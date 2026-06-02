@@ -40,6 +40,19 @@ class InPlayPokemon:
     played_this_turn: bool = False     # can't evolve the turn it was played
     evolved_this_turn: bool = False    # one evolution step per Pokemon per turn
 
+    def clone(self) -> "InPlayPokemon":
+        """Copy the mutable wrapper but SHARE Card refs (Cards are frozen/immutable).
+        This is what makes MCTS rollouts cheap — we don't deep-copy the card DB."""
+        return InPlayPokemon(
+            card=self.card,
+            damage=self.damage,
+            energy=list(self.energy),
+            evolved_from=list(self.evolved_from),
+            ability_used_this_turn=self.ability_used_this_turn,
+            played_this_turn=self.played_this_turn,
+            evolved_this_turn=self.evolved_this_turn,
+        )
+
     @property
     def remaining_hp(self) -> int:
         return (self.card.hp or 0) - self.damage
@@ -93,6 +106,21 @@ class PlayerState:
             drawn += 1
         return drawn
 
+    def clone(self) -> "PlayerState":
+        p = PlayerState(
+            name=self.name,
+            deck=list(self.deck),          # Card refs shared; list copied
+            hand=list(self.hand),
+            discard=list(self.discard),
+            prizes=list(self.prizes),
+            active=self.active.clone() if self.active else None,
+            bench=[m.clone() for m in self.bench],
+            energy_attached_this_turn=self.energy_attached_this_turn,
+            supporter_played_this_turn=self.supporter_played_this_turn,
+            turns_taken=self.turns_taken,
+        )
+        return p
+
 
 @dataclass
 class GameState:
@@ -115,6 +143,23 @@ class GameState:
 
     def opponent_index(self) -> int:
         return 1 - self.active_index
+
+    def clone(self, fresh_rng: Optional[random.Random] = None,
+              keep_log: bool = False) -> "GameState":
+        """Deep-copy the mutable game state for MCTS. Card refs and the db are
+        SHARED (immutable). The log is dropped by default (rollouts don't need it).
+        Pass a fresh_rng so each simulated world rolls differently."""
+        s = GameState(
+            players=(self.players[0].clone(), self.players[1].clone()),
+            rng=fresh_rng if fresh_rng is not None else random.Random(),
+            active_index=self.active_index,
+            turn_number=self.turn_number,
+            phase=self.phase,
+            winner=self.winner,
+            log=list(self.log) if keep_log else [],
+            db=self.db,
+        )
+        return s
 
     def emit(self, msg: str) -> None:
         self.log.append(f"T{self.turn_number} P{self.active_index}: {msg}")

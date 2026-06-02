@@ -57,3 +57,20 @@ real matchup. Win rates are not yet trustworthy.
 **MCTS agent** is the gate before any win rate is trustworthy. Validate each
 matchup against a published result before believing it. Card-library breadth can
 grow in parallel (same discipline: primitive + registry + test per card).
+
+## R6 — MCTS agent (branch: mcts-agent)
+**Built:** `GameState.clone()` (shares immutable Cards, copies mutable wrappers);
+`determinize()` for hidden info (PIMC — reshuffles hidden zones, preserves the
+acting player's known info; tested to conserve the card multiset); single-turn
+UCT with greedy rollouts and semantic action de-duplication. Runner gains an
+`mcts` agent option. `finish_game()` refactored out of `play_game` so rollouts
+can finish an arbitrary mid-game state.
+**Result:** MCTS beats greedy **61%** across mirrored seats (deterministic, fixed
+seeds), ~1 game/sec at 120 iterations. Honest framing: a real but bounded edge —
+greedy already makes obvious plays; MCTS wins on sequencing and non-obvious lines.
+**Scope/limits (documented):** tree is single-turn (not full multi-turn ISMCTS);
+determinization assumes both decklists are known (true in self-play).
+**Tests:** `tests/test_mcts.py` — clone/determinize correctness (instant) +
+strength check (~35s, `--fast` to skip).
+**Next:** breadth (more real archetypes) + validation vs published Limitless
+matchups; optional full ISMCTS.
