@@ -1,0 +1,19 @@
+Building Standard-legal pool (marks: H, I, J)...
+  svp: +50
+  sv5: +147
+  sv6: +151
+  sv6pt5: +61
+  sv7: +101
+  sv8: +145
+  sv8pt5: +35
+  sv9: +119
+  sv10: +149
+  zsv10pt5: +36
+  rsv10pt5: +53
+  me1: +78
+  me2: +52
+  me2pt5: +42
+  me3: +7
+  me4: +47
+
+Done. 1273 unique Standard-legal cards -> data/standard_pool.json

@@ -1,0 +1,3 @@
+# Core pull script uses only the Python standard library (urllib, json) — no deps.
+# The optional live-API path at the bottom of fetch_standard_pool.py uses requests:
+requests>=2.31
