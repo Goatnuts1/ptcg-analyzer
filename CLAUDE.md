@@ -52,11 +52,13 @@ because effects mutate the hand (learned bug — index shift).
   same energy type to same target) so the iteration budget isn't wasted.
 
 ## Next task
-Now that MCTS plays competently, win rates are finally meaningful — but only as
-fidelity allows. Two parallel tracks:
-1. BREADTH: implement more meta archetypes (Charizard ex, Gardevoir ex, a fast
-   aggro deck) — same discipline (primitive + registry + test per card). Need
-   real opposing decks before any matchup number means something.
-2. VALIDATION: once two real archetypes exist, run a matchup and compare to a
-   published result (Limitless) before trusting it. Document in REVIEW_LOG.
-Optional: full multi-turn ISMCTS for stronger play.
+VALIDATION is now the priority. Two real archetypes exist (Dragapult, Mega
+Charizard X ex) but as FIXTURE decks. To trust a matchup number:
+1. Build faithful ~60-card tournament lists for both (proper draw/search counts,
+   energy ratios, tech cards) — pull current lists from Limitless.
+2. Run the matchup with MCTS and compare to the published win rate (target within
+   ~5-8%). Log it in REVIEW_LOG. THAT comparison is what tells us if the sim
+   reflects reality.
+Note on card legality: the Mega ex mechanic is current (mark I). Old SV-base ex
+(Charizard ex, Gardevoir ex, mark G) rotated OUT — always check the pool, never
+card-name memory. Optional later: multi-turn ISMCTS; more archetypes.

@@ -74,3 +74,33 @@ determinization assumes both decklists are known (true in self-play).
 strength check (~35s, `--fast` to skip).
 **Next:** breadth (more real archetypes) + validation vs published Limitless
 matchups; optional full ISMCTS.
+
+## R7 — Second archetype: Mega Charizard X ex (branch: feat/raging-bolt → renamed work)
+**Correction:** I first claimed Charizard/Gardevoir had "rotated out." Half right —
+the *old* Charizard ex / Gardevoir ex (G mark) rotated, but the **Mega** versions
+(Mega Charizard X ex, Mega Gardevoir ex, 27 Mega ex total) are legal (mark I) and
+in the pool. Lesson reinforced: check the pool, not card-name memory.
+**Engine fidelity fixes:**
+- **MEGA prize rule** — Mega Evolution ex give up **3** prizes when KO'd, not 2.
+  `gives_up_prizes` now returns 3 for MEGA ex, 2 for other ex, 1 otherwise. This
+  materially affects any Mega matchup (a wrong value silently skews win rates).
+- **Variable damage** — `×` and `+` attacks now resolve correctly: an attack with
+  a registered effect computes its full hit (weakness applied once to the total);
+  an unregistered variable attack falls back to its printed base (fixed a
+  regression where Iron Thorns' `70×` briefly did 0).
+**Cards implemented + tested (5 new):** Inferno X (Mega Charizard X ex, Fire
+discard ×90), Bellowing Thunder + Burst Roar (Raging Bolt ex), Teal Dance +
+Myriad Leaf Shower (Teal Mask Ogerpon ex). Plus an ability `can_use` guard so
+the engine never offers a do-nothing ability (e.g. Teal Dance with no Grass).
+**Determinize hardening (from R6 review):** added the *correct* zone-integrity
+invariant — public zones (in-play, attached energy, discard) byte-identical
+pre/post, and resampled cards drawn only from each player's own pool (no
+cross-player leak). Note: prizes intentionally DO resample (their contents are
+hidden — pinning them would leak info), so Grok's originally-proposed discard
+test would have been trivially true; this is the right test instead.
+**Internal matchup (NOT validated):** Mega Charizard X ex vs Dragapult ≈ 50%
+(greedy) / 46% (MCTS). Roughly even, plausible — but these are fixture decks, not
+tournament lists, so this is an internal data point, NOT a number to compare to
+Limitless yet. Real validation still needs faithful 60-card lists on both sides.
+**Next:** faithful decklists → validate one matchup vs a published Limitless
+result; optional multi-turn ISMCTS.

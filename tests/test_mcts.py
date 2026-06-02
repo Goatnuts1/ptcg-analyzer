@@ -68,6 +68,25 @@ def correctness_checks(db):
               f"determinize changed P{i} prize count")
         check(len(d.players[i].hand) == len(st.players[i].hand),
               f"determinize changed P{i} hand size")
+
+    # --- zone integrity (the real invariant from R6 review): public zones must
+    #     be byte-identical, and resampled cards must come only from each
+    #     player's OWN pool (no card teleporting between players). Prizes ARE
+    #     allowed to resample (their contents are hidden); pinning them would
+    #     leak hidden info, so we do NOT assert prize identity. ---
+    for i in (0, 1):
+        # discard identical (same cards, same order — it's public, untouched)
+        check([c.name for c in d.players[i].discard] == [c.name for c in st.players[i].discard],
+              f"determinize must not touch P{i} discard contents")
+        # in-play identical: same Pokémon, same attached energy
+        for m_d, m_s in zip(d.players[i].all_in_play(), st.players[i].all_in_play()):
+            check(m_d.card.name == m_s.card.name,
+                  f"determinize changed P{i} in-play Pokémon")
+            check(sorted(e.name for e in m_d.energy) == sorted(e.name for e in m_s.energy),
+                  f"determinize changed P{i} attached energy")
+        # per-player conservation: the multiset of THAT player's cards is identical
+        check(_player_multiset(d.players[i]) == _player_multiset(st.players[i]),
+              f"determinize must conserve P{i}'s own card pool (no cross-player leak)")
     return fails
 
 
@@ -81,6 +100,18 @@ def _card_multiset(state):
             names.append(m.card.name)
             names += [e.name for e in m.energy]
             names += [c.name for c in m.evolved_from]
+    return sorted(names)
+
+
+def _player_multiset(p):
+    """Every card belonging to one player, across all their zones."""
+    names = []
+    for z in (p.deck, p.hand, p.discard, p.prizes):
+        names += [c.name for c in z]
+    for m in p.all_in_play():
+        names.append(m.card.name)
+        names += [e.name for e in m.energy]
+        names += [c.name for c in m.evolved_from]
     return sorted(names)
 
 

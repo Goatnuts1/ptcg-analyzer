@@ -171,12 +171,14 @@ def legal_actions(state: GameState) -> list[Action]:
         if fx.get_trainer_effect(c.name) and fx.can_play_trainer(state, p, c.name):
             actions.append(Action("play_trainer", hand_index=i))
 
-    # use an activated ability (once per turn per Pokemon, if registered)
+    # use an activated ability (once per turn per Pokemon, if registered and able)
     for t, mon in in_play:
         if mon and not mon.ability_used_this_turn:
             for ab in mon.card.abilities:
                 if fx.get_ability_effect(mon.card.name, ab.name):
-                    actions.append(Action("use_ability", target_index=t))
+                    guard = fx.get_ability_can_use(mon.card.name, ab.name)
+                    if guard is None or guard(p, mon):
+                        actions.append(Action("use_ability", target_index=t))
 
     # retreat (if enough energy and there's a bench Pokemon to promote)
     if p.bench and p.active.energy_count() >= p.active.card.retreat_cost:
@@ -200,9 +202,20 @@ def _resolve_attack(state: GameState, atk_index: int) -> None:
     attacker = state.current.active
     defender = state.opponent.active
     atk = attacker.card.attacks[atk_index]
+    effect = fx.get_attack_effect(attacker.card.name, atk.name)
 
-    damage = atk.damage
-    # weakness: ×2 if defender is weak to attacker's (first) type
+    # Base damage handling:
+    #   fixed ("")         -> engine applies atk.damage (+weakness)
+    #   variable ("+"/"×") WITH a registered effect -> engine applies 0; the
+    #       effect computes the full hit (so weakness multiplies the total once)
+    #   variable WITHOUT an effect -> fall back to the printed base so the attack
+    #       still does something sensible (e.g. Iron Thorns' Destructo-Press)
+    if atk.damage_suffix in ("+", "×") and effect is not None:
+        base = 0
+    else:
+        base = atk.damage
+
+    damage = base
     if damage > 0 and defender is not None:
         for wtype, wval in defender.card.weaknesses:
             if attacker.card.types and wtype == attacker.card.types[0]:
@@ -218,8 +231,8 @@ def _resolve_attack(state: GameState, atk_index: int) -> None:
         defender.damage += damage
         state.emit(f"{attacker.card.name} used {atk.name} for {damage}")
 
-    # EFFECT HOOK: run the card's registered attack effect (spread, draw, etc.)
-    effect = fx.get_attack_effect(attacker.card.name, atk.name)
+    # EFFECT HOOK: run the card's registered attack effect (spread, draw,
+    # variable damage, etc.). Variable-damage attacks rely on this to land any hit.
     if effect:
         ctx = fx.EffectContext(state=state, me=state.current, opp=state.opponent,
                                source=attacker, db=state.db, rng=state.rng)

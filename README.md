@@ -29,12 +29,27 @@ errors, and synthesizes results. The engine is always the source of truth.
 | Viz   | `viz/data_explorer.html` — card-data inspector + next-best-move demo | ✅ working |
 | Engine | `src/engine/` — Card model, state, rules engine, agents, runner | ✅ v0 working |
 | Engine | `tests/test_engine.py` — termination, prize, cost, agent-sanity checks | ✅ working |
-| Effects | `src/engine/effects.py` — effect system + Dragapult line + Trainers | ✅ working |
-| Effects | `tests/test_effects.py` — per-card effect validation (8 cards) | ✅ working |
+| Effects | `src/engine/effects.py` — effects: Dragapult + Charizard + Raging Bolt + Trainers | ✅ working |
+| Effects | `tests/test_effects.py` — per-card effect validation (13 cards) | ✅ working |
+| Engine | variable damage (`×`/`+`) + MEGA 3-prize rule | ✅ working |
 | Agents | `src/engine/mcts.py` — determinized UCT search agent | ✅ working |
 | Agents | `tests/test_mcts.py` — clone/determinize correctness + strength vs greedy | ✅ working |
-| Validation | win rates vs published matchups | ◻ now unblocked (needs more cards) |
+| Validation | win rates vs published matchups | ⏳ needs faithful decklists |
 | LLM   | self-healing card scripts, result synthesis | ◻ planned |
+
+### Archetypes implemented (13 cards)
+
+- **Dragapult ex** (Stage 2 spread): Phantom Dive, Recon Directive.
+- **Mega Charizard X ex** (Stage 2 MEGA, gives up **3** prizes): Inferno X (`90×`
+  Fire discard). Charmander → Charmeleon → Mega Charizard X ex (Rare Candy skips middle).
+- **Raging Bolt ex / Teal Mask Ogerpon ex** (Basic, energy-scaling): Bellowing
+  Thunder (`70×`), Burst Roar, Teal Dance, Myriad Leaf Shower (`30+`).
+- **Trainers:** Rare Candy, Buddy-Buddy Poffin, Cheren, Boss's Orders.
+
+⚠️ **Matchup numbers are internal, not validated.** Mega Charizard vs Dragapult
+≈ 50% (greedy) / 46% (MCTS) — even and plausible, but these are *fixture* decks,
+not tournament lists. Comparing to a published Limitless number needs faithful
+60-card lists on both sides; that's the next milestone.
 
 ### MCTS agent (`mcts.py`)
 
