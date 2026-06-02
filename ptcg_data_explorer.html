@@ -1,0 +1,374 @@
+<meta charset="utf-8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0b0f14; --panel:#121821; --panel2:#0e141c; --line:#223040;
+    --ink:#e7eef6; --dim:#8aa0b4; --faint:#5a7088;
+    --grass:#5fcf80; --fire:#ff7a59; --water:#4db5ff; --psychic:#c47dff;
+    --dark:#9aa7b8; --metal:#b9c4d0; --gold:#ffcf5c; --good:#5fcf80; --warn:#ff7a59;
+    --key:#ffcf5c; --str:#5fcf80; --num:#4db5ff;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:
+      radial-gradient(900px 500px at 85% -10%, #16202c 0%, transparent 60%),
+      radial-gradient(700px 500px at -5% 110%, #141b26 0%, transparent 55%),
+      var(--bg);
+    color:var(--ink);font-family:"Space Grotesk",sans-serif;line-height:1.5;
+    -webkit-font-smoothing:antialiased;padding:28px 18px 60px}
+  .wrap{max-width:1080px;margin:0 auto}
+  h1{font-family:"Silkscreen",monospace;font-weight:700;font-size:22px;letter-spacing:1px;
+    margin:0 0 4px;color:var(--ink)}
+  .sub{color:var(--dim);font-size:14px;margin:0 0 22px;max-width:70ch}
+  .tag{display:inline-block;font-family:"JetBrains Mono",monospace;font-size:11px;
+    color:var(--gold);border:1px solid var(--line);border-radius:999px;padding:2px 9px;margin-bottom:14px}
+  .panel{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--line);
+    border-radius:14px;padding:18px;margin-bottom:18px;box-shadow:0 1px 0 #ffffff08 inset}
+  .panel h2{font-family:"JetBrains Mono",monospace;font-size:13px;letter-spacing:1px;
+    text-transform:uppercase;color:var(--faint);margin:0 0 12px;display:flex;gap:8px;align-items:center}
+  .panel h2 b{color:var(--gold);font-weight:700}
+  .eli{font-size:13px;color:var(--dim);background:#0c1219;border-left:3px solid var(--gold);
+    padding:9px 12px;border-radius:0 8px 8px 0;margin:10px 0}
+  .eli b{color:var(--ink)}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  @media(max-width:820px){.grid{grid-template-columns:1fr}}
+
+  /* card picker */
+  .picker{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+  .chip{font-family:"JetBrains Mono",monospace;font-size:12px;cursor:pointer;
+    background:#0c1219;border:1px solid var(--line);color:var(--dim);
+    padding:6px 11px;border-radius:8px;transition:.15s}
+  .chip:hover{color:var(--ink);border-color:#36506a}
+  .chip.on{color:#0b0f14;background:var(--gold);border-color:var(--gold);font-weight:700}
+
+  /* rendered card */
+  .card{position:relative;border-radius:16px;padding:14px;color:#0b0f14;
+    background:linear-gradient(160deg,#f4efe2,#d9d2c0);border:2px solid #00000022;
+    box-shadow:0 18px 40px #00000060, 0 0 0 4px #ffffff10}
+  .card .ctop{display:flex;justify-content:space-between;align-items:baseline}
+  .card .cname{font-weight:700;font-size:18px}
+  .card .chp{font-family:"JetBrains Mono",monospace;font-weight:700;font-size:13px}
+  .card .cstage{font-size:11px;font-weight:600;opacity:.7;text-transform:uppercase;letter-spacing:.5px}
+  .card .art{height:96px;border-radius:10px;margin:10px 0;display:flex;align-items:center;
+    justify-content:center;font-family:"Silkscreen";font-size:13px;color:#ffffffcc;
+    text-shadow:0 1px 4px #0008;letter-spacing:1px}
+  .row{border-top:1px dashed #00000033;padding:7px 0;font-size:13px}
+  .row .rh{display:flex;justify-content:space-between;font-weight:700}
+  .row .rt{font-size:12px;opacity:.78;margin-top:2px}
+  .pips{display:inline-flex;gap:3px;vertical-align:middle;margin-right:6px}
+  .pip{width:13px;height:13px;border-radius:50%;border:1px solid #00000040;font-size:9px;
+    display:inline-flex;align-items:center;justify-content:center;font-weight:700;color:#0008}
+  .meta{display:flex;gap:14px;font-size:11px;margin-top:8px;opacity:.7;flex-wrap:wrap}
+  .badge{position:absolute;top:10px;right:10px}
+
+  /* json */
+  .json{font-family:"JetBrains Mono",monospace;font-size:12.5px;background:#0a0e14;
+    border:1px solid var(--line);border-radius:10px;padding:14px;overflow:auto;max-height:430px;line-height:1.65}
+  .json .k{color:var(--key);cursor:pointer;border-bottom:1px dotted #ffcf5c55}
+  .json .k:hover{background:#ffcf5c22}
+  .json .s{color:var(--str)} .json .n{color:var(--num)} .json .p{color:var(--faint)}
+  .ann{font-size:12.5px;color:var(--dim);min-height:38px;margin-top:10px;padding:10px 12px;
+    background:#0c1219;border:1px solid var(--line);border-radius:8px}
+  .ann b{color:var(--gold);font-family:"JetBrains Mono",monospace}
+  .ann.empty{color:var(--faint)}
+
+  /* query patterns */
+  .q{font-family:"JetBrains Mono",monospace;font-size:12.5px;background:#0a0e14;border:1px solid var(--line);
+    border-radius:8px;padding:10px 12px;margin:8px 0;color:var(--water)}
+  .q .c{color:var(--faint)}
+
+  /* next best move */
+  .controls{display:flex;flex-wrap:wrap;gap:18px;margin-bottom:14px}
+  .ctl{font-size:12px;color:var(--dim)}
+  .ctl label{display:block;margin-bottom:5px;font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--faint)}
+  input[type=range]{width:160px;accent-color:var(--gold)}
+  .ctl .val{color:var(--ink);font-family:"JetBrains Mono",monospace}
+  .move{border:1px solid var(--line);border-radius:10px;padding:11px 13px;margin:8px 0;background:#0c1219;
+    transition:.2s}
+  .move.best{border-color:var(--good);background:#0e1a14;box-shadow:0 0 0 1px #5fcf8044}
+  .move .mt{display:flex;justify-content:space-between;align-items:center}
+  .move .mn{font-weight:700;font-size:14px}
+  .move .ms{font-family:"JetBrains Mono",monospace;font-size:13px;color:var(--dim)}
+  .move.best .ms{color:var(--good)}
+  .move .why{font-size:12px;color:var(--faint);margin-top:4px}
+  .bar{height:5px;border-radius:3px;background:#1b2735;margin-top:7px;overflow:hidden}
+  .bar>span{display:block;height:100%;background:linear-gradient(90deg,#36506a,var(--good))}
+  .pick{font-family:"JetBrains Mono",monospace;font-size:13px;color:var(--good);margin-top:12px}
+  .pick b{color:var(--gold)}
+  .foot{color:var(--faint);font-size:12px;margin-top:26px;text-align:center;line-height:1.7}
+  code{font-family:"JetBrains Mono",monospace;color:var(--gold);font-size:.92em}
+</style>
+
+<div class="wrap">
+  <span class="tag">DATA LAYER · pokemontcg.io</span>
+  <h1>CARD DATA INSPECTOR</h1>
+  <p class="sub">Every card is just structured text. This shows what the data <i>is</i>, what the pull
+  script does to it, and how those fields become the moves your engine can choose between. Cards below are
+  real, pulled live from the official data dump.</p>
+
+  <!-- WHAT THE SCRIPT DOES -->
+  <div class="panel">
+    <h2><b>1.</b> What the script does</h2>
+    <div class="eli"><b>ELI15:</b> Cards have a tiny letter in the corner — the <b>regulation mark</b>.
+    Standard format only allows certain letters. For the 2026 season that's <b>H, I, J</b>; everything
+    G and older is retired. The script downloads all cards, throws away anything that isn't H/I/J,
+    trims each card to just the parts a game needs, and saves one clean file.</div>
+    <div style="font-family:'JetBrains Mono',monospace;font-size:12.5px;color:var(--dim);line-height:1.9;margin-top:6px">
+      <span style="color:var(--faint)"># the whole legality test is two checks:</span><br>
+      legal = (mark <span style="color:var(--water)">in</span> {<span class="s" style="color:var(--str)">"H","I","J"</span>}) <span style="color:var(--water)">and</span> (legalities.standard == <span class="s" style="color:var(--str)">"Legal"</span>)
+    </div>
+    <h2 style="margin-top:16px"><b>2.</b> Two ways to get the data</h2>
+    <div class="q"><span class="c"># A) offline dump (no key, what the script uses)</span><br>raw.githubusercontent.com/PokemonTCG/pokemon-tcg-data/master/cards/en/sv9.json</div>
+    <div class="q"><span class="c"># B) live API — query language is field:value</span><br>GET api.pokemontcg.io/v2/cards?q=<span style="color:var(--gold)">regulationMark:H OR regulationMark:I OR regulationMark:J</span></div>
+    <div class="eli" style="margin-top:6px">Useful live filters: <code>types:Fire</code> · <code>subtypes:ex</code> ·
+    <code>hp:[200 TO *]</code> · <code>name:"Dragapult ex"</code>. A free API key just raises how many you can pull per hour.</div>
+  </div>
+
+  <div class="grid">
+    <!-- LEFT: rendered card -->
+    <div class="panel">
+      <h2><b>3.</b> JSON &rarr; rendered card</h2>
+      <div class="picker" id="picker"></div>
+      <div id="cardview"></div>
+      <div class="eli" style="margin-top:12px">If the data can rebuild the whole card, it's complete enough
+      to <b>simulate</b> the card. That's the test.</div>
+    </div>
+
+    <!-- RIGHT: annotated json -->
+    <div class="panel">
+      <h2><b>4.</b> The raw data <span style="color:var(--faint);font-weight:400;text-transform:none;letter-spacing:0">— tap any key</span></h2>
+      <div class="json" id="json"></div>
+      <div class="ann empty" id="ann">Tap a highlighted key on the left to see what it means.</div>
+    </div>
+  </div>
+
+  <!-- NEXT BEST MOVE -->
+  <div class="panel">
+    <h2><b>5.</b> What move makes the next best move?</h2>
+    <div class="eli"><b>ELI15:</b> The card data lists what a Pokémon <i>can</i> do. The best move depends on
+    the <b>game state</b> — how much energy is attached, and how hurt the opponent is. The engine scores every
+    legal action and picks the highest. Drag the sliders and watch the pick change. (This is a teaching toy,
+    not the real engine — but the shape is exactly right.)</div>
+    <div class="controls">
+      <div class="ctl">
+        <label>energy attached: <span class="val" id="eVal">2</span></label>
+        <input type="range" id="energy" min="0" max="4" value="2">
+      </div>
+      <div class="ctl">
+        <label>opponent active HP: <span class="val" id="hVal">180</span></label>
+        <input type="range" id="ohp" min="30" max="330" step="10" value="180">
+      </div>
+    </div>
+    <div id="moves"></div>
+    <div class="pick" id="pick"></div>
+  </div>
+
+  <p class="foot">Cards: real, from <code>PokemonTCG/pokemon-tcg-data</code> · marks H/I/J = 2026 Standard ·
+  the inspector renders straight from the same fields the simulator reads.</p>
+</div>
+
+<script>
+// ---- REAL CARD DATA (pulled from the dump) ----
+const CARDS = {
+  "Hydreigon ex": {
+    id:"sv8-119", name:"Hydreigon ex", supertype:"Pokémon",
+    subtypes:["Stage 2","Tera","ex"], hp:330, types:["Darkness"],
+    attacks:[
+      {name:"Crashing Headbutt", cost:["Darkness","Colorless"], convertedEnergyCost:2, damage:"200",
+       text:"Discard the top 3 cards of your opponent's deck."},
+      {name:"Obsidian", cost:["Psychic","Darkness","Metal","Colorless"], convertedEnergyCost:4, damage:"130",
+       text:"This attack also does 130 damage to 2 of your opponent's Benched Pokémon."}
+    ],
+    weaknesses:[{type:"Grass",value:"×2"}], retreatCost:["Colorless","Colorless","Colorless"],
+    regulationMark:"H"
+  },
+  "Roselia": {
+    id:"sv5-8", name:"Roselia", supertype:"Pokémon", subtypes:["Basic"], hp:60, types:["Grass"],
+    evolvesTo:["Roserade"],
+    abilities:[{name:"Poison Point", type:"Ability",
+      text:"If this Pokémon is in the Active Spot and is damaged by an attack from your opponent's Pokémon, the Attacking Pokémon is now Poisoned."}],
+    attacks:[{name:"Leaf Step", cost:["Colorless"], convertedEnergyCost:1, damage:"10", text:""}],
+    weaknesses:[{type:"Fire",value:"×2"}], retreatCost:["Colorless"], regulationMark:"H"
+  },
+  "Caterpie": {
+    id:"sv9-1", name:"Caterpie", supertype:"Pokémon", subtypes:["Basic"], hp:50, types:["Grass"],
+    evolvesTo:["Metapod"],
+    attacks:[{name:"Bug Bite", cost:["Grass"], convertedEnergyCost:1, damage:"20", text:""}],
+    weaknesses:[{type:"Fire",value:"×2"}], retreatCost:["Colorless"], regulationMark:"I"
+  },
+  "Bianca's Devotion": {
+    id:"sv5-142", name:"Bianca's Devotion", supertype:"Trainer", subtypes:["Supporter"],
+    rules:["Heal all damage from 1 of your Pokémon that has 30 HP or less remaining.",
+           "You may play only 1 Supporter card during your turn."],
+    regulationMark:"H"
+  },
+  "Mist Energy": {
+    id:"sv5-161", name:"Mist Energy", supertype:"Energy", subtypes:["Special"],
+    rules:["As long as this card is attached to a Pokémon, it provides Colorless Energy. Prevent all effects of attacks (except damage) done to this Pokémon."],
+    regulationMark:"H"
+  }
+};
+
+// ---- field explanations (eli15) ----
+const ANN = {
+  id:"The unique tag: set code + number. <b>sv8-119</b> = Surging Sparks card #119. How the engine references the card.",
+  name:"The card's name. The engine de-dupes by name, since the same card gets reprinted across sets.",
+  supertype:"The big bucket: <b>Pokémon</b>, <b>Trainer</b>, or <b>Energy</b>. Decides which rules apply.",
+  subtypes:"Finer labels. <b>Stage 2</b> = needs two evolutions. <b>ex</b> = gives up 2 prizes when KO'd. <b>Supporter</b> = one per turn.",
+  hp:"Hit points. When damage reaches this, the Pokémon is Knocked Out. The engine compares damage to this number.",
+  types:"Energy type(s). Matters for weakness, resistance, and what energy pays for attacks.",
+  evolvesTo:"What this can become next turn. The engine uses it to plan evolution lines.",
+  abilities:"Free powers you don't attack with. The <b>text</b> is the rule the engine must encode — the hard part.",
+  attacks:"The moves. Each has a <b>cost</b> (energy needed), <b>damage</b>, and <b>text</b> (extra effect). This is the menu of offensive moves.",
+  cost:"Energy required to use the attack. The engine checks attached energy against this before allowing the move.",
+  convertedEnergyCost:"Just the total energy count, pre-summed so the engine doesn't have to count the list.",
+  damage:"Base damage dealt. Weakness can double it; resistance reduces it.",
+  text:"The effect in plain English. Turning this sentence into code is ~80% of building the engine.",
+  weaknesses:"Takes extra damage from this type — usually ×2. A huge factor in which attack wins the race.",
+  resistances:"Takes less damage from this type. Less common.",
+  retreatCost:"Energy you must discard to switch this Pokémon out. The engine weighs this when deciding to retreat.",
+  rules:"For Trainers/Energy: the whole effect lives here instead of in attacks.",
+  regulationMark:"<b>The legality letter.</b> H/I/J = legal in 2026 Standard. This single field is the entire rotation filter."
+};
+
+const ENERGY_COLOR = {Grass:"#5fcf80",Fire:"#ff7a59",Water:"#4db5ff",Psychic:"#c47dff",
+  Darkness:"#7d8aa0",Metal:"#b9c4d0",Colorless:"#cdbf9e",Lightning:"#ffcf5c",Fighting:"#d98a4b"};
+
+let current = "Hydreigon ex";
+
+// build picker
+const picker = document.getElementById("picker");
+Object.keys(CARDS).forEach(name=>{
+  const b=document.createElement("div");
+  b.className="chip"+(name===current?" on":""); b.textContent=name;
+  b.onclick=()=>{current=name; render();};
+  picker.appendChild(b);
+});
+
+function pips(cost){
+  if(!cost||!cost.length) return '<span style="opacity:.5">—</span>';
+  return '<span class="pips">'+cost.map(t=>{
+    const c=ENERGY_COLOR[t]||"#cdbf9e";
+    return `<span class="pip" style="background:${c}" title="${t}">${t[0]}</span>`;
+  }).join("")+'</span>';
+}
+
+function renderCard(){
+  const c=CARDS[current];
+  const accent=ENERGY_COLOR[(c.types&&c.types[0])||"Colorless"]||"#9aa7b8";
+  let inner="";
+  if(c.supertype==="Pokémon"){
+    inner+=`<div class="ctop"><span class="cname">${c.name}</span><span class="chp">${c.hp} HP</span></div>`;
+    inner+=`<div class="cstage">${c.subtypes.join(" · ")} · ${c.types.join("/")}</div>`;
+    inner+=`<div class="art" style="background:linear-gradient(140deg,${accent},#0b0f14)">${c.types[0]||""}</div>`;
+    (c.abilities||[]).forEach(a=>{
+      inner+=`<div class="row"><div class="rh"><span>⟡ ${a.name}</span><span style="font-size:10px;opacity:.6">ABILITY</span></div><div class="rt">${a.text}</div></div>`;
+    });
+    (c.attacks||[]).forEach(a=>{
+      inner+=`<div class="row"><div class="rh"><span>${pips(a.cost)}${a.name}</span><span>${a.damage||""}</span></div>${a.text?`<div class="rt">${a.text}</div>`:""}</div>`;
+    });
+    inner+=`<div class="meta"><span>weak: ${(c.weaknesses||[]).map(w=>w.type+" "+w.value).join(", ")||"—"}</span>
+      <span>retreat: ${pips(c.retreatCost)}</span></div>`;
+  } else {
+    inner+=`<div class="ctop"><span class="cname">${c.name}</span></div>`;
+    inner+=`<div class="cstage">${c.supertype} · ${c.subtypes.join(" · ")}</div>`;
+    inner+=`<div class="art" style="background:linear-gradient(140deg,${accent},#0b0f14)">${c.supertype.toUpperCase()}</div>`;
+    (c.rules||[]).forEach(r=> inner+=`<div class="row"><div class="rt" style="opacity:.9">${r}</div></div>`);
+  }
+  inner+=`<div class="badge"><span class="pip" style="background:var(--gold);width:18px;height:18px" title="regulation mark ${c.regulationMark}">${c.regulationMark}</span></div>`;
+  document.getElementById("cardview").innerHTML=`<div class="card">${inner}</div>`;
+}
+
+function jsonHTML(obj,ind=0){
+  const pad="  ".repeat(ind);
+  if(Array.isArray(obj)){
+    if(!obj.length) return "[]";
+    return "[\n"+obj.map(v=>pad+"  "+jsonHTML(v,ind+1)).join(",\n")+"\n"+pad+"]";
+  }
+  if(obj&&typeof obj==="object"){
+    const keys=Object.keys(obj);
+    return "{\n"+keys.map(k=>{
+      const kk=`<span class="k" data-k="${k}">"${k}"</span>`;
+      return pad+"  "+kk+': '+jsonHTML(obj[k],ind+1);
+    }).join(",\n")+"\n"+pad+"}";
+  }
+  if(typeof obj==="string") return `<span class="s">"${obj.replace(/</g,"&lt;")}"</span>`;
+  if(typeof obj==="number") return `<span class="n">${obj}</span>`;
+  return `<span class="p">${obj}</span>`;
+}
+
+function renderJSON(){
+  document.getElementById("json").innerHTML=jsonHTML(CARDS[current]);
+  document.querySelectorAll(".json .k").forEach(el=>{
+    el.onclick=()=>{
+      const k=el.dataset.k;
+      const a=document.getElementById("ann");
+      if(ANN[k]){a.className="ann"; a.innerHTML=`<b>${k}</b> — ${ANN[k]}`;}
+      else {a.className="ann empty"; a.textContent="(structural field — no special meaning)";}
+    };
+  });
+}
+
+// ---- next best move (teaching toy) ----
+function renderMoves(){
+  const c=CARDS[current];
+  const e=+document.getElementById("energy").value;
+  const ohp=+document.getElementById("ohp").value;
+  document.getElementById("eVal").textContent=e;
+  document.getElementById("hVal").textContent=ohp;
+  const movesDiv=document.getElementById("moves");
+  const pickDiv=document.getElementById("pick");
+
+  if(c.supertype!=="Pokémon"){
+    movesDiv.innerHTML=`<div class="move"><div class="mt"><span class="mn">No active-Pokémon moves</span></div>
+      <div class="why">${c.name} is a ${c.supertype}, not a Pokémon in the Active Spot. Pick Hydreigon ex, Roselia, or Caterpie to see the decision.</div></div>`;
+    pickDiv.textContent=""; return;
+  }
+
+  const moves=[];
+  (c.attacks||[]).forEach(a=>{
+    const need=a.convertedEnergyCost||(a.cost||[]).length;
+    const dmg=parseInt(a.damage)||0;
+    let score, why;
+    if(e<need){ score=0; why=`Can't use yet — needs ${need} energy, you have ${e}.`; }
+    else {
+      const lethal=dmg>=ohp;
+      // value: lethal is huge; otherwise reward damage but don't over-spend energy
+      score = lethal ? 100 : Math.min(95, Math.round(dmg/ohp*70) + (a.text?10:0));
+      why = lethal ? `Knocks out the opponent (${dmg} ≥ ${ohp}). Take the prize.`
+                   : `Deals ${dmg}. ${a.text?"Bonus effect: "+a.text.split(".")[0]+".":"No extra effect."}`;
+    }
+    moves.push({name:"Attack · "+a.name, score, why, usable:e>=need});
+  });
+  // retreat option
+  const rc=(c.retreatCost||[]).length;
+  moves.push({name:"Retreat & set up", score: e<2?35:12,
+    why: e<2?"Low energy — retreating to build a bench attacker may beat a weak swing.":`Costs ${rc} energy to retreat; usually worse than attacking when you can hit hard.`,
+    usable:e>=rc});
+  // ability (passive note)
+  if(c.abilities&&c.abilities.length){
+    moves.push({name:"Ability · "+c.abilities[0].name, score:5,
+      why:"Passive/conditional — fires on its own, not a turn action here.", usable:true});
+  }
+
+  const max=Math.max(...moves.map(m=>m.score),1);
+  const best=moves.reduce((a,b)=>b.score>a.score?b:a);
+  movesDiv.innerHTML=moves.map(m=>`
+    <div class="move ${m===best&&m.score>0?"best":""}">
+      <div class="mt"><span class="mn">${m.name}</span><span class="ms">EV ${m.score}</span></div>
+      <div class="why">${m.why}</div>
+      <div class="bar"><span style="width:${Math.round(m.score/max*100)}%"></span></div>
+    </div>`).join("");
+  pickDiv.innerHTML = best.score>0
+    ? `&rarr; Next best move: <b>${best.name}</b>`
+    : `&rarr; No useful move yet — attach more energy.`;
+}
+
+function render(){
+  document.querySelectorAll(".chip").forEach(ch=>ch.classList.toggle("on",ch.textContent===current));
+  renderCard(); renderJSON(); renderMoves();
+}
+document.getElementById("energy").oninput=renderMoves;
+document.getElementById("ohp").oninput=renderMoves;
+render();
+</script>

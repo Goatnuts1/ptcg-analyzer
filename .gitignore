@@ -5,3 +5,7 @@ build.log
 __pycache__/
 .venv/
 .DS_Store
+
+# export bundles / snapshots
+*.zip
+*.tar.gz
