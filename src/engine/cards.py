@@ -92,8 +92,14 @@ class Card:
 
     @property
     def gives_up_prizes(self) -> int:
-        # ex cards give up 2 prizes when KO'd; everything else gives up 1.
-        return 2 if "ex" in (s.lower() for s in self.subtypes) else 1
+        # Mega Evolution ex give up 3 prizes when KO'd (per their printed rule);
+        # other ex give 2; everything else gives 1.
+        subs = [s.lower() for s in self.subtypes]
+        if "ex" in subs and "mega" in subs:
+            return 3
+        if "ex" in subs:
+            return 2
+        return 1
 
 
 def _parse_damage(raw: str) -> tuple[int, str]:

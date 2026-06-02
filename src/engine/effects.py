@@ -86,6 +86,68 @@ def heal(ctx: EffectContext, mon: InPlayPokemon, amount: int) -> None:
     mon.damage = max(0, mon.damage - amount)
 
 
+def damage_active_with_weakness(ctx: EffectContext, amount: int) -> None:
+    """Deal `amount` to the opponent's Active, applying Weakness (×2) and
+    Resistance based on the SOURCE Pokémon's type. Used by variable-damage attacks
+    that compute their own total, so weakness multiplies the whole hit once."""
+    d = ctx.opp.active
+    if d is None or amount <= 0:
+        return
+    src_types = ctx.source.card.types if ctx.source else ()
+    dmg = amount
+    for wtype, _ in d.card.weaknesses:
+        if src_types and wtype == src_types[0]:
+            dmg *= 2
+    for rtype, rval in d.card.resistances:
+        if src_types and rtype == src_types[0]:
+            try:
+                dmg = max(0, dmg + int(rval))
+            except ValueError:
+                pass
+    d.damage += dmg
+
+
+def discard_basic_energy_from_own(ctx: EffectContext, count: int,
+                                  energy_type: Optional[str] = None) -> int:
+    """Discard up to `count` Basic Energy from the acting player's Pokémon
+    (active first, then bench). If `energy_type` is given, only that type is
+    discarded (e.g. Inferno X discards Fire). Returns how many were discarded."""
+    discarded = 0
+    for mon in ctx.me.all_in_play():
+        i = 0
+        while i < len(mon.energy) and discarded < count:
+            e = mon.energy[i]
+            if e.is_basic_energy and (energy_type is None or energy_type in e.types):
+                ctx.me.discard.append(mon.energy.pop(i))
+                discarded += 1
+            else:
+                i += 1
+    return discarded
+
+
+def count_basic_energy_on_own(ctx: EffectContext, energy_type: Optional[str] = None) -> int:
+    return sum(1 for mon in ctx.me.all_in_play() for e in mon.energy
+               if e.is_basic_energy and (energy_type is None or energy_type in e.types))
+
+
+def attach_basic_energy_from_hand(ctx: EffectContext, energy_type: str,
+                                  target: InPlayPokemon) -> bool:
+    """Find a Basic <type> Energy in hand and attach it to `target`. (Used by
+    acceleration abilities like Teal Dance — does NOT count as the turn's manual
+    energy attachment.)"""
+    for i, c in enumerate(ctx.me.hand):
+        if c.is_basic_energy and energy_type in c.types:
+            target.energy.append(ctx.me.hand.pop(i))
+            return True
+    return False
+
+
+def discard_hand_and_draw(ctx: EffectContext, n: int) -> None:
+    ctx.me.discard.extend(ctx.me.hand)
+    ctx.me.hand = []
+    ctx.me.draw(n)
+
+
 def draw(ctx: EffectContext, n: int) -> int:
     return ctx.me.draw(n)
 
@@ -184,15 +246,86 @@ def _recon_directive(ctx: EffectContext) -> None:
     dig_and_pick(ctx, look=2, take=1)
 
 
+# --- Raging Bolt ex / Teal Mask Ogerpon ex / Mega Charizard X ex ---
+def _discard_energy_for_damage(ctx: EffectContext, per_hit: int,
+                               energy_type: Optional[str] = None) -> None:
+    """Shared logic for 'discard any amount of [Fire/Basic] Energy; N damage each'
+    attacks (Inferno X, Bellowing Thunder). Engine applied 0 base; we compute it.
+
+    Discard policy (v1, a hook MCTS can later own): discard exactly enough to KO
+    the opponent's Active if reachable; otherwise discard a conservative 2 so we
+    don't strip our own board. Weakness is applied to the total via the helper.
+    """
+    opp = ctx.opp.active
+    available = count_basic_energy_on_own(ctx, energy_type)
+    if available == 0 or opp is None:
+        return
+    src = ctx.source.card.types[0] if ctx.source and ctx.source.card.types else None
+    effective = per_hit * 2 if any(w == src for w, _ in opp.card.weaknesses) else per_hit
+    need = -(-opp.remaining_hp // effective)        # ceil division to reach lethal
+    discard_n = need if 0 < need <= available else min(available, 2)
+    discarded = discard_basic_energy_from_own(ctx, discard_n, energy_type)
+    damage_active_with_weakness(ctx, per_hit * discarded)
+
+
+def _bellowing_thunder(ctx: EffectContext) -> None:
+    # 'Discard any amount of Basic Energy from your Pokémon. 70 damage for each.'
+    _discard_energy_for_damage(ctx, per_hit=70, energy_type=None)
+
+
+def _inferno_x(ctx: EffectContext) -> None:
+    # 'Discard any amount of Fire Energy from among your Pokémon. 90 damage each.'
+    _discard_energy_for_damage(ctx, per_hit=90, energy_type="Fire")
+
+
+def _burst_roar(ctx: EffectContext) -> None:
+    discard_hand_and_draw(ctx, 6)
+
+
+def _teal_dance(ctx: EffectContext) -> None:
+    """Ability: attach a Basic Grass Energy from hand to this Pokémon, then draw."""
+    if attach_basic_energy_from_hand(ctx, "Grass", ctx.source):
+        draw(ctx, 1)
+
+
+def _myriad_leaf_shower(ctx: EffectContext) -> None:
+    """'30+': 30 more damage for each Energy attached to BOTH Active Pokémon.
+    Variable — engine applied 0 base; we compute 30 + 30*count and apply weakness.
+    """
+    n = 0
+    if ctx.me.active:
+        n += ctx.me.active.energy_count()
+    if ctx.opp.active:
+        n += ctx.opp.active.energy_count()
+    damage_active_with_weakness(ctx, 30 + 30 * n)
+
+
 # (card_name, attack_name) -> effect
 ATTACK_EFFECTS: dict[tuple[str, str], Callable[[EffectContext], None]] = {
     ("Dragapult ex", "Phantom Dive"): _phantom_dive,
+    ("Raging Bolt ex", "Bellowing Thunder"): _bellowing_thunder,
+    ("Raging Bolt ex", "Burst Roar"): _burst_roar,
+    ("Teal Mask Ogerpon ex", "Myriad Leaf Shower"): _myriad_leaf_shower,
+    ("Mega Charizard X ex", "Inferno X"): _inferno_x,
 }
 
 # (card_name, ability_name) -> effect
 ABILITY_EFFECTS: dict[tuple[str, str], Callable[[EffectContext], None]] = {
     ("Drakloak", "Recon Directive"): _recon_directive,
+    ("Teal Mask Ogerpon ex", "Teal Dance"): _teal_dance,
 }
+
+# Optional usability guards so the engine never offers an ability that would do
+# nothing (and let greedy waste it). (card_name, ability_name) -> pred(me, mon).
+ABILITY_CAN_USE: dict[tuple[str, str], Callable] = {
+    # Teal Dance needs a Basic Grass Energy in hand to attach.
+    ("Teal Mask Ogerpon ex", "Teal Dance"):
+        lambda me, mon: any(c.is_basic_energy and "Grass" in c.types for c in me.hand),
+}
+
+
+def get_ability_can_use(card_name: str, ability_name: str):
+    return ABILITY_CAN_USE.get((card_name, ability_name))
 
 
 # --------------------------------------------------------------------------- #

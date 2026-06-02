@@ -153,6 +153,74 @@ def main():
     check(did and b.active.card.name == "Dreepy", "Boss should drag up the low-HP Dreepy")
     check(any(m.card.name == "Dragapult ex" for m in b.bench), "old active should go to bench")
 
+    # ----------------------------------------------------------------- #
+    # R7 — Mega Charizard X ex / Raging Bolt ex / Teal Mask Ogerpon ex
+    # ----------------------------------------------------------------- #
+    # MEGA prize rule: a Mega Evolution ex gives up 3 prizes when KO'd.
+    mcx = db.get("Mega Charizard X ex")
+    check(mcx.gives_up_prizes == 3, f"Mega ex should give 3 prizes, got {mcx.gives_up_prizes}")
+    check(db.get("Pikachu ex").gives_up_prizes == 2, "plain ex should give 2 prizes")
+    check(db.get("Dreepy").gives_up_prizes == 1, "non-ex should give 1 prize")
+
+    # Inferno X: discard Fire Energy, 90 each, applied to opponent Active.
+    # With 2 energy vs a 320 HP target, lethal is unreachable, so the policy
+    # discards both for 180.
+    st, a, b = fresh_state(db)
+    st.active_index = 0
+    a.active = InPlayPokemon(card=mcx)
+    a.active.energy = [db.get("Basic Fire Energy")] * 2
+    b.active = InPlayPokemon(card=db.get("Dragapult ex"))   # 320 HP, survives 180
+    atk_i = next(i for i, atk in enumerate(mcx.attacks) if atk.name == "Inferno X")
+    game._resolve_attack(st, atk_i)
+    check(b.active is not None and b.active.damage == 180,
+          f"Inferno X should deal 90*2=180 here, got {b.active.damage if b.active else 'KO'}")
+    check(len(a.discard) == 2 and all(c.name == "Basic Fire Energy" for c in a.discard),
+          "Inferno X should discard exactly the 2 Fire Energy it used")
+
+    # Inferno X reaches lethal: discards exactly enough to KO a low-HP target.
+    st, a, b = fresh_state(db)
+    st.active_index = 0
+    a.active = InPlayPokemon(card=mcx)
+    a.active.energy = [db.get("Basic Fire Energy")] * 4
+    b.active = InPlayPokemon(card=db.get("Dreepy"))         # 70 HP -> 1 discard (90) KOs
+    game._resolve_attack(st, atk_i)
+    check(db.get("Dreepy") in b.discard, "Inferno X should KO the 70 HP Dreepy")
+    check(len(a.prizes) == 0, "prizes setup empty so taking happens via hand")
+
+    # Bellowing Thunder: 70 per Basic Energy discarded.
+    st, a, b = fresh_state(db)
+    st.active_index = 0
+    rb = db.get("Raging Bolt ex")
+    a.active = InPlayPokemon(card=rb)
+    a.active.energy = [db.get("Basic Lightning Energy"), db.get("Basic Fighting Energy")]
+    b.active = InPlayPokemon(card=db.get("Dragapult ex"))   # 320, survives
+    ti = next(i for i, atk in enumerate(rb.attacks) if atk.name == "Bellowing Thunder")
+    game._resolve_attack(st, ti)
+    check(b.active.damage == 140, f"Bellowing Thunder 70*2=140 expected, got {b.active.damage}")
+
+    # Teal Dance: attach a Grass Energy from hand to self + draw.
+    st, a, b = fresh_state(db)
+    og = db.get("Teal Mask Ogerpon ex")
+    a.active = InPlayPokemon(card=og)
+    a.hand = [db.get("Basic Grass Energy"), db.get("Basic Grass Energy")]
+    a.deck = [db.get("Cheren")] * 5
+    hand_e_before = len(a.active.energy)
+    fx._teal_dance(fx.EffectContext(state=st, me=a, opp=b, source=a.active, db=db, rng=st.rng))
+    check(a.active.energy_count() == hand_e_before + 1, "Teal Dance should attach 1 energy")
+    check(any(c.name == "Cheren" for c in a.hand), "Teal Dance should draw a card")
+
+    # Myriad Leaf Shower: 30 + 30 per energy on BOTH actives.
+    st, a, b = fresh_state(db)
+    st.active_index = 0
+    a.active = InPlayPokemon(card=og)
+    a.active.energy = [db.get("Basic Grass Energy")] * 2          # 2 on attacker
+    b.active = InPlayPokemon(card=db.get("Dragapult ex"))
+    b.active.energy = [db.get("Basic Fire Energy")]               # 1 on defender
+    mi = next(i for i, atk in enumerate(og.attacks) if atk.name == "Myriad Leaf Shower")
+    game._resolve_attack(st, mi)
+    # 30 + 30*(2+1) = 120
+    check(b.active.damage == 120, f"Myriad Leaf Shower 30+30*3=120 expected, got {b.active.damage}")
+
     if fails:
         print(f"FAIL ({len(fails)}):")
         for f in fails:

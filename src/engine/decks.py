@@ -70,3 +70,23 @@ def load_test_decks(db: CardDB) -> tuple[list[Card], list[Card]]:
 
 def load_dragapult_vs_lightning(db: CardDB) -> tuple[list[Card], list[Card]]:
     return _expand(db, DECK_DRAGAPULT), _expand(db, DECK_LIGHTNING)
+
+
+# Mega Charizard X ex line: Charmander -> Charmeleon -> Mega Charizard X ex (360 HP,
+# gives up 3 prizes). Inferno X discards Fire Energy for 90 each. Rare Candy skips
+# Charmeleon. A real, currently-legal Stage 2 MEGA archetype.
+DECK_CHARIZARD = [
+    ("Charmander", 4),
+    ("Charmeleon", 2),
+    ("Mega Charizard X ex", 3),
+    ("Flutter Mane", 2),          # Basic opener / attacker
+    ("Rare Candy", 4),
+    ("Buddy-Buddy Poffin", 4),
+    ("Cheren", 4),
+    ("Boss's Orders", 2),
+    ("Basic Fire Energy", 35),
+]
+
+
+def load_charizard_vs_dragapult(db: CardDB) -> tuple[list[Card], list[Card]]:
+    return _expand(db, DECK_CHARIZARD), _expand(db, DECK_DRAGAPULT)
