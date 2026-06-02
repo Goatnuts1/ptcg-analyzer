@@ -23,8 +23,10 @@ USAGE:
 """
 
 import argparse
+import datetime
 import json
 import sys
+import urllib.error
 import urllib.request
 
 # The regulation marks that are legal in the 2026 Standard format.
@@ -57,6 +59,18 @@ def is_standard_legal(card):
     return mark in LEGAL_MARKS and legal_field == "Legal"
 
 
+def safe_hp(value):
+    """HP is usually a clean integer string, but don't assume it. Some oddball
+    prints or upstream data hiccups could be non-numeric; degrade to None rather
+    than crash the whole pull on one bad card."""
+    if not value:
+        return None
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
+
+
 def slim(card):
     """Keep only what an engine needs. The art, flavor text, prices, etc. are noise."""
     return {
@@ -64,9 +78,10 @@ def slim(card):
         "name": card["name"],
         "supertype": card["supertype"],            # Pokemon / Trainer / Energy
         "subtypes": card.get("subtypes", []),      # Basic, Stage 2, ex, Supporter, Item...
-        "hp": int(card["hp"]) if card.get("hp") else None,
+        "hp": safe_hp(card.get("hp")),
         "types": card.get("types", []),
-        "evolvesFrom": card.get("evolvesFrom"),
+        "evolvesFrom": card.get("evolvesFrom"),    # what this evolves up from
+        "evolvesTo": card.get("evolvesTo", []),    # what this can become (evolution planning)
         "abilities": card.get("abilities", []),    # name + text
         "attacks": card.get("attacks", []),        # name, cost, damage, text
         "rules": card.get("rules", []),            # Trainer/Energy effect text
@@ -80,11 +95,17 @@ def slim(card):
 def build_pool():
     pool, seen = [], set()
     codes = list_set_codes()
+    failed = []
     for code in codes:
         try:
             cards = fetch_json(f"{RAW}/cards/en/{code}.json")
-        except Exception as e:
-            print(f"  skip {code}: {e}", file=sys.stderr)
+        except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError,
+                json.JSONDecodeError) as e:
+            # A failed set means a SILENTLY INCOMPLETE pool — the exact failure
+            # mode that makes a stale/partial pool look healthy. Track it loudly
+            # instead of swallowing it.
+            print(f"  !! FAILED {code}: {e}", file=sys.stderr)
+            failed.append(code)
             continue
         kept = 0
         for c in cards:
@@ -99,7 +120,7 @@ def build_pool():
             kept += 1
         if kept:
             print(f"  {code}: +{kept}", file=sys.stderr)
-    return pool
+    return pool, codes, failed
 
 
 def main():
@@ -109,10 +130,36 @@ def main():
 
     print("Building Standard-legal pool (marks: %s)..." % ", ".join(sorted(LEGAL_MARKS)),
           file=sys.stderr)
-    pool = build_pool()
+    pool, codes, failed = build_pool()
+
     with open(args.out, "w", encoding="utf-8") as f:
         json.dump(pool, f, ensure_ascii=False, indent=2)
+
+    # Metadata sidecar: a small provenance file written next to the pool so you
+    # (and the engine) can tell at a glance when it was built, from how many sets,
+    # and whether the pull was complete. Answers "is this pool fresh / trustworthy?"
+    from collections import Counter
+    meta_path = args.out.rsplit(".", 1)[0] + "_meta.json"
+    meta = {
+        "built_at": datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds"),
+        "legal_marks": sorted(LEGAL_MARKS),
+        "card_count": len(pool),
+        "by_supertype": dict(Counter(c["supertype"] for c in pool)),
+        "sets_total": len(codes),
+        "sets_failed": failed,
+        "complete": not failed,
+        "source": RAW,
+    }
+    with open(meta_path, "w", encoding="utf-8") as f:
+        json.dump(meta, f, ensure_ascii=False, indent=2)
+
     print(f"\nDone. {len(pool)} unique Standard-legal cards -> {args.out}", file=sys.stderr)
+    print(f"Metadata -> {meta_path}", file=sys.stderr)
+    if failed:
+        # Non-zero exit so a CI step or your session-start ritual can catch it.
+        print(f"\nWARNING: {len(failed)} set(s) failed to download: {failed}\n"
+              f"The pool is INCOMPLETE. Re-run before trusting it.", file=sys.stderr)
+        sys.exit(2)
 
 
 if __name__ == "__main__":

@@ -1,9 +1,15 @@
 # generated data artifacts — rebuild with the fetch script
 data/*.json
+docs/last_build.log
 build.log
+
+# python
 *.pyc
 __pycache__/
 .venv/
+.pytest_cache/
+
+# os
 .DS_Store
 
 # export bundles / snapshots

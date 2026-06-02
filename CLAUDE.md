@@ -16,29 +16,31 @@ engine (CPU only, zero tokens). The model's jobs are bounded:
 Every model output is validated against the engine before it's trusted.
 
 ## Current state
-- Data layer is done and tested. `data/standard_pool.json` = 1,273 unique
-  Standard-legal cards (regulation marks H/I/J, 2026 season).
-- Engine, agents, and LLM roles are not built yet.
+- Data layer: done + tested. `data/standard_pool.json` = 1,273 cards (marks H/I/J).
+- Engine v0: done + tested. `src/engine/` plays full legal games at ~1,700
+  games/sec, zero tokens. Core rules faithful incl. evolution timing.
+- Effect system: done + tested. `effects.py` = primitives + registries for
+  attacks, abilities, and Trainers. 8 cards implemented (Dragapult line + Rare
+  Candy, Buddy-Buddy Poffin, Cheren, Boss's Orders), each validated vs card text.
+  Trainer play wired in (Items unlimited, Supporters once/turn, can_play gating).
+  Basic energy injected in the loader. `db` threaded through state for searches.
+- Validated: greedy beats random ~99%; effects fire in real games; Dragapult
+  attacks as early as turn 3 via Rare Candy.
 
-## Layout
-- `src/`    — pipeline code (currently just the fetch script)
-- `data/`   — generated artifacts (gitignored; rebuild with the fetch script)
-- `tests/`  — invariant checks
-- `docs/`   — notes
-
-## Commands
-```bash
-python3 src/fetch_standard_pool.py --out data/standard_pool.json
-python3 tests/test_pool.py
-```
-
-## Conventions
-- Cards are referenced by `name` (de-duped across set reprints).
-- Standard legality = regulation mark in LEGAL_MARKS AND legalities.standard == "Legal".
-- Format rotation = change `LEGAL_MARKS` in the fetch script, re-run fetch + test.
-- Keep the data layer's slimmed schema lean; only add fields the engine reads.
+## Effect system (`src/engine/effects.py`)
+Hybrid: primitives + registries. Attack/ability registries keyed by
+(card_name, move_name); Trainer registry keyed by card_name with a parallel
+can_play predicate. Engine hooks: `_resolve_attack`, use_ability branch,
+play_trainer branch. KO logic shared in `process_knockouts` (scans bench).
+IMPORTANT: in play_trainer the card is popped from hand BEFORE the effect runs,
+because effects mutate the hand (learned bug — index shift).
 
 ## Next task
-Card schema + engine state machine (turns, phases, energy, evolution, prizes,
-status, bench, stadiums, tools). Effects/`text` parsing is the long pole — scope
-to current meta cards first, not all 1,273.
+MCTS agent. The greedy heuristic can't sequence a Stage 2 deck, so win rates are
+not yet trustworthy (Dragapult shows ~36% vs the Lightning fixture purely from
+weak piloting). Replace GreedyAgent with MCTS over the existing legal_actions /
+apply_action interface (state is cheap to copy; ~1,700 games/sec leaves room for
+search). Only AFTER MCTS plays competently should we start trusting matchup win
+rates — and validate each against a published result before believing it.
+Broadening the card library (more archetypes) can proceed in parallel; same
+discipline (primitive + registry + test per card).

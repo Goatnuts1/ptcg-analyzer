@@ -29,10 +29,13 @@ def check(pool):
     def fail(msg):
         fails.append(msg)
 
-    # 1. non-empty and sane size (rotation pools sit in the ~1000-1600 range;
-    #    a tiny number means the fetch broke, a huge one means the filter broke)
-    if not (800 <= len(pool) <= 2500):
-        fail(f"pool size {len(pool)} outside expected 800-2500 range")
+    # 1. non-empty and sane size. Current 2026 pool is 1273. Bounds are tight
+    #    enough to catch a broken/partial fetch, loose enough to absorb a few
+    #    set releases. NOTE: a format rotation drops a big chunk of cards — when
+    #    you change LEGAL_MARKS, re-baseline these bounds too.
+    if not (1100 <= len(pool) <= 1800):
+        fail(f"pool size {len(pool)} outside expected 1100-1800 range "
+             f"(broken fetch? or time to re-baseline after a rotation?)")
 
     seen_names = set()
     seen_ids = set()
@@ -66,6 +69,20 @@ def check(pool):
                 fail(f"{c['id']} ({c['name']}): Pokemon with no HP")
             if not c.get("attacks") and not c.get("abilities"):
                 fail(f"{c['id']} ({c['name']}): Pokemon with no attacks or abilities")
+            # 7b. evolution fields must be list-typed (engine iterates them)
+            if not isinstance(c.get("evolvesTo", []), list):
+                fail(f"{c['id']} ({c['name']}): evolvesTo is not a list")
+
+        # 8. Trainers and Energy carry their effect in `rules` — empty means the
+        #    card would do nothing in the engine. Verified non-empty across the
+        #    current pool, so treat a violation as a real problem.
+        if c["supertype"] in ("Trainer", "Energy") and not c.get("rules"):
+            fail(f"{c['id']} ({c['name']}): {c['supertype']} with empty rules")
+
+        # 9. every attack must at least have a name (engine keys moves by name)
+        for atk in c.get("attacks", []):
+            if not atk.get("name"):
+                fail(f"{c['id']} ({c['name']}): attack with no name")
 
     return fails
 
