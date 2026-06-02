@@ -31,9 +31,34 @@ errors, and synthesizes results. The engine is always the source of truth.
 | Engine | `tests/test_engine.py` — termination, prize, cost, agent-sanity checks | ✅ working |
 | Effects | `src/engine/effects.py` — effect system + Dragapult line + Trainers | ✅ working |
 | Effects | `tests/test_effects.py` — per-card effect validation (8 cards) | ✅ working |
-| Agents | MCTS (replaces greedy heuristic) | ⏳ next |
-| Validation | win rates vs published matchups | ◻ needs MCTS first |
+| Agents | `src/engine/mcts.py` — determinized UCT search agent | ✅ working |
+| Agents | `tests/test_mcts.py` — clone/determinize correctness + strength vs greedy | ✅ working |
+| Validation | win rates vs published matchups | ◻ now unblocked (needs more cards) |
 | LLM   | self-healing card scripts, result synthesis | ◻ planned |
+
+### MCTS agent (`mcts.py`)
+
+A search-based agent — still zero tokens, pure CPU. Three pieces:
+1. **`GameState.clone()`** — deep-copies mutable wrappers, shares immutable Card
+   refs. This is what makes search cheap.
+2. **`determinize()`** — Pokémon is imperfect-information; naive search that reads
+   the shuffled deck would cheat. Before each simulation we sample one world
+   consistent with the acting player's knowledge (their hand + public board),
+   reshuffling all hidden zones (Perfect-Information Monte Carlo).
+3. **Single-turn UCT** — the tree branches on the acting player's actions within
+   the current turn (the sequencing decision greedy can't do); the rest of the
+   game is rolled out with a greedy policy.
+
+**Result:** MCTS beats the greedy heuristic **61%** across mirrored seats
+(deterministic, fixed seeds), at ~1 game/sec with 120 iterations. The edge is
+real but bounded — greedy already makes the obvious plays, so MCTS's gain is
+sequencing and finding non-obvious lines (lethal setups, gust targets).
+
+Run it: `python3 -m src.engine.run --games 10 --agent-a mcts --agent-b greedy`
+
+**v1 scope (documented honestly):** the tree is single-turn; full multi-turn
+ISMCTS is a later upgrade. Determinization assumes the simulator knows both
+decklists (true in self-play).
 
 ### Effect system (`effects.py`)
 

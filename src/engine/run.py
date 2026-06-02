@@ -41,33 +41,59 @@ def play_one_turn(state, agent) -> None:
             break
 
 
-def play_game(deck_a, deck_b, agent_a, agent_b, seed=None, keep_log=False, db=None):
-    state = setup_game(deck_a, deck_b, seed=seed, db=db)
-    agents = (agent_a, agent_b)
-
-    while state.phase != Phase.GAME_OVER and state.turn_number < MAX_TURNS:
-        if not start_turn(state):          # deck-out check
-            break
-        if check_win(state):
-            break
-        play_one_turn(state, agents[state.active_index])
-        if check_win(state):
-            break
-        end_turn(state)
-
-    # turn cap reached with no winner -> decide by prizes remaining (fewer = ahead)
+def _resolve_tie(state):
+    """No winner at the cap -> whoever has fewer prizes left is ahead."""
     if state.winner is None:
         pa, pb = state.players
         if len(pa.prizes) != len(pb.prizes):
             state.winner = 0 if len(pa.prizes) < len(pb.prizes) else 1
+    return state.winner
+
+
+def finish_game(state, agent_a, agent_b):
+    """Play an ALREADY-SET-UP state to completion. Works from any point: a fresh
+    post-setup state, mid-turn (phase MAIN, current player partway through), or
+    between turns. Used by MCTS rollouts and by play_game.
+
+    Returns the winner index (0/1) or None (tie at cap).
+    """
+    agents = (agent_a, agent_b)
+    guard = 0
+    while state.phase != Phase.GAME_OVER and state.turn_number < MAX_TURNS:
+        guard += 1
+        if guard > 2000:
+            break
+        if state.phase == Phase.MAIN:
+            play_one_turn(state, agents[state.active_index])
+            if check_win(state):
+                break
+            state.phase = Phase.BETWEEN_TURNS
+        # advance to the next player's turn
+        if state.phase == Phase.BETWEEN_TURNS:
+            end_turn(state)
+            if not start_turn(state):     # deck-out sets the winner
+                break
+            if check_win(state):
+                break
+    return _resolve_tie(state)
+
+
+def play_game(deck_a, deck_b, agent_a, agent_b, seed=None, keep_log=False, db=None):
+    state = setup_game(deck_a, deck_b, seed=seed, db=db)
+    # first turn must be started before finish_game's loop (which expects MAIN)
+    if not start_turn(state):
+        _resolve_tie(state)
+        return state
+    if not check_win(state):
+        finish_game(state, agent_a, agent_b)
     return state
 
 
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--games", type=int, default=1000)
-    ap.add_argument("--agent-a", choices=["random", "greedy"], default="greedy")
-    ap.add_argument("--agent-b", choices=["random", "greedy"], default="greedy")
+    ap.add_argument("--agent-a", choices=["random", "greedy", "mcts"], default="greedy")
+    ap.add_argument("--agent-b", choices=["random", "greedy", "mcts"], default="greedy")
     ap.add_argument("--pool", default="data/standard_pool.json")
     ap.add_argument("--log", action="store_true", help="print move log of one game and exit")
     ap.add_argument("--seed", type=int, default=None)
@@ -77,7 +103,12 @@ def main():
     deck_a, deck_b = load_test_decks(db)
 
     def make(kind, rng):
-        return RandomAgent(rng) if kind == "random" else GreedyAgent(rng)
+        if kind == "random":
+            return RandomAgent(rng)
+        if kind == "mcts":
+            from .mcts import MCTSAgent
+            return MCTSAgent(iterations=120, rollout="greedy", rng=rng)
+        return GreedyAgent(rng)
 
     if args.log:
         rng = random.Random(args.seed or 1)

@@ -35,12 +35,28 @@ play_trainer branch. KO logic shared in `process_knockouts` (scans bench).
 IMPORTANT: in play_trainer the card is popped from hand BEFORE the effect runs,
 because effects mutate the hand (learned bug — index shift).
 
+- MCTS agent: done + tested. `src/engine/mcts.py` = GameState.clone() +
+  determinize() (PIMC, handles hidden info) + single-turn UCT with greedy
+  rollouts. Beats greedy 61% across mirrored seats (deterministic). ~1 game/sec
+  at 120 iterations. `tests/test_mcts.py` checks clone/determinize correctness
+  (instant) and strength (~35s; skip with --fast).
+- Validated: greedy beats random ~99%; MCTS beats greedy ~61%; effects fire.
+
+## MCTS notes (`src/engine/mcts.py`)
+- clone() shares immutable Card refs, copies mutable wrappers — keep it that way.
+- determinize() conserves the exact card multiset and preserves the acting
+  player's known info (own hand, public board/discard); reshuffles hidden zones.
+- Tree is SINGLE-TURN (acting player's sequencing); rest is rolled out. Full
+  multi-turn ISMCTS is a later upgrade.
+- Actions are de-duplicated by semantic key (same card from different hand slots,
+  same energy type to same target) so the iteration budget isn't wasted.
+
 ## Next task
-MCTS agent. The greedy heuristic can't sequence a Stage 2 deck, so win rates are
-not yet trustworthy (Dragapult shows ~36% vs the Lightning fixture purely from
-weak piloting). Replace GreedyAgent with MCTS over the existing legal_actions /
-apply_action interface (state is cheap to copy; ~1,700 games/sec leaves room for
-search). Only AFTER MCTS plays competently should we start trusting matchup win
-rates — and validate each against a published result before believing it.
-Broadening the card library (more archetypes) can proceed in parallel; same
-discipline (primitive + registry + test per card).
+Now that MCTS plays competently, win rates are finally meaningful — but only as
+fidelity allows. Two parallel tracks:
+1. BREADTH: implement more meta archetypes (Charizard ex, Gardevoir ex, a fast
+   aggro deck) — same discipline (primitive + registry + test per card). Need
+   real opposing decks before any matchup number means something.
+2. VALIDATION: once two real archetypes exist, run a matchup and compare to a
+   published result (Limitless) before trusting it. Document in REVIEW_LOG.
+Optional: full multi-turn ISMCTS for stronger play.
