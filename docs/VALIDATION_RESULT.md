@@ -139,7 +139,7 @@ success signal):**
 | Phantom Dive | 36 | 31 |
 | gust (Boss's Orders) | 81 | 86 |
 | Crushing Hammer | 44 | 42 |
-| Budew Item-lock | 0 | **0** (opener-sequencing, below) |
+| Budew Item-lock | 0 | **0** (defensible skip — see CORRECTION) |
 | Dragapult win % | 59.2% | 52.5% |
 | won by prizes | 42% | 47% |
 
@@ -147,10 +147,10 @@ success signal):**
 Battle Cage) is modeled and fires. The win % actually dipped because Battle Cage's spread-denial is
 effective and two equal MCTS agents fight the stadium war to ~even; reaching the Dragapult-favored
 band now needs deeper search (piece 2b) to out-sequence the war, plus the two still-missing pieces.
-**Budew stays 0** — it's a turn-1 *opener* line (Budew must be Active to Itchy Pollen); the agent
-doesn't promote-to-disrupt. That's a sequencing/opening limitation, not an eval-term gap; flag for
-piece 2b/3. The headline is the MCTS bug: the reordering instinct was right — without valuing +
-*surfacing* disruption, no amount of search would have played it.
+**Budew stays 0** — see the CORRECTION below; the earlier "promote-to-disrupt / opener-sequencing"
+hypothesis (this line, and the one in §2b) was **investigated and overturned**. The headline of 1b
+stands: the MCTS bug was the unlock — without valuing + *surfacing* disruption, no amount of search
+would have played the stadium war.
 
 ---
 
@@ -176,21 +176,50 @@ truncates each deep line — pieces 1 and 2b are synergistic).
 | **Budew Item-lock** | 0 | **0/120** |
 | gust / Crushing Hammer / Phantom Dive / Cursed Blast | 86/42/31/34 | 86 / 55 / 31 / 35 |
 
-**Read (matches the doc's predicted branch):** depth tilts the **stadium war toward Dragapult**
-(TRW 79 ≫ Battle Cage 16 — Dragapult now out-sequences it) and nudges win% up (52.5→55.8%, within
-sample noise at n=120). **But Budew stays 0** → exactly the doc's call: *depth alone wasn't enough;
-promote-to-disrupt is a turn-1 opening choice the legal-action set doesn't surface well* → **piece 3**
-(search-owned target/opening policies). Still below the band; not tuned toward 84. Net: a partial
-mechanism win (stadium war), with the named remaining gap (Budew opener) now precisely localized.
+**Read:** depth tilts the **stadium war toward Dragapult** (TRW 79 ≫ Battle Cage 16 — Dragapult now
+out-sequences it) and nudges win% up (52.5→55.8%, within sample noise at n=120). **Budew stays 0** —
+the cause is the CORRECTION below, *not* depth or opener-sequencing. Still below the band; not tuned
+toward 84. Net: a partial mechanism win (stadium war).
 
-**Next: piece 3** — search-owned opening/target policies (promote-to-disrupt so Budew's Item-lock
-can actually be played turn 1), then re-measure. Optional 2c: mid-tree re-determinization (full
-ISMCTS) — deferred unless 3 shows it's needed.
+---
+
+## CORRECTION (post-2b investigation) — the Budew 0/120 framing was wrong
+
+Earlier (R15/R17) this doc attributed Budew = 0/120 to a "promote-to-disrupt / turn-1 opener"
+policy gap. **An investigation overturned that:**
+- **Itchy Pollen is free-cost** (zero energy) — Budew can attack with nothing attached.
+- In the best case (seed 64: Dragapult second, Budew already Active), the agent has Itchy Pollen
+  **legally available turn 2** and **chooses to retreat Budew and develop instead.** Promotion
+  happens; the attack is in `legal_actions`; the agent passes on it.
+- So it is **not** an opener-sequencing or action-space gap. It is a **valuation choice**: under the
+  current eval, "retreat → develop → draw → continue the turn" out-scores "Itchy Pollen → end turn,"
+  and 2-ply negamax confirms it (the simulated opponent routes around an item-lock with supporters/
+  abilities, so the modeled cost of one lock is small). **The agent's choice is defensible.**
+
+**Decision (D + pivot):** accept Budew 0/120 as a play-style under the current valuation — **not a
+bug.** Do NOT crank `W_ITEM_LOCK` (point-chasing; would over-fire lock everywhere). Budew is a 1-of
+worth ~1–2 pts; the ~10–20 pt band gap is dominated by **targeting** in the lines that fire in most
+games. **Known limitation (recorded, not fixed):** an item-lock's value is contingent on the
+opponent's *hidden* hand (which items they'd skip), which PIMC with a public-info-determinized
+opponent hand can't see except in the random fraction of worlds where they hold the key item.
+
+**Next: piece 3 = search-owned TARGET policies** (replacing the v0 greedy defaults), the real band
+lever:
+- `gust_target` — drag the benched Pokémon whose removal yields a **KO this turn** (energy + the
+  active's damage), not just lowest-HP; fall back to highest-threat when no KO is available.
+- `cursed_blast_target` — pick the KO that closes the most prize math and/or disables the most engine
+  (TRW/Battle Cage holder, draw-engine pieces like Dudunsparce).
+- `phantom_dive_spread` — distribute the 6 counters as **next-turn KO setup**, not v0 max-KO-this-turn.
+
+Budew (B-style, scoped by the opponent's *developed-ness* — board facts, not turn number) is
+revisited only if target policies close most of the gap and disruption is the residual. 2c (mid-tree
+re-determinization / full ISMCTS) stays deferred — both runs say the residual is policy, not width.
 
 **Independent corroboration (cowork).** A separate cowork run of the same 2-ply regression
 (`docs/PIECE2b_REGRESSION_cowork.md`) reached the same result: Dragapult **60.8%** (vs my 55.8% —
 overlapping at n=120; pooled ~58%), every line-fire count within sampling noise (Phantom Dive 29/31,
-gust 91/86, TRW 82/79, Battle Cage 14/16), and **Budew 0/120 in both → piece 3**. Two independent
-implementations agreeing on the mechanism *and* the named gap. Note: cowork's run was 2-seed-chunked
+gust 91/86, TRW 82/79, Battle Cage 14/16), and **Budew 0/120 in both** (a defensible valuation skip,
+per the CORRECTION — not the piece-3 driver). Two independent implementations agreeing on the
+mechanism. Note: cowork's run was 2-seed-chunked
 (0+999) for a shell-timeout; **this doc's number is the clean single-seed-0 mirrored run** — use it
 for the REVIEW_LOG.
