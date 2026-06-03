@@ -75,7 +75,40 @@ valid validation number** — it's a degenerate-play artifact.
 
 **Conclusion:** position_value is a correct, reusable evaluation; the limiter is *search depth*,
 exactly as the build order anticipated. **Piece 2 = MCTS using position_value as its leaf
-evaluation** (multi-turn lookahead) is what will make the agent express bench-spread + gust-into-
-KO + disruption over a real game. The matchup harness + right-lines instrumentation are in place
-to measure it. (No eval over-tuning — per the standing rule, we don't chase the point; we get the
-band for the right reasons via search.)
+evaluation** is what will make the agent express the deck's plan.
+
+---
+
+## Policy milestone — piece 2: eval-MCTS (the real number, with right-lines evidence)
+
+Wired `position_value` into MCTS as a **leaf evaluation** (`MCTSAgent(rollout="eval")`): stop at
+the leaf and back-propagate `logistic(position_value)` instead of a terminal greedy playout. Far
+cheaper (**0.5 s/game** vs ~17 s for terminal rollouts) and it values within-turn lines.
+
+**Result — eval-MCTS mirror, 120 games, 100 iters:**
+
+| | value |
+|---|---:|
+| **Dragapult ex win %** | **59.2%** (greedy 53 → terminal-MCTS 57.5 → eval-MCTS 59.2) |
+| won by prizes | **42%** (vs EvalAgent's 1% — games close the real way again) |
+| Phantom Dive (spread) | 36/120 |
+| gust (Boss's Orders) | 81/120 |
+| Cursed Blast (KO engine) | 34/120 |
+| Crushing Hammer (disruption) | 44/120 |
+| Budew Item-lock / TRW / Battle Cage | **0 / 0 / 0** |
+
+**Read:** real, non-degenerate play — the *tactical* lines fire (spread, gust, KO engine,
+energy-denial), and the number is climbing in the right direction. But it's **still below the
+~68–82% band** (~25 pts under the published 84%). Two honest causes for the residual gap:
+1. **Search depth** — this is a single-turn tree + leaf eval. Dragapult's edge compounds over
+   *multiple* turns (spread now → KOs later); full multi-turn / ISMCTS (build-order piece 2b)
+   should recover more of it.
+2. **The eval doesn't yet value *strategic* disruption** — Budew Item-lock, TRW shutting off the
+   Charizard deck's Dudunsparce draw engine, and Battle Cage denying spread all read as ~0 to
+   `position_value` (no term for "opponent's engine disabled" / "future spread prevented"), so the
+   agent never plays them. These are precisely the lines that should widen the matchup.
+
+**Next:** (2b) multi-turn/ISMCTS lookahead, then (3) replace the v0 target policies — and, carefully
+(no point-chasing), a couple of strategic-disruption terms in the eval (engine-denial, spread-denial).
+Re-run this matchup as the regression metric toward the band. The harness + instrumentation make
+each step measurable.

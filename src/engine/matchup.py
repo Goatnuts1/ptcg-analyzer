@@ -44,6 +44,8 @@ def _make_agent(kind: str, rng: random.Random, iters: int):
         return EvalAgent(rng)
     if kind == "mcts":
         return MCTSAgent(iterations=iters, rng=rng)
+    if kind == "mcts-eval":
+        return MCTSAgent(iterations=iters, rollout="eval", rng=rng)
     raise ValueError(kind)
 
 
@@ -91,7 +93,7 @@ def run_matchup(agent: str = "eval", n_per_orient: int = 30, iters: int = 120,
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--agent", default="eval", choices=["random", "greedy", "eval", "mcts"])
+    ap.add_argument("--agent", default="eval", choices=["random", "greedy", "eval", "mcts", "mcts-eval"])
     ap.add_argument("--games", type=int, default=30, help="games PER orientation (x2 total)")
     ap.add_argument("--iters", type=int, default=120, help="MCTS iterations (mcts only)")
     ap.add_argument("--seed", type=int, default=0)

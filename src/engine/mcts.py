@@ -35,6 +35,15 @@ from .state import GameState, InPlayPokemon, PlayerState, Phase
 from .game import (Action, PASS, legal_actions, apply_action,
                    start_turn, end_turn, check_win, MAX_TURNS)
 from .agents import GreedyAgent, RandomAgent
+from .evaluation import position_value
+
+
+def _logistic(x: float, scale: float = 60.0) -> float:
+    """Squash a signed position_value into a [0,1] 'win-ish' value for backprop."""
+    try:
+        return 1.0 / (1.0 + math.exp(-x / scale))
+    except OverflowError:
+        return 0.0 if x < 0 else 1.0
 
 
 # --------------------------------------------------------------------------- #
@@ -134,6 +143,10 @@ class MCTSAgent:
 
     def __init__(self, iterations: int = 160, c: float = 1.4,
                  rollout: str = "greedy", rng: Optional[random.Random] = None):
+        # rollout: "greedy"/"random" = play to terminal, backprop win/loss.
+        #          "eval" = stop at the leaf and backprop position_value (effect-aware,
+        #          piece 2) — far cheaper per iteration and it values within-turn lines
+        #          (spread, gust-into-KO, disruption) the terminal greedy rollout misses.
         self.iterations = iterations
         self.c = c
         self.rollout = rollout
@@ -150,8 +163,8 @@ class MCTSAgent:
         for _ in range(self.iterations):
             world = determinize(state, me, self.rng)
             node = self._select_expand(root, world, me)
-            winner = self._rollout(world, me)
-            self._backprop(node, winner, me)
+            value = self._evaluate(world, me)
+            self._backprop(node, value)
 
         if not root.children:
             return PASS
@@ -198,6 +211,20 @@ class MCTSAgent:
                 start_turn(world)        # may set GAME_OVER on deck-out
                 check_win(world)
 
+    # -- leaf evaluation: return a value in [0,1] from `me`'s perspective --
+    def _evaluate(self, world: GameState, me: int) -> float:
+        if world.phase == Phase.GAME_OVER:
+            if world.winner is None:
+                return 0.5
+            return 1.0 if world.winner == me else 0.0
+        if self.rollout == "eval":
+            # effect-aware leaf eval (piece 2): no terminal playout needed.
+            return _logistic(position_value(world, me))
+        winner = self._rollout(world, me)
+        if winner is None:
+            return 0.5
+        return 1.0 if winner == me else 0.0
+
     # -- rollout: finish the game from `world` with a fast default policy --
     def _rollout(self, world: GameState, me: int) -> Optional[int]:
         agent = (RandomAgent(self.rng) if self.rollout == "random"
@@ -238,9 +265,8 @@ class MCTSAgent:
                 world.phase = Phase.BETWEEN_TURNS
                 break
 
-    def _backprop(self, node: _Node, winner: Optional[int], me: int) -> None:
+    def _backprop(self, node: _Node, value: float) -> None:
         while node is not None:
             node.visits += 1
-            if winner == me:
-                node.wins += 1.0
+            node.wins += value          # value already in [0,1] from `me`'s perspective
             node = node.parent
