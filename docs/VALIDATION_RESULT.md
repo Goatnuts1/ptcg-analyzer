@@ -151,3 +151,38 @@ band now needs deeper search (piece 2b) to out-sequence the war, plus the two st
 doesn't promote-to-disrupt. That's a sequencing/opening limitation, not an eval-term gap; flag for
 piece 2b/3. The headline is the MCTS bug: the reordering instinct was right — without valuing +
 *surfacing* disruption, no amount of search would have played it.
+
+---
+
+## Policy milestone — piece 2b: multi-turn negamax MCTS (depth across the turn boundary)
+
+`MCTSAgent(search_plies=N)`: 1 = single-turn (v1, preserved); ≥2 = the tree spans the turn boundary
+into the opponent's reply, with **negamax backprop** (each node's stat from the perspective of the
+player who *chose* it, so opponent nodes are optimized for the opponent — no inversion). No-leak
+preserved (one root determinization per iteration; opponent's in-tree draws come off that deck).
+
+**Correctness gates (all green BEFORE trusting the number):** `test_mcts_negamax.py` (opponent model
+not inverted — a me-winning line scores ~0 at the opponent's node); `search_plies=1` still beats
+greedy **61%** (backward compatible); full suite green. 2-ply is **0.6 s/game** (the eval leaf
+truncates each deep line — pieces 1 and 2b are synergistic).
+
+**Result — eval-MCTS, `search_plies=2`, 120 games, mirrored:**
+
+| line | 1-ply (R15) | **2-ply (R17)** |
+|------|------------:|----------------:|
+| Dragapult win % | 52.5% | **55.8%** |
+| **TRW (Dragapult's draw-denial)** | 77 | **79/120** |
+| **Battle Cage (Charizard's defense)** | 22 | **16/120** |
+| **Budew Item-lock** | 0 | **0/120** |
+| gust / Crushing Hammer / Phantom Dive / Cursed Blast | 86/42/31/34 | 86 / 55 / 31 / 35 |
+
+**Read (matches the doc's predicted branch):** depth tilts the **stadium war toward Dragapult**
+(TRW 79 ≫ Battle Cage 16 — Dragapult now out-sequences it) and nudges win% up (52.5→55.8%, within
+sample noise at n=120). **But Budew stays 0** → exactly the doc's call: *depth alone wasn't enough;
+promote-to-disrupt is a turn-1 opening choice the legal-action set doesn't surface well* → **piece 3**
+(search-owned target/opening policies). Still below the band; not tuned toward 84. Net: a partial
+mechanism win (stadium war), with the named remaining gap (Budew opener) now precisely localized.
+
+**Next: piece 3** — search-owned opening/target policies (promote-to-disrupt so Budew's Item-lock
+can actually be played turn 1), then re-measure. Optional 2c: mid-tree re-determinization (full
+ISMCTS) — deferred unless 3 shows it's needed.

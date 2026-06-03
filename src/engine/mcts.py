@@ -17,12 +17,24 @@ WHY THIS IS THE HARD PART (and how we handle it):
    hand + everyone's public board/discard), reshuffling all hidden zones. This is
    Perfect-Information Monte Carlo (PIMC) — search many plausible worlds, average.
 
-3. SCOPE OF THE TREE (v1). The tree branches only on the ACTING player's actions
-   within their CURRENT turn (the sequencing decision: evolve before attaching,
-   which attack, when to gust). Once the turn ends, the rest of the game is rolled
-   out with a fast default policy. This bounds the tree, is correct, and directly
-   targets what greedy can't do — sequencing. Full multi-turn ISMCTS is a later
-   upgrade; this is documented as v1 on purpose.
+3. SCOPE OF THE TREE. `search_plies` controls how many turn-segments the tree
+   spans before the leaf is scored:
+     - search_plies = 1  -> single-turn tree (the v1 behavior): branch only on the
+       acting player's own turn, then evaluate/rollout. Backward compatible.
+     - search_plies >= 2 -> MULTI-TURN (piece 2b): the tree continues ACROSS the
+       turn boundary into the opponent's turn (and back), so search can value
+       lines whose payoff lands a turn later — out-sequencing the stadium war,
+       Budew promote-to-disrupt, etc. Two correctness requirements come with this:
+         (a) NEGAMAX backprop — a node's statistic is value FROM THE PERSPECTIVE OF
+             THE PLAYER WHO CHOSE IT, so the opponent's nodes are optimized for the
+             OPPONENT, not for us. Without this the search models an opponent who
+             helps us win and reports an inflated, believable-looking number.
+         (b) NO-LEAK determinization is preserved: we sample ONE world per
+             iteration from the root player's legitimate knowledge; the opponent's
+             in-tree draws come off THAT determinized deck. Diversity comes from
+             re-sampling per iteration. (Full mid-tree re-determinization / ISMCTS
+             is a later 2c; determinized-root multi-ply is correct PIMC and is what
+             the Budew/stadium-war gap actually needs — depth + a real opponent.)
 """
 
 from __future__ import annotations
@@ -81,14 +93,18 @@ def determinize(state: GameState, root_index: int, rng: random.Random) -> GameSt
 # Tree node
 # --------------------------------------------------------------------------- #
 class _Node:
-    __slots__ = ("parent", "key", "children", "visits", "wins")
+    # `chooser` = the player who MADE the move leading into this node (i.e. the
+    # actor at the parent). Its statistic is stored from `chooser`'s perspective,
+    # so a parent maximizing child means maximizes its OWN value (negamax).
+    __slots__ = ("parent", "key", "children", "visits", "wins", "chooser")
 
-    def __init__(self, parent, key):
+    def __init__(self, parent, key, chooser=None):
         self.parent = parent
         self.key = key                  # semantic key of the action that led here
         self.children: dict = {}
         self.visits = 0
         self.wins = 0.0
+        self.chooser = chooser
 
 
 def _akey(a: Action):
@@ -145,23 +161,26 @@ def _deduped_legal(state: GameState):
 # The agent
 # --------------------------------------------------------------------------- #
 class MCTSAgent:
-    """Single-turn determinized UCT.
+    """Determinized UCT.
 
-    iterations  : MCTS simulations per decision (more = stronger, slower)
-    c           : UCB1 exploration constant
-    rollout     : "random" (fast) or "greedy" (stronger signal) playout policy
+    iterations   : MCTS simulations per decision (more = stronger, slower)
+    c            : UCB1 exploration constant
+    rollout      : "random"/"greedy" = play to terminal, backprop win/loss.
+                   "eval" = stop at the leaf and backprop position_value (cheaper,
+                   values within-turn lines greedy rollout misses).
+    search_plies : turn-segments the tree spans. 1 = single-turn (v1). >=2 = the
+                   multi-turn negamax tree (piece 2b). Pairs naturally with
+                   rollout="eval": the eval truncates each deep line cheaply.
     """
 
     def __init__(self, iterations: int = 160, c: float = 1.4,
-                 rollout: str = "greedy", rng: Optional[random.Random] = None):
-        # rollout: "greedy"/"random" = play to terminal, backprop win/loss.
-        #          "eval" = stop at the leaf and backprop position_value (effect-aware,
-        #          piece 2) — far cheaper per iteration and it values within-turn lines
-        #          (spread, gust-into-KO, disruption) the terminal greedy rollout misses.
+                 rollout: str = "greedy", rng: Optional[random.Random] = None,
+                 search_plies: int = 1):
         self.iterations = iterations
         self.c = c
         self.rollout = rollout
         self.rng = rng or random.Random()
+        self.search_plies = max(1, search_plies)
 
     # -- public interface: same as the other agents --
     def choose(self, state: GameState) -> Action:
@@ -170,12 +189,12 @@ class MCTSAgent:
         if len(root_legal) == 1:
             return next(iter(root_legal.values()))
 
-        root = _Node(parent=None, key=None)
+        root = _Node(parent=None, key=None, chooser=None)
         for _ in range(self.iterations):
             world = determinize(state, me, self.rng)
             node = self._select_expand(root, world, me)
-            value = self._evaluate(world, me)
-            self._backprop(node, value)
+            value = self._evaluate(world, me)          # value in [0,1] for `me`
+            self._backprop(node, value, me)
 
         if not root.children:
             return PASS
@@ -186,20 +205,27 @@ class MCTSAgent:
     # -- selection + expansion, replaying actions on the determinized world --
     def _select_expand(self, root: _Node, world: GameState, me: int) -> _Node:
         node = root
-        while world.phase == Phase.MAIN and world.active_index == me:
+        plies = 0
+        while world.phase == Phase.MAIN and plies < self.search_plies:
+            actor_here = world.active_index          # who is choosing at this node
             by_key = _deduped_legal(world)
+            if not by_key:
+                break
             untried = [k for k in by_key if k not in node.children]
             if untried:
                 k = self.rng.choice(untried)
                 self._apply(world, by_key[k], me)
-                child = _Node(parent=node, key=k)
+                child = _Node(parent=node, key=k, chooser=actor_here)
                 node.children[k] = child
                 return child
             legal_children = [node.children[k] for k in by_key if k in node.children]
             if not legal_children:
                 break
             node = self._ucb_select(node, legal_children)
+            before = world.active_index
             self._apply(world, by_key[node.key], me)
+            if world.active_index != before:        # crossed a turn boundary
+                plies += 1
         return node
 
     def _ucb_select(self, parent: _Node, children: list[_Node]) -> _Node:
@@ -207,6 +233,8 @@ class MCTSAgent:
         def ucb(n: _Node):
             if n.visits == 0:
                 return float("inf")
+            # n.wins/n.visits is already value from n.chooser's perspective, which
+            # is exactly `parent`'s actor — so maximizing is correct for the chooser.
             return n.wins / n.visits + self.c * math.sqrt(logN / n.visits)
         return max(children, key=ucb)
 
@@ -216,7 +244,7 @@ class MCTSAgent:
         if action.kind in ("attack", "pass"):
             if action.kind == "pass":
                 world.phase = Phase.BETWEEN_TURNS
-            # turn is over: hand control to the opponent so the rollout continues
+            # turn is over: hand control to the opponent so search/rollout continues
             if not check_win(world):
                 end_turn(world)
                 start_turn(world)        # may set GAME_OVER on deck-out
@@ -229,7 +257,7 @@ class MCTSAgent:
                 return 0.5
             return 1.0 if world.winner == me else 0.0
         if self.rollout == "eval":
-            # effect-aware leaf eval (piece 2): no terminal playout needed.
+            # effect-aware leaf eval: no terminal playout needed.
             return _logistic(position_value(world, me))
         winner = self._rollout(world, me)
         if winner is None:
@@ -276,8 +304,13 @@ class MCTSAgent:
                 world.phase = Phase.BETWEEN_TURNS
                 break
 
-    def _backprop(self, node: _Node, value: float) -> None:
+    def _backprop(self, node: _Node, value: float, me: int) -> None:
+        # NEGAMAX: store each node's stat from ITS chooser's perspective. `value`
+        # is from `me`'s view; for a node the opponent chose, store (1 - value).
         while node is not None:
             node.visits += 1
-            node.wins += value          # value already in [0,1] from `me`'s perspective
+            if node.chooser is None or node.chooser == me:
+                node.wins += value
+            else:
+                node.wins += (1.0 - value)
             node = node.parent
