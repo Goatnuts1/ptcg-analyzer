@@ -25,13 +25,16 @@ USAGE:
 import argparse
 import datetime
 import json
+import os
 import sys
 import urllib.error
 import urllib.request
 
-# The regulation marks that are legal in the 2026 Standard format.
-# When the format rotates again, you change ONE line here.
-LEGAL_MARKS = {"H", "I", "J"}
+# The set of legal regulation marks is the SINGLE SOURCE OF TRUTH in
+# engine/legality.py — imported here so the fetcher and the runtime deck-legality
+# checks can never drift. Rotation = edit STANDARD_LEGAL_MARKS there, then re-run.
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from engine.legality import STANDARD_LEGAL_MARKS as LEGAL_MARKS
 
 RAW = "https://raw.githubusercontent.com/PokemonTCG/pokemon-tcg-data/master"
 
@@ -120,7 +123,40 @@ def build_pool():
             kept += 1
         if kept:
             print(f"  {code}: +{kept}", file=sys.stderr)
+
+    # Merge the hand-maintained supplement: Standard-legal cards the upstream dump
+    # hasn't published yet (newer Mega-era cards needed for current tournament
+    # lists). Deduped by name, so if upstream later ships them, upstream WINS and
+    # the supplement entry is silently dropped — at which point it can be deleted
+    # from data/manual_cards.json. This keeps the pool reproducible from source.
+    for c in load_manual_supplement():
+        if c["name"] in seen:
+            print(f"  manual: skip {c['name']!r} (now in upstream)", file=sys.stderr)
+            continue
+        # Respect rotation: a manual card whose mark has rotated out is dropped,
+        # exactly like an upstream card would be. (Keeps the supplement honest when
+        # LEGAL_MARKS changes — no zombie cards lingering past rotation.)
+        if c.get("regulationMark") not in LEGAL_MARKS:
+            print(f"  manual: skip {c['name']!r} (mark {c.get('regulationMark')!r} "
+                  f"not legal)", file=sys.stderr)
+            continue
+        seen.add(c["name"])
+        pool.append(slim(c))
+        print(f"  manual: +1 {c['name']!r}", file=sys.stderr)
+
     return pool, codes, failed
+
+
+def load_manual_supplement():
+    """Tracked cards missing from the upstream dump. Path is resolved relative to
+    this script (repo_root/data/manual_cards.json), so it works regardless of cwd.
+    Returns [] if the file is absent."""
+    here = os.path.dirname(os.path.abspath(__file__))
+    path = os.path.join(here, os.pardir, "data", "manual_cards.json")
+    if not os.path.exists(path):
+        return []
+    with open(path, encoding="utf-8") as f:
+        return json.load(f)
 
 
 def main():

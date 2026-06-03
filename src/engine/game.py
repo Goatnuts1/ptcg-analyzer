@@ -161,10 +161,17 @@ def legal_actions(state: GameState) -> list[Action]:
                             and not mon.evolved_this_turn):
                         actions.append(Action("evolve", hand_index=i, target_index=t))
 
-    # play a Trainer (Item: any number; Supporter: one per turn). Only offered
-    # if the card has an implemented, currently-playable effect.
+    # play a Trainer (Item: any number; Supporter: one per turn; Stadium: one per
+    # turn). Only offered if the card has an implemented, currently-playable effect.
     for i, c in enumerate(p.hand):
         if not c.is_trainer:
+            continue
+        if "Stadium" in c.subtypes:
+            # Any Stadium can be played into the shared zone (its passive effect,
+            # if any, is handled elsewhere); gated only by the once-per-turn and
+            # same-name rules.
+            if not p.stadium_played_this_turn and fx.can_play_stadium(state, c):
+                actions.append(Action("play_stadium", hand_index=i))
             continue
         if c.is_supporter and p.supporter_played_this_turn:
             continue
@@ -203,6 +210,8 @@ def _resolve_attack(state: GameState, atk_index: int) -> None:
     defender = state.opponent.active
     atk = attacker.card.attacks[atk_index]
     effect = fx.get_attack_effect(attacker.card.name, atk.name)
+    ctx = fx.EffectContext(state=state, me=state.current, opp=state.opponent,
+                           source=attacker, db=state.db, rng=state.rng)
 
     # Base damage handling:
     #   fixed ("")         -> engine applies atk.damage (+weakness)
@@ -215,27 +224,17 @@ def _resolve_attack(state: GameState, atk_index: int) -> None:
     else:
         base = atk.damage
 
-    damage = base
-    if damage > 0 and defender is not None:
-        for wtype, wval in defender.card.weaknesses:
-            if attacker.card.types and wtype == attacker.card.types[0]:
-                damage *= 2   # all current Standard weakness is ×2
-        for rtype, rval in defender.card.resistances:
-            if attacker.card.types and rtype == attacker.card.types[0]:
-                try:
-                    damage = max(0, damage + int(rval))   # resistance like "-30"
-                except ValueError:
-                    pass
-
-    if defender is not None and damage > 0:
-        defender.damage += damage
-        state.emit(f"{attacker.card.name} used {atk.name} for {damage}")
+    # Direct attack damage goes through the chokepoint (Weakness/Resistance on the
+    # Active; Tera bench-immunity for benched targets — n/a here since defender is
+    # the Active, but the path is shared with bench-hitting effects).
+    if base > 0 and defender is not None:
+        dealt = fx.apply_attack_damage(ctx, defender, base, owner=state.opponent,
+                                       source=attacker)
+        state.emit(f"{attacker.card.name} used {atk.name} for {dealt}")
 
     # EFFECT HOOK: run the card's registered attack effect (spread, draw,
     # variable damage, etc.). Variable-damage attacks rely on this to land any hit.
     if effect:
-        ctx = fx.EffectContext(state=state, me=state.current, opp=state.opponent,
-                               source=attacker, db=state.db, rng=state.rng)
         effect(ctx)
         state.emit(f"  effect: {atk.name}")
 
@@ -272,6 +271,11 @@ def apply_action(state: GameState, action: Action) -> None:
         mon.evolved_this_turn = True       # no second evolution step this turn
         mon.ability_used_this_turn = False  # the new stage's ability is fresh
         state.emit(f"evolved into {card.name}")
+        # NOTE: current "Mega Evolution Pokémon ex" (lowercase ex; e.g. Mega Charizard
+        # X/Y ex) have NO turn-ending rule — per the official 2026 rulebook (Appendix 1,
+        # p23): "there are no special rules when it comes to playing Mega Evolution
+        # Pokémon ex." The turn-end belonged to the rotated XY-era "Mega Evolution
+        # Pokémon-EX" (uppercase). Their only drawback is the 3-prize KO (gives_up_prizes).
         return
 
     if action.kind == "retreat":
@@ -284,6 +288,17 @@ def apply_action(state: GameState, action: Action) -> None:
         p.bench.append(p.active)
         p.active = new_active
         state.emit(f"retreated to {new_active.card.name}")
+        return
+
+    if action.kind == "play_stadium":
+        card = p.hand.pop(action.hand_index)
+        # discard the outgoing Stadium to whoever played it, then install the new one
+        if state.stadium is not None and state.stadium_owner is not None:
+            state.players[state.stadium_owner].discard.append(state.stadium)
+        state.stadium = card
+        state.stadium_owner = state.active_index
+        p.stadium_played_this_turn = True
+        state.emit(f"played Stadium {card.name}")
         return
 
     if action.kind == "play_trainer":
@@ -358,6 +373,7 @@ def start_turn(state: GameState) -> bool:
     p.turns_taken += 1
     p.energy_attached_this_turn = False
     p.supporter_played_this_turn = False
+    p.stadium_played_this_turn = False
     for mon in p.all_in_play():
         mon.ability_used_this_turn = False
         mon.played_this_turn = False

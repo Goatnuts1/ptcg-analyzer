@@ -79,6 +79,17 @@ class GreedyAgent:
                 if dmg >= defender.remaining_hp:
                     return a
 
+        # 1b. play a Stadium when one is available. It's a free action that doesn't
+        # end the turn, and it's only OFFERED when it isn't already our same-name
+        # Stadium in play (so this can't thrash). This establishes a beneficial
+        # Stadium — e.g. Battle Cage to deny the opponent's Bench spread (Phantom
+        # Dive / Cursed Blast) — and bumps an opponent's Stadium out. Without this
+        # branch a greedy player never plays its Stadiums, so Battle Cage (and the
+        # whole Stadium war) would be silently inert in every game.
+        stadiums = [a for a in acts if a.kind == "play_stadium"]
+        if stadiums:
+            return stadiums[0]
+
         # 2. develop board early: bench, then attach energy
         # draw with a Supporter if the hand is running low
         if len(p.hand) <= 3:

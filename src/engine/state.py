@@ -86,6 +86,7 @@ class PlayerState:
     # per-turn flags the rules reset
     energy_attached_this_turn: bool = False
     supporter_played_this_turn: bool = False
+    stadium_played_this_turn: bool = False   # only 1 Stadium per turn
     turns_taken: int = 0          # for the "no evolving on your first turn" rule
 
     MAX_BENCH = 5
@@ -117,6 +118,7 @@ class PlayerState:
             bench=[m.clone() for m in self.bench],
             energy_attached_this_turn=self.energy_attached_this_turn,
             supporter_played_this_turn=self.supporter_played_this_turn,
+            stadium_played_this_turn=self.stadium_played_this_turn,
             turns_taken=self.turns_taken,
         )
         return p
@@ -132,6 +134,11 @@ class GameState:
     winner: Optional[int] = None   # 0, 1, or None (None + GAME_OVER = tie)
     log: list[str] = field(default_factory=list)
     db: Optional[object] = None    # CardDB, for searches / evolution-chain lookups
+    # The single shared Stadium zone. `stadium_owner` is the player index who
+    # played it (for discard routing when it's replaced). Most Stadiums are
+    # symmetric, but ownership matters for "discard the outgoing Stadium".
+    stadium: Optional[Card] = None
+    stadium_owner: Optional[int] = None
 
     @property
     def current(self) -> PlayerState:
@@ -159,6 +166,8 @@ class GameState:
             log=list(self.log) if keep_log else [],
             db=self.db,
         )
+        s.stadium = self.stadium
+        s.stadium_owner = self.stadium_owner
         return s
 
     def emit(self, msg: str) -> None:

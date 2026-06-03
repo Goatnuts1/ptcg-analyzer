@@ -29,7 +29,9 @@ def check(pool):
     def fail(msg):
         fails.append(msg)
 
-    # 1. non-empty and sane size. Current 2026 pool is 1273. Bounds are tight
+    # 1. non-empty and sane size. Current 2026 pool is 1276 (1273 fetched + 3
+    #    manually added for tournament-list coverage: Meowth ex, Mega Charizard Y
+    #    ex, Poké Pad). Bounds are tight
     #    enough to catch a broken/partial fetch, loose enough to absorb a few
     #    set releases. NOTE: a format rotation drops a big chunk of cards — when
     #    you change LEGAL_MARKS, re-baseline these bounds too.
