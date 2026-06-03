@@ -104,3 +104,33 @@ tournament lists, so this is an internal data point, NOT a number to compare to
 Limitless yet. Real validation still needs faithful 60-card lists on both sides.
 **Next:** faithful decklists → validate one matchup vs a published Limitless
 result; optional multi-turn ISMCTS.
+
+---
+
+## R8 — Validation milestone: scope + foundation
+**Reviewer:** Grok/user · **Verdict:** Gap report APPROVED as the milestone scope. Build against it.
+**Why it passed:**
+- Grades interaction-gaps strictly, not by name-matching. The `implemented*` asterisk on the two
+  namesake cards is the tell it's honest: Phantom Dive is coded+tested, yet Dragapult ex is NOT
+  called faithful because Tera bench-immunity wasn't modeled; same for Mega Charizard X ex
+  (Inferno X coded, MEGA mechanic flagged). "The attack works but the card doesn't" — correct.
+- Separates effect-gaps from infra-gaps (§B): ~35 registry functions are necessary but not
+  sufficient because whole clusters sit behind missing subsystems (Special Conditions, Stadiums,
+  Tools, coin flips, trigger hooks, Special Energy, ACE SPEC). Names the "looks 80% done" trap.
+- **Caught the critical cross-deck confound:** Battle Cage (×3 in the Charizard list) cancels
+  Phantom Dive's bench spread — Dragapult's entire game plan. Validating before implementing it
+  would have made Dragapult look far stronger than reality and missed Limitless by a mile with no
+  way to tell bug-vs-agent-vs-deck apart. Foundation work (R8) implemented Battle Cage first.
+**Adjustments to scope (this review):**
+1. **Build SUBSYSTEMS first, then effects fall out cheaply** — reframe the milestone as ~8
+   subsystems (each unlocks a cluster; several non-trivial: Stadium framework, Special Conditions,
+   etc.), not "grind 35 functions". Made the explicit build order in VALIDATION_MILESTONE.md.
+2. **Open fork (decided with user):** first validation target = full 35 effects vs a load-bearing
+   subset (all matchup-critical cards faithful; a few fringe 1-ofs honestly stubbed + logged) to
+   reach a real number ~2x sooner. Reviewer leans subset-first.
+**Fix applied during this review (commit on the R8 branch):** the coverage burndown was
+red-by-design, which poisons the "all green = trustworthy" invariant. Reshaped
+`tests/test_decklist_coverage.py` into a GREEN snapshot vs a recorded manifest — red only on real
+drift (regression / unrecorded progress / `implemented`-without-a-named-test). All suites green.
+**Next:** resolve the validation-target fork, then build subsystems-first toward the first real
+matchup number vs Limitless.

@@ -85,6 +85,16 @@ So we only ever work on currently-legal cards and can rotate cleanly later.
 
 ## §2 — Engine subsystems (infra), ordered by leverage × matchup-impact
 
+> **THE BUILD ORDER IS SUBSYSTEMS-FIRST (R8 review).** Don't think of this milestone as
+> "grind 35 registry functions" — think of it as **~8 engine subsystems, after which the
+> effects fall out cheaply** (most become a few-line registry entry). The critical path runs
+> through the subsystems, not the effect count, because the two namesake cards and the single
+> most matchup-relevant card (Battle Cage) all sit behind infra. Several subsystems are
+> non-trivial in their own right (Stadium framework ✅, Special Conditions, an
+> ability-suppression layer, Special Energy). Sequence:
+> **Battle Cage/Stadiums ✅ → Tera + MEGA ✅ → Special Conditions → draw/search engine →
+> the long tail of Trainers/Tools/coin-flips/Special-Energy.** (✅ = done in R8.)
+
 Each subsystem is its own PR with its own tests. **Build infra before the effects that need
 it** — an effect written against missing infra is the "half-implemented, inert" trap.
 
