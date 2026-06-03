@@ -22,6 +22,7 @@ Dragapult-vs-Charizard regression matchup, not toward a single published number.
 from __future__ import annotations
 
 from .state import GameState, PlayerState
+from .effects import ability_suppressed, current_stadium_name
 
 # Coarse weights. Prizes are the win condition, so they dwarf everything; a terminal
 # win/loss is effectively infinite.
@@ -41,6 +42,10 @@ W_ITEM_LOCK = 8.0        # opponent can't play Items (Budew) — strong tempo de
 W_NO_RETREAT = 4.0       # opponent can't retreat (Shadow Bind)
 W_CONFUSED = 4.0         # opponent's Active is Confused
 W_HAND = 0.5             # per card in hand — resources
+# Strategic disruption (piece 1b) — board FACTS of denial, not number-fitting. Without
+# these the agent never plays TRW / Battle Cage (they read ~0) and those lines fire 0/120.
+W_ABILITY_DENIED = 7.0   # per opponent Pokémon whose Ability is currently shut off (TRW)
+W_BENCH_SHIELD = 3.0     # per Benched Pokémon a Battle Cage is currently shielding from spread
 
 
 def _board_damage_pressure(player: PlayerState) -> float:
@@ -102,6 +107,23 @@ def position_value(state: GameState, idx: int) -> float:
     if me.active is not None and me.active.confused:
         v -= W_CONFUSED
 
-    # 5. Resources.
+    # 5. Strategic disruption — board facts of engine-denial. These make the agent
+    #    actually PLAY its disruption (TRW, Battle Cage), which read ~0 before.
+    #  (a) Abilities shut off (TRW: Colorless Pokémon have no Abilities). Count the
+    #      opponent's ability-bearers currently suppressed (e.g. Dudunsparce's draw),
+    #      minus your own that the same Stadium suppresses.
+    for m in opp.all_in_play():
+        if m.card.abilities and ability_suppressed(state, m):
+            v += W_ABILITY_DENIED
+    for m in me.all_in_play():
+        if m.card.abilities and ability_suppressed(state, m):
+            v -= W_ABILITY_DENIED
+    #  (b) Battle Cage shields a Benched Pokémon from the OPPONENT's spread. Your bench
+    #      being safe is good for you; the opponent's bench being safe denies YOUR spread.
+    if current_stadium_name(state) == "Battle Cage":
+        v += len(me.bench) * W_BENCH_SHIELD
+        v -= len(opp.bench) * W_BENCH_SHIELD
+
+    # 6. Resources.
     v += len(me.hand) * W_HAND
     return v
