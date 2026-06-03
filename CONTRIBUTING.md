@@ -24,6 +24,10 @@ python3 src/fetch_standard_pool.py --out data/standard_pool.json   # build pool
 python3 tests/test_pool.py                                          # data invariants
 python3 tests/test_engine.py                                        # engine invariants
 python3 tests/test_effects.py                                       # per-card effects
+python3 tests/test_stadium.py                                       # Stadium zone + damage chokepoints
+python3 tests/test_mega.py                                          # MEGA + Tera namesake rules
+python3 tests/test_legality.py                                      # format / rotation framework
+python3 tests/test_decklist_coverage.py                             # coverage snapshot (green; red on drift)
 python3 -m src.engine.run --games 1000                              # simulate (0 tokens)
 python3 -m src.engine.run --log --seed 7                            # watch one game
 ```

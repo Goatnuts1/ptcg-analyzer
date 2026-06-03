@@ -79,7 +79,8 @@ def place_counters_on_bench(ctx: EffectContext, counters: int,
             target = min(alive, key=lambda m: m.remaining_hp)
         else:  # "spread"
             target = max(alive, key=lambda m: m.remaining_hp)
-        target.damage += 10
+        # route through the chokepoint so Battle Cage can prevent the counter
+        place_counters(ctx, target, 1, owner=ctx.opp)
 
 
 def heal(ctx: EffectContext, mon: InPlayPokemon, amount: int) -> None:
@@ -89,22 +90,10 @@ def heal(ctx: EffectContext, mon: InPlayPokemon, amount: int) -> None:
 def damage_active_with_weakness(ctx: EffectContext, amount: int) -> None:
     """Deal `amount` to the opponent's Active, applying Weakness (×2) and
     Resistance based on the SOURCE Pokémon's type. Used by variable-damage attacks
-    that compute their own total, so weakness multiplies the whole hit once."""
-    d = ctx.opp.active
-    if d is None or amount <= 0:
-        return
-    src_types = ctx.source.card.types if ctx.source else ()
-    dmg = amount
-    for wtype, _ in d.card.weaknesses:
-        if src_types and wtype == src_types[0]:
-            dmg *= 2
-    for rtype, rval in d.card.resistances:
-        if src_types and rtype == src_types[0]:
-            try:
-                dmg = max(0, dmg + int(rval))
-            except ValueError:
-                pass
-    d.damage += dmg
+    that compute their own total, so weakness multiplies the whole hit once.
+
+    Thin wrapper over the attack-damage chokepoint (§2.5) targeting the Active."""
+    apply_attack_damage(ctx, ctx.opp.active, amount, owner=ctx.opp, source=ctx.source)
 
 
 def discard_basic_energy_from_own(ctx: EffectContext, count: int,
@@ -185,6 +174,108 @@ def dig_and_pick(ctx: EffectContext, look: int, take: int = 1) -> None:
     rest = top[take:]
     ctx.me.hand.extend(taken)
     ctx.me.deck.extend(rest)   # to the bottom
+
+
+# --------------------------------------------------------------------------- #
+# DAMAGE CHOKEPOINTS + STADIUMS (VALIDATION_MILESTONE §2.5)
+#
+# Two DISTINCT paths — deliberately NOT merged (confirmed ruling):
+#   apply_attack_damage() — "damage done by an attack" (printed number ± W/R).
+#       Blocked by Tera on the Bench. NOT blocked by Battle Cage.
+#   place_counters()      — damage counters placed by an attack/ability EFFECT
+#       (Phantom Dive's spread, Cursed Blast). Blocked by Battle Cage when the
+#       source is the opposing player. NOT blocked by Tera.
+# See docs/project memory project_ptcg_mega_tera_rules.
+# --------------------------------------------------------------------------- #
+
+# Stadiums whose FULL printed text is faithfully handled (passive logic lives in
+# the chokepoints below). A Stadium not listed here is still playable via the
+# engine's Stadium zone, but its effect is unimplemented → the coverage test
+# keeps it `needs-effect`.
+STADIUM_IMPLEMENTED: set[str] = {"Battle Cage"}
+
+
+def _on_bench(player: PlayerState, mon: InPlayPokemon) -> bool:
+    """Identity test — NOT `mon in player.bench`. InPlayPokemon is a value-equality
+    dataclass, so `in`/`==` would treat two identical Pokémon (e.g. two undamaged
+    Dragapult ex) as the same object and mis-locate the target."""
+    return any(mon is m for m in player.bench)
+
+
+def owner_of(state: GameState, mon: InPlayPokemon) -> Optional[PlayerState]:
+    """Which player has `mon` in play (active or bench), or None. Identity-based."""
+    for p in state.players:
+        if mon is p.active or _on_bench(p, mon):
+            return p
+    return None
+
+
+def current_stadium_name(state: GameState) -> Optional[str]:
+    return state.stadium.name if state.stadium else None
+
+
+def can_play_stadium(state: GameState, card) -> bool:
+    """A Stadium is playable unless one with the SAME name is already in play
+    (a same-name Stadium can't replace itself)."""
+    return state.stadium is None or state.stadium.name != card.name
+
+
+def _apply_weakness_resistance(source_card, defender: InPlayPokemon, dmg: int) -> int:
+    """×2 Weakness / flat Resistance based on the SOURCE's first type. (Only the
+    Active takes W/R; bench-damage attacks say 'don't apply W/R for Benched'.)"""
+    if dmg <= 0:
+        return dmg
+    stypes = source_card.types if source_card else ()
+    for wtype, _ in defender.card.weaknesses:
+        if stypes and wtype == stypes[0]:
+            dmg *= 2
+    for rtype, rval in defender.card.resistances:
+        if stypes and rtype == stypes[0]:
+            try:
+                dmg = max(0, dmg + int(rval))
+            except ValueError:
+                pass
+    return dmg
+
+
+def apply_attack_damage(ctx: EffectContext, target: InPlayPokemon, amount: int,
+                        owner: Optional[PlayerState] = None,
+                        source: Optional[InPlayPokemon] = None) -> int:
+    """Deal `amount` ATTACK damage to `target`. Applies Weakness/Resistance to an
+    Active target, and Tera bench-immunity to a Benched one. Returns damage dealt."""
+    if target is None or amount <= 0:
+        return 0
+    owner = owner if owner is not None else owner_of(ctx.state, target)
+    source = source if source is not None else ctx.source
+    on_bench = owner is not None and _on_bench(owner, target)
+    dmg = amount
+    if not on_bench:
+        dmg = _apply_weakness_resistance(source.card if source else None, target, dmg)
+    # Tera: "Prevent all damage done to this Pokémon by attacks while on your Bench."
+    if on_bench and "Tera" in target.card.subtypes:
+        ctx.state.emit(f"Tera: prevented {dmg} attack damage to benched {target.card.name}")
+        return 0
+    if dmg > 0:
+        target.damage += dmg
+    return dmg
+
+
+def place_counters(ctx: EffectContext, target: InPlayPokemon, counters: int,
+                   owner: Optional[PlayerState] = None) -> int:
+    """Place `counters` damage counters (×10 dmg) on `target` via an attack/ability
+    EFFECT. Battle Cage prevents counters on a Benched Pokémon placed by the
+    OPPOSING player. Returns counters actually placed."""
+    if target is None or counters <= 0:
+        return 0
+    owner = owner if owner is not None else owner_of(ctx.state, target)
+    on_bench = owner is not None and _on_bench(owner, target)
+    if (on_bench and owner is not ctx.me
+            and current_stadium_name(ctx.state) == "Battle Cage"):
+        ctx.state.emit(f"Battle Cage: prevented {counters} counter(s) on benched "
+                       f"{target.card.name}")
+        return 0
+    target.damage += counters * 10
+    return counters
 
 
 # --------------------------------------------------------------------------- #
@@ -364,6 +455,8 @@ def _rare_candy(ctx: EffectContext) -> bool:
                 mon.evolved_this_turn = True
                 mon.ability_used_this_turn = False
                 ctx.state.emit(f"Rare Candy: {basic_name} -> {mon.card.name}")
+                # (No MEGA turn-end: current Mega Evolution Pokémon ex have no special
+                # play rules — see game.py evolve branch / official rulebook p23.)
                 return True
     return False
 

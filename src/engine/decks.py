@@ -12,8 +12,7 @@ A deck is given as a list of (card_name, count) and expanded into Card objects.
 from __future__ import annotations
 
 from .cards import Card, CardDB
-
-DECK_SIZE = 60
+from .legality import DECK_SIZE   # single source of truth for the 60-card rule
 
 
 def _expand(db: CardDB, recipe: list[tuple[str, int]]) -> list[Card]:
@@ -90,3 +89,92 @@ DECK_CHARIZARD = [
 
 def load_charizard_vs_dragapult(db: CardDB) -> tuple[list[Card], list[Card]]:
     return _expand(db, DECK_CHARIZARD), _expand(db, DECK_DRAGAPULT)
+
+
+# --------------------------------------------------------------------------- #
+# TOURNAMENT LISTS — the real 60-card decklists the validation milestone targets.
+# Unlike the fixtures above, these are faithful copies of current Limitless lists
+# (see docs/CARD_GAP_REPORT.md for sources). They will NOT play correctly until the
+# effects/infra in docs/VALIDATION_MILESTONE.md are built — that's the point: the
+# coverage test (tests/test_decklist_coverage.py) burns these down to zero gaps.
+# Basic energy uses the engine's injected name ("Basic Fire Energy"); the printed
+# lists just say "Fire Energy".
+# --------------------------------------------------------------------------- #
+
+# Dragapult ex (Dusknoir variant) — Justin Newdorf, 3rd, Regional Indianapolis,
+# May 30 2026. limitlesstcg.com/decks/list/27610.
+TOURNAMENT_DRAGAPULT = [
+    # Pokémon (21)
+    ("Dreepy", 4),
+    ("Drakloak", 4),
+    ("Dragapult ex", 3),
+    ("Duskull", 2),
+    ("Dusclops", 2),
+    ("Dusknoir", 1),
+    ("Fezandipiti ex", 1),
+    ("Munkidori", 1),
+    ("Budew", 1),
+    ("Meowth ex", 1),
+    ("Moltres", 1),
+    # Trainer (31)
+    ("Lillie's Determination", 4),
+    ("Boss's Orders", 3),
+    ("Crispin", 3),
+    ("Dawn", 1),
+    ("Buddy-Buddy Poffin", 4),
+    ("Poké Pad", 4),
+    ("Ultra Ball", 4),
+    ("Crushing Hammer", 3),
+    ("Night Stretcher", 2),
+    ("Unfair Stamp", 1),
+    ("Team Rocket's Watchtower", 2),
+    # Energy (8)
+    ("Basic Fire Energy", 4),
+    ("Basic Psychic Energy", 3),
+    ("Basic Darkness Energy", 1),
+]
+
+# Mega Charizard X/Y ex toolbox — Khaine, 3rd of 21, Ling TV ARENA (online),
+# May 2026, post-rotation. play.limitlesstcg.com/.../khaine/decklist.
+TOURNAMENT_CHARIZARD_XY = [
+    # Pokémon (16)
+    ("Dunsparce", 3),
+    ("Dudunsparce", 2),
+    ("Charmander", 3),
+    ("Charmeleon", 1),
+    ("Mega Charizard X ex", 2),
+    ("Mega Charizard Y ex", 1),
+    ("Oricorio ex", 2),
+    ("Fezandipiti ex", 1),
+    ("Fan Rotom", 1),
+    # Trainer (33)
+    ("Hilda", 3),
+    ("Lillie's Determination", 3),
+    ("Dawn", 3),
+    ("Judge", 2),
+    ("Boss's Orders", 2),
+    ("Rare Candy", 3),
+    ("Poké Pad", 3),
+    ("Buddy-Buddy Poffin", 2),
+    ("Energy Retrieval", 2),
+    ("Night Stretcher", 2),
+    ("Ultra Ball", 2),
+    ("Switch", 1),
+    ("Air Balloon", 1),
+    ("Powerglass", 1),
+    ("Battle Cage", 3),
+    # Energy (11)
+    ("Basic Fire Energy", 10),
+    ("Enriching Energy", 1),
+]
+
+# name -> recipe, for the coverage test and future matchup runs.
+TOURNAMENT_LISTS: dict[str, list[tuple[str, int]]] = {
+    "dragapult": TOURNAMENT_DRAGAPULT,
+    "charizard_xy": TOURNAMENT_CHARIZARD_XY,
+}
+
+
+def load_tournament_deck(db: CardDB, name: str) -> list[Card]:
+    """Expand a registered tournament list into Card objects (validates 60 cards)."""
+    return _expand(db, TOURNAMENT_LISTS[name])

@@ -1,5 +1,9 @@
 # generated data artifacts — rebuild with the fetch script
 data/*.json
+# ...except the hand-maintained supplement of Standard-legal cards the upstream
+# GitHub dump hasn't published yet (newer Mega-era cards). Tracked + merged by
+# fetch_standard_pool.py so a re-fetch reproduces the full pool deterministically.
+!data/manual_cards.json
 docs/last_build.log
 build.log
 
