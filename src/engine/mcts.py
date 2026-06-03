@@ -111,6 +111,10 @@ def _semantic_key(state: GameState, a: Action):
         return ("evolve", p.hand[a.hand_index].name, a.target_index)
     if a.kind == "play_trainer":
         return ("play_trainer", p.hand[a.hand_index].name)
+    if a.kind == "play_stadium":
+        return ("play_stadium", p.hand[a.hand_index].name)
+    if a.kind == "attach_tool":
+        return ("attach_tool", p.hand[a.hand_index].name, a.target_index)
     if a.kind == "use_ability":
         return ("use_ability", a.target_index)
     if a.kind == "retreat":

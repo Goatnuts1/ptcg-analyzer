@@ -112,3 +112,42 @@ energy-denial), and the number is climbing in the right direction. But it's **st
 (no point-chasing), a couple of strategic-disruption terms in the eval (engine-denial, spread-denial).
 Re-run this matchup as the regression metric toward the band. The harness + instrumentation make
 each step measurable.
+
+---
+
+## Policy milestone — piece 1b: strategic-disruption terms (lines off 0) + a real MCTS bug
+
+Reordered (correctly): value disruption BEFORE deepening search — deeper search toward an eval
+that scores disruption at ~0 just explores more lines that undervalue the same thing.
+
+**Added mechanistic board-fact terms to `position_value`** (not number-fitted): per opponent
+Pokémon whose Ability is currently shut off (TRW → Dudunsparce's draw), and per Benched Pokémon a
+Battle Cage is shielding from spread.
+
+**Then a sensitivity test exposed the actual blocker:** even at 40× weights, TRW/Battle Cage still
+fired 0 — because **MCTS's `_semantic_key` had no case for `play_stadium`/`attach_tool`** (added to
+the engine *after* MCTS was written). They collapsed to the `("pass",)` key and were **dropped from
+the search entirely.** A whole class of plays was invisible to MCTS, regardless of eval. Fixed.
+
+**Result — eval-MCTS mirror, 120 games, after the fix (disruption lines climbing off 0 = the
+success signal):**
+
+| line | before 1b | after 1b |
+|------|----------:|---------:|
+| **TRW (ability lock / draw-denial)** | **0/120** | **77/120** |
+| **Battle Cage prevented spread** | **0/120** | **22/120** |
+| Phantom Dive | 36 | 31 |
+| gust (Boss's Orders) | 81 | 86 |
+| Crushing Hammer | 44 | 42 |
+| Budew Item-lock | 0 | **0** (opener-sequencing, below) |
+| Dragapult win % | 59.2% | 52.5% |
+| won by prizes | 42% | 47% |
+
+**Read:** the disruption mechanism now *works* — the stadium war (Dragapult's TRW vs Charizard's
+Battle Cage) is modeled and fires. The win % actually dipped because Battle Cage's spread-denial is
+effective and two equal MCTS agents fight the stadium war to ~even; reaching the Dragapult-favored
+band now needs deeper search (piece 2b) to out-sequence the war, plus the two still-missing pieces.
+**Budew stays 0** — it's a turn-1 *opener* line (Budew must be Active to Itchy Pollen); the agent
+doesn't promote-to-disrupt. That's a sequencing/opening limitation, not an eval-term gap; flag for
+piece 2b/3. The headline is the MCTS bug: the reordering instinct was right — without valuing +
+*surfacing* disruption, no amount of search would have played it.
