@@ -121,6 +121,12 @@ class GreedyAgent:
                 if c.name == want and c.is_supporter:
                     return a
 
+        # 1e. attach a Pokémon Tool when one is available (free setup; otherwise
+        # Air Balloon / Powerglass would sit in hand, never played).
+        tools = [a for a in acts if a.kind == "attach_tool"]
+        if tools:
+            return tools[0]
+
         # 2. develop board early: bench, then attach energy
         benches = [a for a in acts if a.kind == "play_basic"]
         if benches and len(p.bench) < 3:

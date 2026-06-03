@@ -125,6 +125,17 @@ def can_pay_cost(mon: InPlayPokemon, cost: tuple[str, ...]) -> bool:
     return len(provided) >= colorless_needed
 
 
+def retreat_cost(mon: InPlayPokemon) -> int:
+    """Effective retreat cost, accounting for Tools (Air Balloon −2) and passive
+    abilities (Agile: 0 if no Energy attached)."""
+    if not mon.energy and any(ab.name == "Agile" for ab in mon.card.abilities):
+        return 0
+    base = mon.card.retreat_cost
+    if mon.tool is not None and mon.tool.name == "Air Balloon":
+        base = max(0, base - 2)
+    return base
+
+
 # --------------------------------------------------------------------------- #
 # Legal action enumeration
 # --------------------------------------------------------------------------- #
@@ -189,9 +200,16 @@ def legal_actions(state: GameState) -> list[Action]:
                     if guard is None or guard(state, p, mon):
                         actions.append(Action("use_ability", target_index=t))
 
+    # attach a Pokémon Tool to a Pokémon that doesn't already have one
+    for i, c in enumerate(p.hand):
+        if c.is_trainer and "Pokémon Tool" in c.subtypes:
+            for t, mon in [(-1, p.active)] + list(enumerate(p.bench)):
+                if mon is not None and mon.tool is None:
+                    actions.append(Action("attach_tool", hand_index=i, target_index=t))
+
     # retreat (if enough energy, a bench Pokemon to promote, and not retreat-locked)
     if (p.bench and not p.cant_retreat
-            and p.active.energy_count() >= p.active.card.retreat_cost):
+            and p.active.energy_count() >= retreat_cost(p.active)):
         for t in range(len(p.bench)):
             actions.append(Action("retreat", target_index=t))
 
@@ -270,6 +288,19 @@ def apply_action(state: GameState, action: Action) -> None:
         mon.energy.append(card)
         p.energy_attached_this_turn = True
         state.emit(f"attached {card.name} to {mon.card.name}")
+        # Special Energy on-attach trigger (Enriching Energy: draw 4)
+        on_attach = fx.get_special_energy_on_attach(card.name)
+        if on_attach:
+            ctx = fx.EffectContext(state=state, me=p, opp=state.opponent,
+                                   source=mon, db=state.db, rng=state.rng)
+            on_attach(ctx)
+        return
+
+    if action.kind == "attach_tool":
+        card = p.hand.pop(action.hand_index)
+        mon = p.active if action.target_index == -1 else p.bench[action.target_index]
+        mon.tool = card
+        state.emit(f"attached Tool {card.name} to {mon.card.name}")
         return
 
     if action.kind == "evolve":
@@ -291,7 +322,7 @@ def apply_action(state: GameState, action: Action) -> None:
 
     if action.kind == "retreat":
         # pay retreat cost: discard that many energy from the active
-        cost = p.active.card.retreat_cost
+        cost = retreat_cost(p.active)
         for _ in range(cost):
             if p.active.energy:
                 p.discard.append(p.active.energy.pop())
@@ -416,5 +447,7 @@ def start_turn(state: GameState) -> bool:
 
 
 def end_turn(state: GameState) -> None:
+    # end-of-turn Pokémon Tool triggers (Powerglass) for the player whose turn ends
+    fx.end_of_turn_tools(state, state.current)
     state.active_index = state.opponent_index()
     state.turn_number += 1

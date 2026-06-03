@@ -40,6 +40,7 @@ class InPlayPokemon:
     played_this_turn: bool = False     # can't evolve the turn it was played
     evolved_this_turn: bool = False    # one evolution step per Pokemon per turn
     confused: bool = False             # Special Condition (cleared off the Active Spot)
+    tool: Optional[Card] = None        # attached Pokémon Tool (max 1)
 
     def clone(self) -> "InPlayPokemon":
         """Copy the mutable wrapper but SHARE Card refs (Cards are frozen/immutable).
@@ -53,6 +54,7 @@ class InPlayPokemon:
             played_this_turn=self.played_this_turn,
             evolved_this_turn=self.evolved_this_turn,
             confused=self.confused,
+            tool=self.tool,
         )
 
     @property

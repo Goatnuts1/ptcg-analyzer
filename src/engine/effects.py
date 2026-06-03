@@ -416,6 +416,8 @@ def _ko_cleanup(state, scorer, victim, mon) -> None:
     victim.discard.append(mon.card)
     victim.discard.extend(mon.energy)
     victim.discard.extend(mon.evolved_from)
+    if mon.tool is not None:
+        victim.discard.append(mon.tool)
     for _ in range(prizes):
         if scorer.prizes:
             scorer.hand.append(scorer.prizes.pop())
@@ -932,6 +934,47 @@ _TRAINER_CAN_PLAY: dict[str, Callable] = {
     "Judge": lambda state, me: len(me.deck) + len(me.hand) > 0,
     "Crispin": lambda state, me: any(c.is_basic_energy for c in me.deck),
 }
+
+
+# --------------------------------------------------------------------------- #
+# POKÉMON TOOLS (§2.8) + SPECIAL ENERGY (§2.10)
+# Passive Tool modifiers (Air Balloon retreat −2) live in game.retreat_cost.
+# End-of-turn Tool triggers (Powerglass) run here. Tools with NO active behavior
+# (purely passive) are listed in TOOL_IMPLEMENTED so the coverage test counts them.
+# --------------------------------------------------------------------------- #
+TOOL_IMPLEMENTED: set[str] = {"Air Balloon", "Powerglass"}
+
+# Abilities handled OUTSIDE the ATTACK/ABILITY registries (passives), but still
+# faithful — the coverage test treats these as implemented. (Agile -> retreat_cost.)
+PASSIVE_ABILITIES: set[tuple[str, str]] = {("Charmander", "Agile")}
+
+
+def end_of_turn_tools(state: GameState, player: PlayerState) -> None:
+    """Run end-of-turn Pokémon Tool triggers for `player`. Powerglass: if the
+    holder is in the Active Spot, attach a Basic Energy from discard to it."""
+    if player.active is not None and player.active.tool is not None \
+            and player.active.tool.name == "Powerglass":
+        for i, c in enumerate(player.discard):
+            if c.is_basic_energy:
+                player.active.energy.append(player.discard.pop(i))
+                state.emit(f"Powerglass: attached {c.name} from discard")
+                break
+
+
+def _enriching_on_attach(ctx: EffectContext) -> None:
+    """Enriching Energy: when attached from hand to a Pokémon, draw 4 cards."""
+    draw(ctx, 4)
+    ctx.state.emit("Enriching Energy: drew 4")
+
+
+SPECIAL_ENERGY_ON_ATTACH: dict[str, Callable[[EffectContext], None]] = {
+    "Enriching Energy": _enriching_on_attach,
+}
+SPECIAL_ENERGY_IMPLEMENTED: set[str] = set(SPECIAL_ENERGY_ON_ATTACH)
+
+
+def get_special_energy_on_attach(card_name: str):
+    return SPECIAL_ENERGY_ON_ATTACH.get(card_name)
 
 
 def get_attack_effect(card_name: str, attack_name: str):
