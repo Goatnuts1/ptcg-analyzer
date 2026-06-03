@@ -51,14 +51,15 @@ INFRA_CAVEATS: dict[str, str] = {}
 
 # Distinct cards (across both decks) that still need an effect. len() = burndown.
 EXPECTED_NEEDS_EFFECT = frozenset({
-    "Air Balloon", "Budew", "Charmander", "Crispin", "Crushing Hammer",
-    "Dudunsparce", "Dunsparce", "Dusclops", "Dusknoir", "Duskull",
-    "Enriching Energy", "Fan Rotom", "Fezandipiti ex", "Judge",
-    "Lillie's Determination", "Mega Charizard Y ex", "Meowth ex", "Moltres",
+    "Air Balloon", "Budew", "Charmander", "Crushing Hammer",
+    "Dunsparce", "Dusclops", "Dusknoir", "Duskull",
+    "Enriching Energy", "Fan Rotom", "Fezandipiti ex",
+    "Mega Charizard Y ex", "Meowth ex", "Moltres",
     "Munkidori", "Oricorio ex", "Powerglass",
     "Team Rocket's Watchtower", "Unfair Stamp",
-    # §2.1 search/recovery engine landed: Poké Pad, Ultra Ball, Hilda, Dawn,
-    # Night Stretcher, Energy Retrieval, Switch -> moved to IMPLEMENTED_BY.
+    # §2.1 draw/search engine landed -> all moved to IMPLEMENTED_BY: Poké Pad,
+    # Ultra Ball, Hilda, Dawn, Night Stretcher, Energy Retrieval, Switch,
+    # Lillie's Determination, Judge, Crispin, Dudunsparce (Run Away Draw).
 })
 
 # A card may only be counted `implemented` if it is listed here WITH the test
@@ -81,6 +82,10 @@ IMPLEMENTED_BY = {
     "Night Stretcher":     ["tests/test_search.py"],
     "Energy Retrieval":    ["tests/test_search.py"],
     "Switch":              ["tests/test_search.py"],
+    "Lillie's Determination": ["tests/test_search.py"],
+    "Judge":               ["tests/test_search.py"],
+    "Crispin":             ["tests/test_search.py"],
+    "Dudunsparce":         ["tests/test_search.py"],   # Run Away Draw
 }
 
 

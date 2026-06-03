@@ -27,6 +27,8 @@ python3 tests/test_effects.py                                       # per-card e
 python3 tests/test_stadium.py                                       # Stadium zone + damage chokepoints
 python3 tests/test_mega.py                                          # MEGA + Tera namesake rules
 python3 tests/test_legality.py                                      # format / rotation framework
+python3 tests/test_search.py                                        # draw/search engine effects
+python3 tests/test_agents.py                                        # greedy actually plays the cards
 python3 tests/test_decklist_coverage.py                             # coverage snapshot (green; red on drift)
 python3 -m src.engine.run --games 1000                              # simulate (0 tokens)
 python3 -m src.engine.run --log --seed 7                            # watch one game

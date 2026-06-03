@@ -14,6 +14,17 @@ import random
 from .game import Action, legal_actions
 from .state import GameState
 
+# v0 greedy Trainer policy (name-based; a real policy is MCTS's job). Without a
+# GENERAL branch here, every search/draw Trainer we implement is inert in live
+# games — only the hardcoded few would ever be played. These lists keep the
+# consistency engine actually firing so the decks function and rollouts are sane.
+_CONSISTENCY_ITEMS = ("Poké Pad", "Nest Ball", "Night Stretcher", "Energy Retrieval")
+_DRAW_SUPPORTERS = ("Lillie's Determination", "Judge", "Cheren")
+_SEARCH_SUPPORTERS = ("Hilda", "Dawn", "Crispin", "Arven")
+# Boss's Orders (gust) is situational — greedy can't judge the KO it sets up, so it
+# sits last and MCTS owns the timing. (§5 deviation.)
+_OTHER_SUPPORTERS = ("Boss's Orders",)
+
 
 class RandomAgent:
     """Picks a uniformly random legal action. The dumb baseline to beat."""
@@ -90,12 +101,27 @@ class GreedyAgent:
         if stadiums:
             return stadiums[0]
 
-        # 2. develop board early: bench, then attach energy
-        # draw with a Supporter if the hand is running low
-        if len(p.hand) <= 3:
+        # 1c. consistency Items — card-neutral/positive search & recovery that
+        # develops the game. (Generalized: any new search/draw Item fires here.)
+        for a in trainers:
+            name = p.hand[a.hand_index].name
+            if name in _CONSISTENCY_ITEMS:
+                return a
+            if name == "Ultra Ball" and len(p.hand) > 4:    # afford the 2-card discard
+                return a
+
+        # 1d. one Supporter per turn: refill the hand when low, else set up. (Legal
+        # actions already hides Supporters once one is played this turn.)
+        supporter_order = (_DRAW_SUPPORTERS + _SEARCH_SUPPORTERS + _OTHER_SUPPORTERS
+                           if len(p.hand) <= 4 else
+                           _SEARCH_SUPPORTERS + _DRAW_SUPPORTERS + _OTHER_SUPPORTERS)
+        for want in supporter_order:
             for a in trainers:
-                if p.hand[a.hand_index].name == "Cheren":
+                c = p.hand[a.hand_index]
+                if c.name == want and c.is_supporter:
                     return a
+
+        # 2. develop board early: bench, then attach energy
         benches = [a for a in acts if a.kind == "play_basic"]
         if benches and len(p.bench) < 3:
             return self.rng.choice(benches)

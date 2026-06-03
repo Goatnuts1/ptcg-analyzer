@@ -104,13 +104,62 @@ def main():
     check(any(m.card.name == "Dreepy" for m in a.bench),
           "the old Active should go to the bench")
 
+    # --- Lillie's Determination: shuffle hand into deck, draw 6 (8 at exactly 6 prizes). ---
+    st, a, b = fresh(db)
+    a.hand = [FIRE, WATER]
+    a.deck = [DREEPY] * 10
+    a.prizes = [DREEPY] * 4            # not 6 -> draw 6
+    fx._lillies_determination(ctx(st, a, b))
+    # 2 hand + 10 deck = 12 conserved; after shuffle-in and draw 6 -> hand 6, deck 6.
+    check(len(a.hand) == 6 and len(a.deck) == 6,
+          f"Lillie's: shuffle hand in, draw 6 (hand={len(a.hand)}, deck={len(a.deck)})")
+    st, a, b = fresh(db)
+    a.hand = [FIRE]; a.deck = [DREEPY] * 12; a.prizes = [DREEPY] * 6   # exactly 6 -> draw 8
+    fx._lillies_determination(ctx(st, a, b))
+    check(len(a.hand) == 8, f"Lillie's should draw 8 at exactly 6 prizes (hand={len(a.hand)})")
+
+    # --- Judge: BOTH players shuffle hand into deck and draw 4. ---
+    st, a, b = fresh(db)
+    a.hand = [FIRE, WATER, DREEPY]; a.deck = [DREEPY] * 10
+    b.hand = [FIRE]; b.deck = [WATER] * 10
+    fx._judge(ctx(st, a, b))
+    check(len(a.hand) == 4 and len(b.hand) == 4,
+          f"Judge should leave both players with 4 cards (a={len(a.hand)}, b={len(b.hand)})")
+
+    # --- Crispin: 2 Basic Energy of DIFFERENT types; attach 1 to Active, 1 to hand. ---
+    st, a, b = fresh(db)
+    a.active = InPlayPokemon(card=DREEPY)
+    a.deck = [FIRE, FIRE, WATER]      # two types available: Fire, Water
+    fx._crispin(ctx(st, a, b))
+    attached = a.active.energy
+    check(len(attached) == 1, f"Crispin should attach exactly 1 energy (got {len(attached)})")
+    check(len(a.hand) == 1 and a.hand[0].is_basic_energy, "Crispin should put 1 energy into hand")
+    types = {attached[0].types[0], a.hand[0].types[0]}
+    check(types == {"Fire", "Water"}, f"Crispin's two energy must be DIFFERENT types, got {types}")
+
+    # --- Dudunsparce Run Away Draw: draw 3, shuffle this Pokémon into the deck. ---
+    st, a, b = fresh(db)
+    dudun = InPlayPokemon(card=db.get("Dudunsparce"), energy=[FIRE])
+    a.active = InPlayPokemon(card=DREEPY)      # so removing benched Dudun is clean
+    a.bench = [dudun]
+    a.deck = [WATER] * 5
+    deck0 = len(a.deck)
+    src_ctx = fx.EffectContext(state=st, me=a, opp=b, source=dudun, db=st.db, rng=st.rng)
+    fx._run_away_draw(src_ctx)
+    check(len(a.hand) == 3, f"Run Away Draw should draw 3 (hand={len(a.hand)})")
+    check(all(m.card.name != "Dudunsparce" for m in a.bench),
+          "Dudunsparce should leave play after Run Away Draw")
+    check(any(c.name == "Dudunsparce" for c in a.deck) and FIRE in a.deck,
+          "Dudunsparce and its attached energy should be shuffled into the deck")
+
     if fails:
         print(f"FAIL ({len(fails)} issue(s)):")
         for f in fails:
             print("  -", f)
         return 1
-    print("OK — §2.1 search/recovery engine: Poké Pad, Ultra Ball, Hilda, Dawn, "
-          "Night Stretcher, Energy Retrieval, Switch all match card text.")
+    print("OK — §2.1 draw/search engine: Poké Pad, Ultra Ball, Hilda, Dawn, Night Stretcher, "
+          "Energy Retrieval, Switch, Lillie's Determination, Judge, Crispin, Run Away Draw "
+          "all match card text.")
     return 0
 
 

@@ -137,6 +137,14 @@ def discard_hand_and_draw(ctx: EffectContext, n: int) -> None:
     ctx.me.draw(n)
 
 
+def shuffle_hand_into_deck(ctx: EffectContext, who: PlayerState) -> None:
+    """Put `who`'s hand into their deck and shuffle. (Lillie's Determination, Judge.)"""
+    who.deck.extend(who.hand)
+    who.hand = []
+    if ctx.rng:
+        ctx.rng.shuffle(who.deck)
+
+
 def draw(ctx: EffectContext, n: int) -> int:
     return ctx.me.draw(n)
 
@@ -419,6 +427,30 @@ def _recon_directive(ctx: EffectContext) -> None:
     dig_and_pick(ctx, look=2, take=1)
 
 
+def _run_away_draw(ctx: EffectContext) -> None:
+    """Dudunsparce ability: draw 3; if you drew any, shuffle THIS Pokémon and all
+    attached cards back into your deck (removing it from play). The Charizard deck's
+    core draw engine — used from the Bench, recycled into the deck each time."""
+    drew = draw(ctx, 3)
+    if drew <= 0:
+        return
+    mon = ctx.source
+    me = ctx.me
+    me.deck.append(mon.card)
+    me.deck.extend(mon.energy)
+    me.deck.extend(mon.evolved_from)
+    if me.active is mon:
+        me.active = None
+        if me.bench:                       # promote the healthiest bencher (v0 policy)
+            me.bench.sort(key=lambda m: m.remaining_hp, reverse=True)
+            me.active = me.bench.pop(0)
+    else:
+        me.bench = [m for m in me.bench if m is not mon]
+    if ctx.rng:
+        ctx.rng.shuffle(me.deck)
+    ctx.state.emit(f"Run Away Draw: drew {drew}, shuffled Dudunsparce into the deck")
+
+
 # --- Raging Bolt ex / Teal Mask Ogerpon ex / Mega Charizard X ex ---
 def _discard_energy_for_damage(ctx: EffectContext, per_hit: int,
                                energy_type: Optional[str] = None) -> None:
@@ -486,6 +518,7 @@ ATTACK_EFFECTS: dict[tuple[str, str], Callable[[EffectContext], None]] = {
 ABILITY_EFFECTS: dict[tuple[str, str], Callable[[EffectContext], None]] = {
     ("Drakloak", "Recon Directive"): _recon_directive,
     ("Teal Mask Ogerpon ex", "Teal Dance"): _teal_dance,
+    ("Dudunsparce", "Run Away Draw"): _run_away_draw,
 }
 
 # Optional usability guards so the engine never offers an ability that would do
@@ -494,6 +527,9 @@ ABILITY_CAN_USE: dict[tuple[str, str], Callable] = {
     # Teal Dance needs a Basic Grass Energy in hand to attach.
     ("Teal Mask Ogerpon ex", "Teal Dance"):
         lambda me, mon: any(c.is_basic_energy and "Grass" in c.types for c in me.hand),
+    # Run Away Draw needs cards to draw, and must not remove your only Pokémon.
+    ("Dudunsparce", "Run Away Draw"):
+        lambda me, mon: len(me.deck) > 0 and (mon is not me.active or len(me.bench) > 0),
 }
 
 
@@ -680,6 +716,54 @@ def _switch(ctx: EffectContext) -> bool:
     return True
 
 
+def _lillies_determination(ctx: EffectContext) -> bool:
+    """Shuffle your hand into your deck, then draw 6 (8 if you have exactly 6 Prizes)."""
+    shuffle_hand_into_deck(ctx, ctx.me)
+    n = 8 if len(ctx.me.prizes) == 6 else 6
+    drew = ctx.me.draw(n)
+    ctx.state.emit(f"Lillie's Determination: drew {drew}")
+    return True
+
+
+def _judge(ctx: EffectContext) -> bool:
+    """Each player shuffles their hand into their deck and draws 4 cards."""
+    for pl in (ctx.me, ctx.opp):
+        shuffle_hand_into_deck(ctx, pl)
+        pl.draw(4)
+    ctx.state.emit("Judge: both players shuffled hand and drew 4")
+    return True
+
+
+def _crispin(ctx: EffectContext) -> bool:
+    """Search deck for up to 2 Basic Energy of DIFFERENT types; attach 1 to one of
+    your Pokémon (v0: the Active), put the other into your hand."""
+    me = ctx.me
+    basics = [c for c in me.deck if c.is_basic_energy]
+    if not basics:
+        return False
+    picked, seen = [], set()
+    for c in sorted(basics, key=lambda c: c.name):
+        t = c.types[0] if c.types else "Colorless"
+        if t not in seen:
+            picked.append(c)
+            seen.add(t)
+        if len(picked) == 2:
+            break
+    for c in picked:
+        me.deck.remove(c)
+    if ctx.rng:
+        ctx.rng.shuffle(me.deck)
+    target = me.active or (me.bench[0] if me.bench else None)
+    if target is not None:
+        target.energy.append(picked[0])          # attach 1
+        for extra in picked[1:]:
+            me.hand.append(extra)                 # the other -> hand
+    else:                                         # no Pokémon to attach to
+        me.hand.extend(picked)
+    ctx.state.emit(f"Crispin: attached 1 + drew {len(picked) - 1} Basic Energy")
+    return True
+
+
 # card_name -> (effect, can_play_predicate)
 # can_play takes (state, me) and returns bool.
 TRAINER_EFFECTS: dict[str, Callable[[EffectContext], bool]] = {
@@ -695,6 +779,10 @@ TRAINER_EFFECTS: dict[str, Callable[[EffectContext], bool]] = {
     "Night Stretcher": _night_stretcher,
     "Energy Retrieval": _energy_retrieval,
     "Switch": _switch,
+    # §2.1/§2.3 shuffle-draw + energy search
+    "Lillie's Determination": _lillies_determination,
+    "Judge": _judge,
+    "Crispin": _crispin,
 }
 
 _TRAINER_CAN_PLAY: dict[str, Callable] = {
@@ -710,6 +798,9 @@ _TRAINER_CAN_PLAY: dict[str, Callable] = {
     "Night Stretcher": lambda state, me: any(p_pokemon_or_basic_energy(c) for c in me.discard),
     "Energy Retrieval": lambda state, me: any(p_basic_energy(c) for c in me.discard),
     "Switch": lambda state, me: me.active is not None and len(me.bench) > 0,
+    "Lillie's Determination": lambda state, me: len(me.deck) + len(me.hand) > 0,
+    "Judge": lambda state, me: len(me.deck) + len(me.hand) > 0,
+    "Crispin": lambda state, me: any(c.is_basic_energy for c in me.deck),
 }
 
 

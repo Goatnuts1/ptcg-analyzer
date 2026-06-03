@@ -275,10 +275,17 @@ reported WITH this list so nothing is hidden. Re-examine each before trusting th
 
 **Agent / policy deviations (not card stubs):**
 - **Greedy Stadium policy (v0):** plays any offered Stadium (first one). Establishes Battle Cage /
-  bumps opponent Stadiums so the Stadium war isn't inert. Simple heuristic; MCTS will own the
-  nuanced timing later. *(Fixed the silent-inert bug found in R8 review — see commit 4978c80.)*
-- Several effects keep a greedy v0 target policy (e.g. `place_counters_on_bench` maximize_ko); a
-  hook for MCTS to own them exists.
+  bumps opponent Stadiums so the Stadium war isn't inert. *(Fixed the silent-inert bug found in
+  R8 review.)*
+- **Greedy Trainer policy (v0, §2.1):** generalized so the consistency engine fires — plays
+  consistency Items (Poké Pad/Ultra Ball/Night Stretcher/Energy Retrieval) and one Supporter/turn
+  (draw when hand low, else search). **Boss's Orders (gust) sits LAST** — greedy can't judge the
+  KO a gust sets up, so it under-plays it; **MCTS owns gust timing.** Guarded by `test_agents.py`.
+- **Observed (watch, not a blocker):** greedy mirror over-churns → ~16% of games deck-out. Partly
+  greedy over-draw, partly the decks can't yet close by prizes (KO-engine effects not built). Expect
+  this to drop as Cursed Blast / Munkidori / Explosion Y land; MCTS avoids suicidal draw regardless.
+- Several effects keep a greedy v0 target policy (e.g. `place_counters_on_bench` maximize_ko,
+  search pick-best, Switch/Run-Away promote-healthiest); a hook for MCTS to own them exists.
 
 ---
 
