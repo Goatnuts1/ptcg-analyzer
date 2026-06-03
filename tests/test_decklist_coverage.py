@@ -51,12 +51,14 @@ INFRA_CAVEATS: dict[str, str] = {}
 
 # Distinct cards (across both decks) that still need an effect. len() = burndown.
 EXPECTED_NEEDS_EFFECT = frozenset({
-    "Air Balloon", "Budew", "Charmander", "Crispin", "Crushing Hammer", "Dawn",
-    "Dudunsparce", "Dunsparce", "Dusclops", "Dusknoir", "Duskull", "Energy Retrieval",
-    "Enriching Energy", "Fan Rotom", "Fezandipiti ex", "Hilda", "Judge",
+    "Air Balloon", "Budew", "Charmander", "Crispin", "Crushing Hammer",
+    "Dudunsparce", "Dunsparce", "Dusclops", "Dusknoir", "Duskull",
+    "Enriching Energy", "Fan Rotom", "Fezandipiti ex", "Judge",
     "Lillie's Determination", "Mega Charizard Y ex", "Meowth ex", "Moltres",
-    "Munkidori", "Night Stretcher", "Oricorio ex", "Poké Pad", "Powerglass",
-    "Switch", "Team Rocket's Watchtower", "Ultra Ball", "Unfair Stamp",
+    "Munkidori", "Oricorio ex", "Powerglass",
+    "Team Rocket's Watchtower", "Unfair Stamp",
+    # §2.1 search/recovery engine landed: Poké Pad, Ultra Ball, Hilda, Dawn,
+    # Night Stretcher, Energy Retrieval, Switch -> moved to IMPLEMENTED_BY.
 })
 
 # A card may only be counted `implemented` if it is listed here WITH the test
@@ -71,6 +73,14 @@ IMPLEMENTED_BY = {
     "Boss's Orders":       ["tests/test_effects.py"],
     "Mega Charizard X ex": ["tests/test_effects.py", "tests/test_mega.py"],     # Inferno X + 3-prize/no-turn-end
     "Battle Cage":         ["tests/test_stadium.py"],                           # passive via chokepoint
+    # §2.1 draw/search engine
+    "Poké Pad":            ["tests/test_search.py"],
+    "Ultra Ball":          ["tests/test_search.py"],
+    "Hilda":               ["tests/test_search.py"],
+    "Dawn":                ["tests/test_search.py"],
+    "Night Stretcher":     ["tests/test_search.py"],
+    "Energy Retrieval":    ["tests/test_search.py"],
+    "Switch":              ["tests/test_search.py"],
 }
 
 
