@@ -149,6 +149,11 @@ def draw(ctx: EffectContext, n: int) -> int:
     return ctx.me.draw(n)
 
 
+def flip(ctx: EffectContext) -> bool:
+    """A coin flip — True = heads. Uses ctx.rng so clone/determinize stay reproducible."""
+    return bool(ctx.rng.randint(0, 1)) if ctx.rng else True
+
+
 def discard_opponent_deck_top(ctx: EffectContext, n: int) -> None:
     for _ in range(n):
         if ctx.opp.deck:
@@ -580,6 +585,27 @@ def _explosion_y(ctx: EffectContext) -> None:
     apply_attack_damage(ctx, target, 280, owner=ctx.opp)
 
 
+# --- §2.6 Special Conditions (Confusion / can't-retreat / can't-play-Items).
+# Base damage is applied by the engine; these add the rider. ---
+def _mind_bend(ctx: EffectContext) -> None:
+    """Munkidori: 60, and the opponent's Active is now Confused."""
+    if ctx.opp.active:
+        ctx.opp.active.confused = True
+        ctx.state.emit(f"Mind Bend: {ctx.opp.active.card.name} is Confused")
+
+
+def _shadow_bind(ctx: EffectContext) -> None:
+    """Dusknoir: 150, and during the opponent's next turn they can't retreat."""
+    ctx.opp.pending_cant_retreat = True
+    ctx.state.emit("Shadow Bind: opponent can't retreat next turn")
+
+
+def _itchy_pollen(ctx: EffectContext) -> None:
+    """Budew: 10, and during the opponent's next turn they can't play Item cards."""
+    ctx.opp.pending_cant_play_items = True
+    ctx.state.emit("Itchy Pollen: opponent can't play Items next turn")
+
+
 # (card_name, attack_name) -> effect
 ATTACK_EFFECTS: dict[tuple[str, str], Callable[[EffectContext], None]] = {
     ("Dragapult ex", "Phantom Dive"): _phantom_dive,
@@ -589,6 +615,9 @@ ATTACK_EFFECTS: dict[tuple[str, str], Callable[[EffectContext], None]] = {
     ("Mega Charizard X ex", "Inferno X"): _inferno_x,
     ("Fezandipiti ex", "Cruel Arrow"): _cruel_arrow,
     ("Mega Charizard Y ex", "Explosion Y"): _explosion_y,
+    ("Munkidori", "Mind Bend"): _mind_bend,
+    ("Dusknoir", "Shadow Bind"): _shadow_bind,
+    ("Budew", "Itchy Pollen"): _itchy_pollen,
 }
 
 # (card_name, ability_name) -> effect
@@ -810,6 +839,7 @@ def _switch(ctx: EffectContext) -> bool:
         return False
     newcomer = max(me.bench, key=lambda m: m.remaining_hp)
     me.bench.remove(newcomer)
+    me.active.confused = False             # Special Conditions clear off the Active Spot
     me.bench.append(me.active)
     me.active = newcomer
     ctx.state.emit(f"Switch: brought up {newcomer.card.name}")

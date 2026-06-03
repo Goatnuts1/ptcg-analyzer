@@ -51,16 +51,15 @@ INFRA_CAVEATS: dict[str, str] = {}
 
 # Distinct cards (across both decks) that still need an effect. len() = burndown.
 EXPECTED_NEEDS_EFFECT = frozenset({
-    "Air Balloon", "Budew", "Charmander", "Crushing Hammer",
-    "Dunsparce", "Dusknoir", "Duskull",
+    "Air Balloon", "Charmander", "Crushing Hammer",
+    "Dunsparce", "Duskull",
     "Enriching Energy", "Fan Rotom",
     "Meowth ex", "Moltres",
-    "Munkidori", "Oricorio ex", "Powerglass",
+    "Oricorio ex", "Powerglass",
     "Team Rocket's Watchtower", "Unfair Stamp",
-    # §2.1 draw/search engine -> IMPLEMENTED_BY (Poké Pad, Ultra Ball, Hilda, Dawn,
-    #   Night Stretcher, Energy Retrieval, Switch, Lillie's, Judge, Crispin, Dudunsparce).
-    # §2.7 KO/damage engine -> IMPLEMENTED_BY (Dusclops, Fezandipiti ex, Mega Charizard Y ex).
-    # Still partial: Dusknoir (Shadow Bind) + Munkidori (Mind Bend) need Special Conditions (§2.6).
+    # §2.1 draw/search engine, §2.7 KO/damage engine, §2.6 Special Conditions all
+    # landed -> see IMPLEMENTED_BY. §2.6 completed Dusknoir (Shadow Bind), Munkidori
+    # (Mind Bend), Budew (Itchy Pollen).
 })
 
 # A card may only be counted `implemented` if it is listed here WITH the test
@@ -91,6 +90,10 @@ IMPLEMENTED_BY = {
     "Dusclops":            ["tests/test_ko_engine.py"],   # Cursed Blast (+ vanilla attack)
     "Fezandipiti ex":      ["tests/test_ko_engine.py"],   # Flip the Script + Cruel Arrow
     "Mega Charizard Y ex": ["tests/test_ko_engine.py"],   # Explosion Y
+    # §2.6 Special Conditions completed these (ability/KO in test_ko_engine, rider in test_conditions)
+    "Munkidori":           ["tests/test_ko_engine.py", "tests/test_conditions.py"],  # Adrena-Brain + Mind Bend
+    "Dusknoir":            ["tests/test_ko_engine.py", "tests/test_conditions.py"],  # Cursed Blast + Shadow Bind
+    "Budew":               ["tests/test_conditions.py"],                            # Itchy Pollen
 }
 
 

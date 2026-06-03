@@ -286,6 +286,13 @@ reported WITH this list so nothing is hidden. Re-examine each before trusting th
   this to drop as Cursed Blast / Munkidori / Explosion Y land; MCTS avoids suicidal draw regardless.
 - Several effects keep a greedy v0 target policy (e.g. `place_counters_on_bench` maximize_ko,
   search pick-best, Switch/Run-Away promote-healthiest); a hook for MCTS to own them exists.
+- **Greedy under-plays low-base-damage DISRUPTION attacks** (Budew Itchy Pollen 10 / item-lock,
+  Munkidori Mind Bend 60 / Confuse, Dusknoir Shadow Bind 150 / no-retreat). Greedy ranks attacks
+  by printed damage and can't value a rider, so these fire rarely (Itchy Pollen ~0). The effects
+  are faithful (test_conditions.py); **MCTS owns disruption timing.** Same goes for effect-damage
+  attacks whose printed base is 0 (Cruel Arrow) — greedy undervalues them; MCTS explores them.
+- **Cursed Blast v0 gate:** offered only when it secures a KO (so greedy doesn't self-KO for chip);
+  chip-damage Cursed Blast isn't available to either agent yet. Revisit if the number needs it.
 
 ---
 
