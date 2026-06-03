@@ -250,7 +250,35 @@ isn't finished. **If a P2 is stubbed for the first run, log it (§5) — never s
 
 ## §5 — Stub / deviation log (keep current; empty = nothing hidden)
 
-*(none yet — populate as effects are stubbed or policies left greedy-only)*
+**First validation target = load-bearing subset** (R8 review decision). The matchup-critical
+cards are made faithful; a small tail is honestly stubbed and listed here. The first number is
+reported WITH this list so nothing is hidden. Re-examine each before trusting the number.
+
+**Promoted to FAITHFUL on matchup-impact re-examination (were going to be stubbed):**
+- **Budew (Itchy Pollen, Item-lock):** not fringe — a turn-1 Item-lock against two Item-reliant
+  decks is real tempo denial. Nearly free once Special Conditions exists (being built). → build it.
+- **Team Rocket's Watchtower:** its real text is *"Colorless Pokémon in play (both players) have
+  no Abilities"* — that shuts off the Charizard deck's **Dudunsparce (Run Away Draw) draw engine**
+  and Fan Rotom, AND as a Stadium it bumps the opponent's Battle Cage (stadium war). Central to
+  the matchup. → build it (needs a Colorless-ability-suppression hook; the stadium-bump already works).
+
+**Stubbed for the first validation pass (low matchup impact — justified):**
+| Card | # | Why it's safe to stub first |
+|------|---|------------------------------|
+| Moltres (Fighting Wings) | 1 | 1-of tech attacker; marginal, rarely the line. |
+| Dunsparce (Dig) | 3 | Dudunsparce evolution fodder; almost never attacks (coin-flip damage-prevent on a fodder mon). |
+| Charmander (Agile) | 3 | Passive free-retreat when no Energy; minor convenience, low swing. |
+| Duskull (Come and Get You) | 2 | Niche Duskull-recursion; the line evolves up, rarely recurs. |
+| Air Balloon | 1 | Retreat-cost Tool; consistency nicety, low matchup swing. |
+| Powerglass | 1 | End-of-turn Energy-from-discard Tool; minor accel. |
+| Unfair Stamp | 1 | 1-of ACE SPEC comeback (hand reset after a KO); situational. **Highest-impact stub — revisit first if the number is off.** |
+
+**Agent / policy deviations (not card stubs):**
+- **Greedy Stadium policy (v0):** plays any offered Stadium (first one). Establishes Battle Cage /
+  bumps opponent Stadiums so the Stadium war isn't inert. Simple heuristic; MCTS will own the
+  nuanced timing later. *(Fixed the silent-inert bug found in R8 review — see commit 4978c80.)*
+- Several effects keep a greedy v0 target policy (e.g. `place_counters_on_bench` maximize_ko); a
+  hook for MCTS to own them exists.
 
 ---
 
