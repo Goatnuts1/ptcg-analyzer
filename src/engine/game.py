@@ -173,6 +173,8 @@ def legal_actions(state: GameState) -> list[Action]:
             if not p.stadium_played_this_turn and fx.can_play_stadium(state, c):
                 actions.append(Action("play_stadium", hand_index=i))
             continue
+        if c.is_item and p.cant_play_items:    # Budew's Itchy Pollen lock
+            continue
         if c.is_supporter and p.supporter_played_this_turn:
             continue
         if fx.get_trainer_effect(c.name) and fx.can_play_trainer(state, p, c.name):
@@ -184,11 +186,12 @@ def legal_actions(state: GameState) -> list[Action]:
             for ab in mon.card.abilities:
                 if fx.get_ability_effect(mon.card.name, ab.name):
                     guard = fx.get_ability_can_use(mon.card.name, ab.name)
-                    if guard is None or guard(p, mon):
+                    if guard is None or guard(state, p, mon):
                         actions.append(Action("use_ability", target_index=t))
 
-    # retreat (if enough energy and there's a bench Pokemon to promote)
-    if p.bench and p.active.energy_count() >= p.active.card.retreat_cost:
+    # retreat (if enough energy, a bench Pokemon to promote, and not retreat-locked)
+    if (p.bench and not p.cant_retreat
+            and p.active.energy_count() >= p.active.card.retreat_cost):
         for t in range(len(p.bench)):
             actions.append(Action("retreat", target_index=t))
 
@@ -212,6 +215,13 @@ def _resolve_attack(state: GameState, atk_index: int) -> None:
     effect = fx.get_attack_effect(attacker.card.name, atk.name)
     ctx = fx.EffectContext(state=state, me=state.current, opp=state.opponent,
                            source=attacker, db=state.db, rng=state.rng)
+
+    # Confusion: flip a coin; tails -> 30 to itself and the attack does nothing.
+    if attacker.confused and not fx.flip(ctx):
+        attacker.damage += 30
+        state.emit(f"{attacker.card.name} is Confused — tails: 30 to itself, attack fails")
+        fx.process_knockouts(state)
+        return
 
     # Base damage handling:
     #   fixed ("")         -> engine applies atk.damage (+weakness)
@@ -270,6 +280,7 @@ def apply_action(state: GameState, action: Action) -> None:
         mon.card = card
         mon.evolved_this_turn = True       # no second evolution step this turn
         mon.ability_used_this_turn = False  # the new stage's ability is fresh
+        mon.confused = False               # evolving removes Special Conditions
         state.emit(f"evolved into {card.name}")
         # NOTE: current "Mega Evolution Pokémon ex" (lowercase ex; e.g. Mega Charizard
         # X/Y ex) have NO turn-ending rule — per the official 2026 rulebook (Appendix 1,
@@ -284,6 +295,7 @@ def apply_action(state: GameState, action: Action) -> None:
         for _ in range(cost):
             if p.active.energy:
                 p.discard.append(p.active.energy.pop())
+        p.active.confused = False          # Special Conditions clear off the Active Spot
         new_active = p.bench.pop(action.target_index)
         p.bench.append(p.active)
         p.active = new_active
@@ -330,6 +342,8 @@ def apply_action(state: GameState, action: Action) -> None:
                 effect(ctx)
                 mon.ability_used_this_turn = True
                 state.emit(f"{mon.card.name} used ability {ab.name}")
+                # abilities can now KO (Cursed Blast places counters AND self-KOs)
+                fx.process_knockouts(state)
                 break
         return
 
@@ -374,6 +388,16 @@ def start_turn(state: GameState) -> bool:
     p.energy_attached_this_turn = False
     p.supporter_played_this_turn = False
     p.stadium_played_this_turn = False
+    # snapshot "KO'd during the opponent's last turn" for Flip the Script, then
+    # reset the accumulator for the cycle that starts now.
+    p.koed_last_turn = p.koed_during_opp_turn
+    p.koed_during_opp_turn = False
+    # activate turn-scoped debuffs the opponent applied for this turn, then clear
+    # the pending slots (so each lasts exactly one turn).
+    p.cant_retreat = p.pending_cant_retreat
+    p.cant_play_items = p.pending_cant_play_items
+    p.pending_cant_retreat = False
+    p.pending_cant_play_items = False
     for mon in p.all_in_play():
         mon.ability_used_this_turn = False
         mon.played_this_turn = False

@@ -39,6 +39,7 @@ class InPlayPokemon:
     ability_used_this_turn: bool = False
     played_this_turn: bool = False     # can't evolve the turn it was played
     evolved_this_turn: bool = False    # one evolution step per Pokemon per turn
+    confused: bool = False             # Special Condition (cleared off the Active Spot)
 
     def clone(self) -> "InPlayPokemon":
         """Copy the mutable wrapper but SHARE Card refs (Cards are frozen/immutable).
@@ -51,6 +52,7 @@ class InPlayPokemon:
             ability_used_this_turn=self.ability_used_this_turn,
             played_this_turn=self.played_this_turn,
             evolved_this_turn=self.evolved_this_turn,
+            confused=self.confused,
         )
 
     @property
@@ -88,6 +90,18 @@ class PlayerState:
     supporter_played_this_turn: bool = False
     stadium_played_this_turn: bool = False   # only 1 Stadium per turn
     turns_taken: int = 0          # for the "no evolving on your first turn" rule
+    # "were any of your Pokémon KO'd during your opponent's last turn?" — drives
+    # Fezandipiti's Flip the Script. `koed_during_opp_turn` accumulates while it is
+    # NOT your turn; start_turn snapshots it into `koed_last_turn` then resets it.
+    koed_during_opp_turn: bool = False
+    koed_last_turn: bool = False
+    # turn-scoped debuffs applied BY the opponent, active only during this player's
+    # next turn. `pending_*` is set on your opponent now; start_turn activates it
+    # into the matching active flag for exactly that one turn, then it clears.
+    cant_retreat: bool = False
+    cant_play_items: bool = False
+    pending_cant_retreat: bool = False
+    pending_cant_play_items: bool = False
 
     MAX_BENCH = 5
 
@@ -120,6 +134,12 @@ class PlayerState:
             supporter_played_this_turn=self.supporter_played_this_turn,
             stadium_played_this_turn=self.stadium_played_this_turn,
             turns_taken=self.turns_taken,
+            koed_during_opp_turn=self.koed_during_opp_turn,
+            koed_last_turn=self.koed_last_turn,
+            cant_retreat=self.cant_retreat,
+            cant_play_items=self.cant_play_items,
+            pending_cant_retreat=self.pending_cant_retreat,
+            pending_cant_play_items=self.pending_cant_play_items,
         )
         return p
 

@@ -149,6 +149,11 @@ def draw(ctx: EffectContext, n: int) -> int:
     return ctx.me.draw(n)
 
 
+def flip(ctx: EffectContext) -> bool:
+    """A coin flip — True = heads. Uses ctx.rng so clone/determinize stay reproducible."""
+    return bool(ctx.rng.randint(0, 1)) if ctx.rng else True
+
+
 def discard_opponent_deck_top(ctx: EffectContext, n: int) -> None:
     for _ in range(n):
         if ctx.opp.deck:
@@ -374,27 +379,36 @@ def place_counters(ctx: EffectContext, target: InPlayPokemon, counters: int,
 # whole board, not just the Active.
 # --------------------------------------------------------------------------- #
 def process_knockouts(state: GameState) -> None:
-    """Award prizes to the CURRENT player for every opposing Pokemon that is now
-    knocked out, move KO'd cards to discard, and promote a new Active if needed.
+    """Scan BOTH boards. For every knocked-out Pokémon, its owner's OPPONENT takes
+    the prizes — so a self-KO (Cursed Blast) correctly gives prizes to the opponent.
+    Move KO'd cards to discard, promote a new Active where needed, and record a
+    player's KOs that happened on the OPPONENT's turn (for Flip the Script).
     """
-    scorer = state.current
-    victim = state.opponent
+    for i, owner in enumerate(state.players):
+        scorer = state.players[1 - i]
+        koed_any = False
 
-    # bench KOs first (order doesn't affect prize count)
-    survivors = []
-    for m in victim.bench:
-        if m.is_knocked_out:
-            _ko_cleanup(state, scorer, victim, m)
-        else:
-            survivors.append(m)
-    victim.bench = survivors
+        survivors = []
+        for m in owner.bench:
+            if m.is_knocked_out:
+                _ko_cleanup(state, scorer, owner, m)
+                koed_any = True
+            else:
+                survivors.append(m)
+        owner.bench = survivors
 
-    # active KO
-    if victim.active and victim.active.is_knocked_out:
-        ko = victim.active
-        victim.active = None
-        _ko_cleanup(state, scorer, victim, ko)
-        _promote(victim)
+        if owner.active and owner.active.is_knocked_out:
+            ko = owner.active
+            owner.active = None
+            _ko_cleanup(state, scorer, owner, ko)
+            _promote(owner)
+            koed_any = True
+
+        # "during your opponent's last turn" = owner lost a Pokémon while it was
+        # NOT owner's turn. (A self-KO on your own turn must NOT arm your own
+        # Flip the Script.)
+        if koed_any and state.active_index != i:
+            owner.koed_during_opp_turn = True
 
 
 def _ko_cleanup(state, scorer, victim, mon) -> None:
@@ -505,6 +519,93 @@ def _myriad_leaf_shower(ctx: EffectContext) -> None:
     damage_active_with_weakness(ctx, 30 + 30 * n)
 
 
+# --- §2.7 KO / damage-manipulation engine (Cursed Blast, Adrena-Brain, Flip the
+# Script, Cruel Arrow, Explosion Y). v0 targeting picks a KO where possible; MCTS
+# owns the real choice. ---
+def _pick_ko_target(player: PlayerState, dmg: int) -> Optional[InPlayPokemon]:
+    """An opponent Pokémon `dmg` would KO (prefer most prizes, then lowest HP), else None."""
+    koable = [m for m in player.all_in_play() if 0 < m.remaining_hp <= dmg]
+    if koable:
+        return max(koable, key=lambda m: (m.card.gives_up_prizes, -m.remaining_hp))
+    return None
+
+
+def _cursed_blast(ctx: EffectContext, counters: int) -> None:
+    """Put `counters` damage counters on 1 opp Pokémon, then THIS Pokémon is KO'd
+    (its owner's opponent takes the prize — that's the cost)."""
+    opp = ctx.opp
+    target = _pick_ko_target(opp, counters * 10) or opp.active
+    if target is not None:
+        place_counters(ctx, target, counters, owner=opp)   # Battle Cage may prevent on bench
+    ctx.source.damage = ctx.source.card.hp or 9999          # self-KO; swept by process_knockouts
+    ctx.state.emit(f"Cursed Blast: {counters} counters; {ctx.source.card.name} KO's itself")
+
+
+def _cursed_blast_5(ctx: EffectContext) -> None:   _cursed_blast(ctx, 5)    # Dusclops
+def _cursed_blast_13(ctx: EffectContext) -> None:  _cursed_blast(ctx, 13)   # Dusknoir
+
+
+def _adrena_brain(ctx: EffectContext) -> None:
+    """Move up to 3 damage counters from 1 of your Pokémon to 1 of the opponent's."""
+    mine = [m for m in ctx.me.all_in_play() if m.damage >= 10]
+    if not mine:
+        return
+    donor = max(mine, key=lambda m: m.damage)
+    n = min(3, donor.damage // 10)
+    target = _pick_ko_target(ctx.opp, n * 10) or ctx.opp.active
+    if target is None:
+        return
+    placed = place_counters(ctx, target, n, owner=ctx.opp)
+    donor.damage -= placed * 10           # only the counters actually moved leave you
+    if placed:
+        ctx.state.emit(f"Adrena-Brain: moved {placed} counter(s) to {target.card.name}")
+
+
+def _flip_the_script(ctx: EffectContext) -> None:
+    """If a Pokémon of yours was KO'd during the opponent's last turn, draw 3."""
+    if ctx.me.koed_last_turn:
+        draw(ctx, 3)
+        ctx.state.emit("Flip the Script: drew 3")
+
+
+def _cruel_arrow(ctx: EffectContext) -> None:
+    """100 damage to 1 of the opponent's Pokémon (no W/R for Benched — handled by
+    the chokepoint, which applies W/R only to the Active)."""
+    target = _pick_ko_target(ctx.opp, 100) or ctx.opp.active
+    apply_attack_damage(ctx, target, 100, owner=ctx.opp)
+
+
+def _explosion_y(ctx: EffectContext) -> None:
+    """Discard 3 Energy from this Pokémon, then 280 to 1 of the opponent's Pokémon."""
+    src = ctx.source
+    for _ in range(3):
+        if src.energy:
+            ctx.me.discard.append(src.energy.pop())
+    target = _pick_ko_target(ctx.opp, 280) or ctx.opp.active
+    apply_attack_damage(ctx, target, 280, owner=ctx.opp)
+
+
+# --- §2.6 Special Conditions (Confusion / can't-retreat / can't-play-Items).
+# Base damage is applied by the engine; these add the rider. ---
+def _mind_bend(ctx: EffectContext) -> None:
+    """Munkidori: 60, and the opponent's Active is now Confused."""
+    if ctx.opp.active:
+        ctx.opp.active.confused = True
+        ctx.state.emit(f"Mind Bend: {ctx.opp.active.card.name} is Confused")
+
+
+def _shadow_bind(ctx: EffectContext) -> None:
+    """Dusknoir: 150, and during the opponent's next turn they can't retreat."""
+    ctx.opp.pending_cant_retreat = True
+    ctx.state.emit("Shadow Bind: opponent can't retreat next turn")
+
+
+def _itchy_pollen(ctx: EffectContext) -> None:
+    """Budew: 10, and during the opponent's next turn they can't play Item cards."""
+    ctx.opp.pending_cant_play_items = True
+    ctx.state.emit("Itchy Pollen: opponent can't play Items next turn")
+
+
 # (card_name, attack_name) -> effect
 ATTACK_EFFECTS: dict[tuple[str, str], Callable[[EffectContext], None]] = {
     ("Dragapult ex", "Phantom Dive"): _phantom_dive,
@@ -512,6 +613,11 @@ ATTACK_EFFECTS: dict[tuple[str, str], Callable[[EffectContext], None]] = {
     ("Raging Bolt ex", "Burst Roar"): _burst_roar,
     ("Teal Mask Ogerpon ex", "Myriad Leaf Shower"): _myriad_leaf_shower,
     ("Mega Charizard X ex", "Inferno X"): _inferno_x,
+    ("Fezandipiti ex", "Cruel Arrow"): _cruel_arrow,
+    ("Mega Charizard Y ex", "Explosion Y"): _explosion_y,
+    ("Munkidori", "Mind Bend"): _mind_bend,
+    ("Dusknoir", "Shadow Bind"): _shadow_bind,
+    ("Budew", "Itchy Pollen"): _itchy_pollen,
 }
 
 # (card_name, ability_name) -> effect
@@ -519,17 +625,40 @@ ABILITY_EFFECTS: dict[tuple[str, str], Callable[[EffectContext], None]] = {
     ("Drakloak", "Recon Directive"): _recon_directive,
     ("Teal Mask Ogerpon ex", "Teal Dance"): _teal_dance,
     ("Dudunsparce", "Run Away Draw"): _run_away_draw,
+    ("Dusclops", "Cursed Blast"): _cursed_blast_5,
+    ("Dusknoir", "Cursed Blast"): _cursed_blast_13,
+    ("Munkidori", "Adrena-Brain"): _adrena_brain,
+    ("Fezandipiti ex", "Flip the Script"): _flip_the_script,
 }
 
+
+def _opp_of(state) -> PlayerState:
+    return state.players[1 - state.active_index]
+
+
 # Optional usability guards so the engine never offers an ability that would do
-# nothing (and let greedy waste it). (card_name, ability_name) -> pred(me, mon).
+# nothing (and let greedy waste it). (card_name, ability_name) -> pred(state, me, mon).
 ABILITY_CAN_USE: dict[tuple[str, str], Callable] = {
     # Teal Dance needs a Basic Grass Energy in hand to attach.
     ("Teal Mask Ogerpon ex", "Teal Dance"):
-        lambda me, mon: any(c.is_basic_energy and "Grass" in c.types for c in me.hand),
+        lambda state, me, mon: any(c.is_basic_energy and "Grass" in c.types for c in me.hand),
     # Run Away Draw needs cards to draw, and must not remove your only Pokémon.
     ("Dudunsparce", "Run Away Draw"):
-        lambda me, mon: len(me.deck) > 0 and (mon is not me.active or len(me.bench) > 0),
+        lambda state, me, mon: len(me.deck) > 0 and (mon is not me.active or len(me.bench) > 0),
+    # Cursed Blast is a self-KO: only offer it when it actually secures a KO, so
+    # greedy doesn't throw the Pokémon away for nothing. (v0 policy — chip-damage
+    # Cursed Blast not offered; logged in §5. MCTS could value chip later.)
+    ("Dusclops", "Cursed Blast"):
+        lambda state, me, mon: _pick_ko_target(_opp_of(state), 50) is not None,
+    ("Dusknoir", "Cursed Blast"):
+        lambda state, me, mon: _pick_ko_target(_opp_of(state), 130) is not None,
+    # Adrena-Brain needs Darkness attached and a damaged Pokémon of yours to move from.
+    ("Munkidori", "Adrena-Brain"):
+        lambda state, me, mon: any("Darkness" in e.types for e in mon.energy)
+            and any(m.damage >= 10 for m in me.all_in_play()),
+    # Flip the Script: only if a Pokémon of yours was KO'd last turn, and you can draw.
+    ("Fezandipiti ex", "Flip the Script"):
+        lambda state, me, mon: me.koed_last_turn and len(me.deck) > 0,
 }
 
 
@@ -710,6 +839,7 @@ def _switch(ctx: EffectContext) -> bool:
         return False
     newcomer = max(me.bench, key=lambda m: m.remaining_hp)
     me.bench.remove(newcomer)
+    me.active.confused = False             # Special Conditions clear off the Active Spot
     me.bench.append(me.active)
     me.active = newcomer
     ctx.state.emit(f"Switch: brought up {newcomer.card.name}")
