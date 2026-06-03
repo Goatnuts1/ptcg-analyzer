@@ -191,14 +191,19 @@ def legal_actions(state: GameState) -> list[Action]:
         if fx.get_trainer_effect(c.name) and fx.can_play_trainer(state, p, c.name):
             actions.append(Action("play_trainer", hand_index=i))
 
-    # use an activated ability (once per turn per Pokemon, if registered and able)
+    # use an activated ability (once per turn per Pokemon unless repeatable; if
+    # registered, not suppressed by a Stadium, and currently able)
     for t, mon in in_play:
-        if mon and not mon.ability_used_this_turn:
-            for ab in mon.card.abilities:
-                if fx.get_ability_effect(mon.card.name, ab.name):
-                    guard = fx.get_ability_can_use(mon.card.name, ab.name)
-                    if guard is None or guard(state, p, mon):
-                        actions.append(Action("use_ability", target_index=t))
+        if not mon or fx.ability_suppressed(state, mon):
+            continue
+        for ab in mon.card.abilities:
+            if not fx.get_ability_effect(mon.card.name, ab.name):
+                continue
+            if mon.ability_used_this_turn and not fx.is_repeatable_ability(mon.card.name, ab.name):
+                continue
+            guard = fx.get_ability_can_use(mon.card.name, ab.name)
+            if guard is None or guard(state, p, mon):
+                actions.append(Action("use_ability", target_index=t))
 
     # attach a Pokémon Tool to a Pokémon that doesn't already have one
     for i, c in enumerate(p.hand):
@@ -247,7 +252,8 @@ def _resolve_attack(state: GameState, atk_index: int) -> None:
     #       effect computes the full hit (so weakness multiplies the total once)
     #   variable WITHOUT an effect -> fall back to the printed base so the attack
     #       still does something sensible (e.g. Iron Thorns' Destructo-Press)
-    if atk.damage_suffix in ("+", "×") and effect is not None:
+    owns_damage = (attacker.card.name, atk.name) in fx.ATTACK_EFFECT_OWNS_DAMAGE
+    if effect is not None and (atk.damage_suffix in ("+", "×") or owns_damage):
         base = 0
     else:
         base = atk.damage
@@ -278,8 +284,15 @@ def apply_action(state: GameState, action: Action) -> None:
 
     if action.kind == "play_basic":
         card = p.hand.pop(action.hand_index)
-        p.bench.append(InPlayPokemon(card=card, played_this_turn=True))
+        newmon = InPlayPokemon(card=card, played_this_turn=True)
+        p.bench.append(newmon)
         state.emit(f"benched {card.name}")
+        # on-bench-from-hand trigger (Meowth ex: Last-Ditch Catch), unless suppressed
+        trigger = fx.get_on_bench_trigger(card.name)
+        if trigger and not fx.ability_suppressed(state, newmon):
+            ctx = fx.EffectContext(state=state, me=p, opp=state.opponent,
+                                   source=newmon, db=state.db, rng=state.rng)
+            trigger(ctx)
         return
 
     if action.kind == "attach_energy":
@@ -371,7 +384,8 @@ def apply_action(state: GameState, action: Action) -> None:
                 ctx = fx.EffectContext(state=state, me=p, opp=state.opponent,
                                        source=mon, db=state.db, rng=state.rng)
                 effect(ctx)
-                mon.ability_used_this_turn = True
+                if not fx.is_repeatable_ability(mon.card.name, ab.name):
+                    mon.ability_used_this_turn = True
                 state.emit(f"{mon.card.name} used ability {ab.name}")
                 # abilities can now KO (Cursed Blast places counters AND self-KOs)
                 fx.process_knockouts(state)
@@ -433,6 +447,7 @@ def start_turn(state: GameState) -> bool:
         mon.ability_used_this_turn = False
         mon.played_this_turn = False
         mon.evolved_this_turn = False
+        mon.shielded = False           # Dig's protection lasted through the opponent's turn
     # the starting player's first turn does NOT draw in some rule sets; modern
     # rules: player going first DOES draw. We follow modern: always draw.
     drawn = p.draw(1)

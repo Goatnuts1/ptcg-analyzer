@@ -52,15 +52,8 @@ INFRA_CAVEATS: dict[str, str] = {}
 
 # Distinct cards (across both decks) that still need an effect. len() = burndown.
 EXPECTED_NEEDS_EFFECT = frozenset({
-    "Crushing Hammer",
-    "Dunsparce", "Duskull",
-    "Fan Rotom",
-    "Meowth ex", "Moltres",
-    "Oricorio ex",
-    "Team Rocket's Watchtower", "Unfair Stamp",
-    # §2.1 draw/search engine, §2.7 KO/damage engine, §2.6 Special Conditions all
-    # landed -> see IMPLEMENTED_BY. §2.6 completed Dusknoir (Shadow Bind), Munkidori
-    # (Mind Bend), Budew (Itchy Pollen).
+    # EMPTY — both tournament lists are fully faithful. Every non-vanilla card has a
+    # registry entry (or passive/tool/stadium/special-energy handler) AND a named test.
 })
 
 # A card may only be counted `implemented` if it is listed here WITH the test
@@ -100,6 +93,16 @@ IMPLEMENTED_BY = {
     "Powerglass":          ["tests/test_tools.py"],
     "Charmander":          ["tests/test_tools.py"],   # Agile (passive retreat)
     "Enriching Energy":    ["tests/test_tools.py"],
+    # final cluster: accel / triggers / disruption / tail
+    "Oricorio ex":         ["tests/test_remaining.py"],   # Excited Turbo
+    "Fan Rotom":           ["tests/test_remaining.py"],   # Fan Call
+    "Meowth ex":           ["tests/test_remaining.py"],   # Last-Ditch Catch
+    "Crushing Hammer":     ["tests/test_remaining.py"],
+    "Team Rocket's Watchtower": ["tests/test_remaining.py"],  # Colorless ability suppression
+    "Moltres":             ["tests/test_remaining.py"],   # Fighting Wings
+    "Dunsparce":           ["tests/test_remaining.py"],   # Dig (shield)
+    "Duskull":             ["tests/test_remaining.py"],   # Come and Get You
+    "Unfair Stamp":        ["tests/test_remaining.py"],
 }
 
 

@@ -41,6 +41,7 @@ class InPlayPokemon:
     evolved_this_turn: bool = False    # one evolution step per Pokemon per turn
     confused: bool = False             # Special Condition (cleared off the Active Spot)
     tool: Optional[Card] = None        # attached Pokémon Tool (max 1)
+    shielded: bool = False             # immune to attack damage & effects (Dunsparce Dig)
 
     def clone(self) -> "InPlayPokemon":
         """Copy the mutable wrapper but SHARE Card refs (Cards are frozen/immutable).
@@ -55,6 +56,7 @@ class InPlayPokemon:
             evolved_this_turn=self.evolved_this_turn,
             confused=self.confused,
             tool=self.tool,
+            shielded=self.shielded,
         )
 
     @property

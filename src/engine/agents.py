@@ -19,6 +19,9 @@ from .state import GameState
 # games — only the hardcoded few would ever be played. These lists keep the
 # consistency engine actually firing so the decks function and rollouts are sane.
 _CONSISTENCY_ITEMS = ("Poké Pad", "Nest Ball", "Night Stretcher", "Energy Retrieval")
+# Disruption / comeback Items greedy plays when offered (their can_play already
+# gates them: Crushing Hammer needs opp Energy; Unfair Stamp needs a KO last turn).
+_UTILITY_ITEMS = ("Crushing Hammer", "Unfair Stamp", "Counter Catcher")
 _DRAW_SUPPORTERS = ("Lillie's Determination", "Judge", "Cheren")
 _SEARCH_SUPPORTERS = ("Hilda", "Dawn", "Crispin", "Arven")
 # Boss's Orders (gust) is situational — greedy can't judge the KO it sets up, so it
@@ -105,7 +108,7 @@ class GreedyAgent:
         # develops the game. (Generalized: any new search/draw Item fires here.)
         for a in trainers:
             name = p.hand[a.hand_index].name
-            if name in _CONSISTENCY_ITEMS:
+            if name in _CONSISTENCY_ITEMS or name in _UTILITY_ITEMS:
                 return a
             if name == "Ultra Ball" and len(p.hand) > 4:    # afford the 2-card discard
                 return a
