@@ -184,7 +184,7 @@ def legal_actions(state: GameState) -> list[Action]:
             for ab in mon.card.abilities:
                 if fx.get_ability_effect(mon.card.name, ab.name):
                     guard = fx.get_ability_can_use(mon.card.name, ab.name)
-                    if guard is None or guard(p, mon):
+                    if guard is None or guard(state, p, mon):
                         actions.append(Action("use_ability", target_index=t))
 
     # retreat (if enough energy and there's a bench Pokemon to promote)
@@ -330,6 +330,8 @@ def apply_action(state: GameState, action: Action) -> None:
                 effect(ctx)
                 mon.ability_used_this_turn = True
                 state.emit(f"{mon.card.name} used ability {ab.name}")
+                # abilities can now KO (Cursed Blast places counters AND self-KOs)
+                fx.process_knockouts(state)
                 break
         return
 
@@ -374,6 +376,10 @@ def start_turn(state: GameState) -> bool:
     p.energy_attached_this_turn = False
     p.supporter_played_this_turn = False
     p.stadium_played_this_turn = False
+    # snapshot "KO'd during the opponent's last turn" for Flip the Script, then
+    # reset the accumulator for the cycle that starts now.
+    p.koed_last_turn = p.koed_during_opp_turn
+    p.koed_during_opp_turn = False
     for mon in p.all_in_play():
         mon.ability_used_this_turn = False
         mon.played_this_turn = False

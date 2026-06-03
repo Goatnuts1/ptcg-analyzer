@@ -52,14 +52,15 @@ INFRA_CAVEATS: dict[str, str] = {}
 # Distinct cards (across both decks) that still need an effect. len() = burndown.
 EXPECTED_NEEDS_EFFECT = frozenset({
     "Air Balloon", "Budew", "Charmander", "Crushing Hammer",
-    "Dunsparce", "Dusclops", "Dusknoir", "Duskull",
-    "Enriching Energy", "Fan Rotom", "Fezandipiti ex",
-    "Mega Charizard Y ex", "Meowth ex", "Moltres",
+    "Dunsparce", "Dusknoir", "Duskull",
+    "Enriching Energy", "Fan Rotom",
+    "Meowth ex", "Moltres",
     "Munkidori", "Oricorio ex", "Powerglass",
     "Team Rocket's Watchtower", "Unfair Stamp",
-    # §2.1 draw/search engine landed -> all moved to IMPLEMENTED_BY: Poké Pad,
-    # Ultra Ball, Hilda, Dawn, Night Stretcher, Energy Retrieval, Switch,
-    # Lillie's Determination, Judge, Crispin, Dudunsparce (Run Away Draw).
+    # §2.1 draw/search engine -> IMPLEMENTED_BY (Poké Pad, Ultra Ball, Hilda, Dawn,
+    #   Night Stretcher, Energy Retrieval, Switch, Lillie's, Judge, Crispin, Dudunsparce).
+    # §2.7 KO/damage engine -> IMPLEMENTED_BY (Dusclops, Fezandipiti ex, Mega Charizard Y ex).
+    # Still partial: Dusknoir (Shadow Bind) + Munkidori (Mind Bend) need Special Conditions (§2.6).
 })
 
 # A card may only be counted `implemented` if it is listed here WITH the test
@@ -86,6 +87,10 @@ IMPLEMENTED_BY = {
     "Judge":               ["tests/test_search.py"],
     "Crispin":             ["tests/test_search.py"],
     "Dudunsparce":         ["tests/test_search.py"],   # Run Away Draw
+    # §2.7 KO/damage engine
+    "Dusclops":            ["tests/test_ko_engine.py"],   # Cursed Blast (+ vanilla attack)
+    "Fezandipiti ex":      ["tests/test_ko_engine.py"],   # Flip the Script + Cruel Arrow
+    "Mega Charizard Y ex": ["tests/test_ko_engine.py"],   # Explosion Y
 }
 
 

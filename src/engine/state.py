@@ -88,6 +88,11 @@ class PlayerState:
     supporter_played_this_turn: bool = False
     stadium_played_this_turn: bool = False   # only 1 Stadium per turn
     turns_taken: int = 0          # for the "no evolving on your first turn" rule
+    # "were any of your Pokémon KO'd during your opponent's last turn?" — drives
+    # Fezandipiti's Flip the Script. `koed_during_opp_turn` accumulates while it is
+    # NOT your turn; start_turn snapshots it into `koed_last_turn` then resets it.
+    koed_during_opp_turn: bool = False
+    koed_last_turn: bool = False
 
     MAX_BENCH = 5
 
@@ -120,6 +125,8 @@ class PlayerState:
             supporter_played_this_turn=self.supporter_played_this_turn,
             stadium_played_this_turn=self.stadium_played_this_turn,
             turns_taken=self.turns_taken,
+            koed_during_opp_turn=self.koed_during_opp_turn,
+            koed_last_turn=self.koed_last_turn,
         )
         return p
 
