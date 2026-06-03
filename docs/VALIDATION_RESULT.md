@@ -186,3 +186,11 @@ mechanism win (stadium war), with the named remaining gap (Budew opener) now pre
 **Next: piece 3** — search-owned opening/target policies (promote-to-disrupt so Budew's Item-lock
 can actually be played turn 1), then re-measure. Optional 2c: mid-tree re-determinization (full
 ISMCTS) — deferred unless 3 shows it's needed.
+
+**Independent corroboration (cowork).** A separate cowork run of the same 2-ply regression
+(`docs/PIECE2b_REGRESSION_cowork.md`) reached the same result: Dragapult **60.8%** (vs my 55.8% —
+overlapping at n=120; pooled ~58%), every line-fire count within sampling noise (Phantom Dive 29/31,
+gust 91/86, TRW 82/79, Battle Cage 14/16), and **Budew 0/120 in both → piece 3**. Two independent
+implementations agreeing on the mechanism *and* the named gap. Note: cowork's run was 2-seed-chunked
+(0+999) for a shell-timeout; **this doc's number is the clean single-seed-0 mirrored run** — use it
+for the REVIEW_LOG.
