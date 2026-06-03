@@ -2,10 +2,10 @@
 """
 report.py — Human-readable + JSON summary of an optimization run.
 
-This OptimizerReport is the *runtime reporter* (formatting + persistence). It is
-distinct from the lightweight `OptimizerReport` dataclass in types.py, which is
-just a data container. core.py constructs THIS one. To avoid the name collision
-the dataclass is no longer imported into core.py.
+This is the single OptimizerReport in the package — the *runtime reporter*
+(fields + formatting + persistence). core.py constructs it and optimize()
+returns it. (An earlier duplicate dataclass of the same name in types.py was
+removed to eliminate a name collision.)
 """
 
 import json

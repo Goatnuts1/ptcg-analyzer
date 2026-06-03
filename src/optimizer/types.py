@@ -36,14 +36,7 @@ class EvalResult:
     ties: int
     metadata: Dict = field(default_factory=dict)
 
-
-@dataclass
-class OptimizerReport:
-    """Final report from an optimization run."""
-    base_deck: Decklist
-    final_deck: List[str]
-    win_rate: float
-    generations: int
-    history: List
-    target: OptimizationTarget
-    total_time_seconds: float = 0.0
+# NOTE: the optimization-run report lives in report.py (OptimizerReport — the
+# reporter with print_summary/save_json). An earlier duplicate dataclass of the
+# same name lived here; it was removed to eliminate the name collision. There is
+# now exactly one public OptimizerReport.
