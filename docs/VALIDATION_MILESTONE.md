@@ -298,13 +298,20 @@ reported WITH this list so nothing is hidden. Re-examine each before trusting th
 
 ## §6 — Validation run (the actual point)
 
-- [ ] Both decks pass test B (coverage) with zero `needs-effect`, zero misclassifications.
-- [ ] Run MCTS mirror-seat matchup Dragapult vs Charizard X/Y at the standard iteration
-      budget; record win rate both seats.
-- [ ] Compare to the published Limitless matchup win rate; **target within ~5–8%**.
-- [ ] Log result + any divergence hypothesis in REVIEW_LOG. If outside tolerance, the suspect
-      list is: the P0 effects, the bench-damage chokepoint, and the MCTS policy hooks left
-      greedy (§5) — not the engine core (already validated).
+- [x] ✅ Both decks pass coverage with **zero `needs-effect`** (R11). Card implementation
+      milestone COMPLETE — ~70 cards/effects across both lists, all unit-tested, 14 suites green.
+- [x] Published target pulled: **Dragapult ex ~84% vs Mega Charizard X** (Limitless CRI Standard,
+      16-3-0 — small 19-game sample; consistent with the tiers: Dragapult ~52% overall vs Mega
+      Charizard X ~29%). It's a lopsided, Dragapult-favored matchup in reality.
+- [x] Greedy mirror (500 games): Dragapult ~53% — **near-even, NOT the published ~84%.**
+- [x] Mirrored-seat MCTS (100 iters, 40 games): Dragapult **57.5%** — closer to greedy than to
+      the published ~84%. **Outside the ~5–8% tolerance by ~26 points.** See docs/VALIDATION_RESULT.md.
+- **Honest read (preliminary):** card *implementation* is faithful, but the sim's *matchup
+      number* looks far more even than reality. Per the suspect list, this points at AGENT/POLICY
+      quality, not the engine core: greedy/MCTS don't yet exploit Dragapult's spread+disruption
+      edge, and several effects keep v0 greedy target policies (§5). So the next milestone is
+      **policy/agent strength**, not more cards. Final number + verdict go to the user first, then
+      REVIEW_LOG.
 
 ---
 
