@@ -34,6 +34,7 @@ python3 tests/test_conditions.py                                    # Special Co
 python3 tests/test_tools.py                                         # Tools / Special Energy / Agile
 python3 tests/test_remaining.py                                     # accel / triggers / disruption / tail
 python3 tests/test_evaluation.py                                    # effect-aware position valuation
+python3 tests/test_mcts_keys.py                                     # guard: no action kind vanishes from search
 python3 -m src.engine.matchup --agent eval --games 30               # regression metric (win% + right-lines)
 python3 tests/test_decklist_coverage.py                             # coverage snapshot (green; red on drift)
 python3 -m src.engine.run --games 1000                              # simulate (0 tokens)
