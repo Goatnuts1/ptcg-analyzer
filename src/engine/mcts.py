@@ -121,7 +121,14 @@ def _semantic_key(state: GameState, a: Action):
         return ("retreat", a.target_index)
     if a.kind == "attack":
         return ("attack", a.attack_index)
-    return ("pass",)
+    if a.kind == "pass":
+        return ("pass",)
+    # FAIL LOUD: a new action kind with no case here used to collapse into the
+    # ("pass",) default and silently vanish from search (the play_stadium/attach_tool
+    # bug). Never default again — raise so it's caught immediately, and guard it in
+    # tests/test_mcts_keys.py (every legal action's key must start with its kind).
+    raise ValueError(f"_semantic_key: no case for action kind {a.kind!r} — add one, "
+                     f"or it will silently disappear from MCTS search.")
 
 
 def _deduped_legal(state: GameState):
