@@ -137,6 +137,14 @@ def discard_hand_and_draw(ctx: EffectContext, n: int) -> None:
     ctx.me.draw(n)
 
 
+def shuffle_hand_into_deck(ctx: EffectContext, who: PlayerState) -> None:
+    """Put `who`'s hand into their deck and shuffle. (Lillie's Determination, Judge.)"""
+    who.deck.extend(who.hand)
+    who.hand = []
+    if ctx.rng:
+        ctx.rng.shuffle(who.deck)
+
+
 def draw(ctx: EffectContext, n: int) -> int:
     return ctx.me.draw(n)
 
@@ -174,6 +182,88 @@ def dig_and_pick(ctx: EffectContext, look: int, take: int = 1) -> None:
     rest = top[take:]
     ctx.me.hand.extend(taken)
     ctx.me.deck.extend(rest)   # to the bottom
+
+
+# --------------------------------------------------------------------------- #
+# DECK SEARCH + DISCARD RECOVERY (VALIDATION_MILESTONE §2.1)
+# One generalized search primitive that a dozen Trainers/abilities compose. Each
+# entry in `predicates` finds ONE best-matching card (so [pred]*3 means "up to 3
+# of that kind"; [predA, predB] means "one of each"). The pick policy is a hook an
+# agent (MCTS) can later own — v0 grabs the most useful match by a simple value.
+# --------------------------------------------------------------------------- #
+def _search_value(card) -> int:
+    """v0 desirability for which match to grab. Evolution-relevant Basics and
+    Stage-2 payoffs first, then other Pokémon/Supporters, then the rest."""
+    if card.is_pokemon and card.is_basic and card.evolves_to:
+        return 5                      # evolution fodder you can build on
+    if card.is_pokemon and "Stage 2" in card.subtypes:
+        return 4
+    if card.is_pokemon or card.is_supporter:
+        return 3
+    if card.is_trainer:
+        return 2
+    return 1
+
+
+def search_deck(ctx: EffectContext, predicates, dest: str = "hand",
+                shuffle: bool = True, policy=None) -> int:
+    """Search the acting player's deck. For each predicate, take ONE best match
+    (by `policy`, default `_search_value`) into `dest` ('hand' or 'bench'). 'Up to
+    N of a kind' = repeat the predicate N times. Shuffles after (a search reveals
+    deck order). Returns how many cards were found. Respects bench space."""
+    me = ctx.me
+    policy = policy or _search_value
+    found = 0
+    for pred in predicates:
+        if dest == "bench" and len(me.bench) >= PlayerState.MAX_BENCH:
+            break
+        candidates = [c for c in me.deck if pred(c)]
+        if not candidates:
+            continue
+        pick = max(candidates, key=policy)
+        me.deck.remove(pick)
+        if dest == "bench":
+            me.bench.append(InPlayPokemon(card=pick, played_this_turn=True))
+        else:
+            me.hand.append(pick)
+        found += 1
+    if shuffle and ctx.rng:
+        ctx.rng.shuffle(me.deck)
+    return found
+
+
+def recover_from_discard(ctx: EffectContext, predicates, policy=None) -> int:
+    """Like search_deck but pulls from the discard pile into hand (no shuffle).
+    Used by Night Stretcher, Energy Retrieval, etc."""
+    me = ctx.me
+    policy = policy or _search_value
+    found = 0
+    for pred in predicates:
+        candidates = [c for c in me.discard if pred(c)]
+        if not candidates:
+            continue
+        pick = max(candidates, key=policy)
+        me.discard.remove(pick)
+        me.hand.append(pick)
+        found += 1
+    return found
+
+
+# Reusable card predicates (compose into the searches above).
+def _has_rule_box(card) -> bool:
+    subs = {s.lower() for s in card.subtypes}
+    return bool(subs & {"ex", "mega", "v", "vmax", "vstar", "gx", "v-union"})
+
+def p_pokemon(c):            return c.is_pokemon
+def p_basic_pokemon(c):      return c.is_pokemon and c.is_basic
+def p_evolution_pokemon(c):  return c.is_pokemon and c.evolves_from is not None
+def p_stage1(c):             return c.is_pokemon and "Stage 1" in c.subtypes
+def p_stage2(c):             return c.is_pokemon and "Stage 2" in c.subtypes
+def p_non_rule_box_pokemon(c): return c.is_pokemon and not _has_rule_box(c)
+def p_basic_energy(c):       return c.is_basic_energy
+def p_energy(c):             return c.is_energy
+def p_supporter(c):          return c.is_supporter
+def p_pokemon_or_basic_energy(c): return c.is_pokemon or c.is_basic_energy
 
 
 # --------------------------------------------------------------------------- #
@@ -337,6 +427,30 @@ def _recon_directive(ctx: EffectContext) -> None:
     dig_and_pick(ctx, look=2, take=1)
 
 
+def _run_away_draw(ctx: EffectContext) -> None:
+    """Dudunsparce ability: draw 3; if you drew any, shuffle THIS Pokémon and all
+    attached cards back into your deck (removing it from play). The Charizard deck's
+    core draw engine — used from the Bench, recycled into the deck each time."""
+    drew = draw(ctx, 3)
+    if drew <= 0:
+        return
+    mon = ctx.source
+    me = ctx.me
+    me.deck.append(mon.card)
+    me.deck.extend(mon.energy)
+    me.deck.extend(mon.evolved_from)
+    if me.active is mon:
+        me.active = None
+        if me.bench:                       # promote the healthiest bencher (v0 policy)
+            me.bench.sort(key=lambda m: m.remaining_hp, reverse=True)
+            me.active = me.bench.pop(0)
+    else:
+        me.bench = [m for m in me.bench if m is not mon]
+    if ctx.rng:
+        ctx.rng.shuffle(me.deck)
+    ctx.state.emit(f"Run Away Draw: drew {drew}, shuffled Dudunsparce into the deck")
+
+
 # --- Raging Bolt ex / Teal Mask Ogerpon ex / Mega Charizard X ex ---
 def _discard_energy_for_damage(ctx: EffectContext, per_hit: int,
                                energy_type: Optional[str] = None) -> None:
@@ -404,6 +518,7 @@ ATTACK_EFFECTS: dict[tuple[str, str], Callable[[EffectContext], None]] = {
 ABILITY_EFFECTS: dict[tuple[str, str], Callable[[EffectContext], None]] = {
     ("Drakloak", "Recon Directive"): _recon_directive,
     ("Teal Mask Ogerpon ex", "Teal Dance"): _teal_dance,
+    ("Dudunsparce", "Run Away Draw"): _run_away_draw,
 }
 
 # Optional usability guards so the engine never offers an ability that would do
@@ -412,6 +527,9 @@ ABILITY_CAN_USE: dict[tuple[str, str], Callable] = {
     # Teal Dance needs a Basic Grass Energy in hand to attach.
     ("Teal Mask Ogerpon ex", "Teal Dance"):
         lambda me, mon: any(c.is_basic_energy and "Grass" in c.types for c in me.hand),
+    # Run Away Draw needs cards to draw, and must not remove your only Pokémon.
+    ("Dudunsparce", "Run Away Draw"):
+        lambda me, mon: len(me.deck) > 0 and (mon is not me.active or len(me.bench) > 0),
 }
 
 
@@ -530,6 +648,122 @@ def can_play_boss(state, opp_has_bench, me=None) -> bool:
     return opp_has_bench
 
 
+# --- §2.1 search/recovery Trainers (compose the search_deck / recover primitives) ---
+def _poke_pad(ctx: EffectContext) -> bool:
+    """Search deck for a Pokémon that doesn't have a Rule Box, put it into hand."""
+    n = search_deck(ctx, [p_non_rule_box_pokemon], dest="hand")
+    if n:
+        ctx.state.emit("Poké Pad: searched a non-Rule-Box Pokémon")
+    return n > 0
+
+
+def _ultra_ball(ctx: EffectContext) -> bool:
+    """Discard 2 other cards from hand, then search deck for any Pokémon to hand."""
+    if len(ctx.me.hand) < 2 or not any(p_pokemon(c) for c in ctx.me.deck):
+        return False
+    # v0 discard policy: pitch the 2 lowest-value cards (energy/items before
+    # Pokémon/Supporters); a hook MCTS will later own.
+    order = sorted(range(len(ctx.me.hand)), key=lambda i: _search_value(ctx.me.hand[i]))
+    for i in sorted(order[:2], reverse=True):
+        ctx.me.discard.append(ctx.me.hand.pop(i))
+    search_deck(ctx, [p_pokemon], dest="hand")
+    ctx.state.emit("Ultra Ball: discarded 2, searched a Pokémon")
+    return True
+
+
+def _hilda(ctx: EffectContext) -> bool:
+    """Search deck for an Evolution Pokémon AND an Energy, put both into hand."""
+    n = search_deck(ctx, [p_evolution_pokemon, p_energy], dest="hand")
+    if n:
+        ctx.state.emit(f"Hilda: searched {n} card(s)")
+    return n > 0
+
+
+def _dawn(ctx: EffectContext) -> bool:
+    """Search deck for a Basic, a Stage 1, and a Stage 2 Pokémon, put all into hand."""
+    n = search_deck(ctx, [p_basic_pokemon, p_stage1, p_stage2], dest="hand")
+    if n:
+        ctx.state.emit(f"Dawn: searched {n} Pokémon")
+    return n > 0
+
+
+def _night_stretcher(ctx: EffectContext) -> bool:
+    """Put a Pokémon OR a Basic Energy from the discard pile into hand."""
+    n = recover_from_discard(ctx, [p_pokemon_or_basic_energy])
+    if n:
+        ctx.state.emit("Night Stretcher: recovered from discard")
+    return n > 0
+
+
+def _energy_retrieval(ctx: EffectContext) -> bool:
+    """Put up to 2 Basic Energy from the discard pile into hand."""
+    n = recover_from_discard(ctx, [p_basic_energy, p_basic_energy])
+    if n:
+        ctx.state.emit(f"Energy Retrieval: recovered {n} Basic Energy")
+    return n > 0
+
+
+def _switch(ctx: EffectContext) -> bool:
+    """Switch your Active with a Benched Pokémon (v0: bring up the healthiest)."""
+    me = ctx.me
+    if not me.bench or me.active is None:
+        return False
+    newcomer = max(me.bench, key=lambda m: m.remaining_hp)
+    me.bench.remove(newcomer)
+    me.bench.append(me.active)
+    me.active = newcomer
+    ctx.state.emit(f"Switch: brought up {newcomer.card.name}")
+    return True
+
+
+def _lillies_determination(ctx: EffectContext) -> bool:
+    """Shuffle your hand into your deck, then draw 6 (8 if you have exactly 6 Prizes)."""
+    shuffle_hand_into_deck(ctx, ctx.me)
+    n = 8 if len(ctx.me.prizes) == 6 else 6
+    drew = ctx.me.draw(n)
+    ctx.state.emit(f"Lillie's Determination: drew {drew}")
+    return True
+
+
+def _judge(ctx: EffectContext) -> bool:
+    """Each player shuffles their hand into their deck and draws 4 cards."""
+    for pl in (ctx.me, ctx.opp):
+        shuffle_hand_into_deck(ctx, pl)
+        pl.draw(4)
+    ctx.state.emit("Judge: both players shuffled hand and drew 4")
+    return True
+
+
+def _crispin(ctx: EffectContext) -> bool:
+    """Search deck for up to 2 Basic Energy of DIFFERENT types; attach 1 to one of
+    your Pokémon (v0: the Active), put the other into your hand."""
+    me = ctx.me
+    basics = [c for c in me.deck if c.is_basic_energy]
+    if not basics:
+        return False
+    picked, seen = [], set()
+    for c in sorted(basics, key=lambda c: c.name):
+        t = c.types[0] if c.types else "Colorless"
+        if t not in seen:
+            picked.append(c)
+            seen.add(t)
+        if len(picked) == 2:
+            break
+    for c in picked:
+        me.deck.remove(c)
+    if ctx.rng:
+        ctx.rng.shuffle(me.deck)
+    target = me.active or (me.bench[0] if me.bench else None)
+    if target is not None:
+        target.energy.append(picked[0])          # attach 1
+        for extra in picked[1:]:
+            me.hand.append(extra)                 # the other -> hand
+    else:                                         # no Pokémon to attach to
+        me.hand.extend(picked)
+    ctx.state.emit(f"Crispin: attached 1 + drew {len(picked) - 1} Basic Energy")
+    return True
+
+
 # card_name -> (effect, can_play_predicate)
 # can_play takes (state, me) and returns bool.
 TRAINER_EFFECTS: dict[str, Callable[[EffectContext], bool]] = {
@@ -537,6 +771,18 @@ TRAINER_EFFECTS: dict[str, Callable[[EffectContext], bool]] = {
     "Buddy-Buddy Poffin": _buddy_buddy_poffin,
     "Cheren": _cheren,
     "Boss's Orders": _boss_orders,
+    # §2.1 search/recovery engine
+    "Poké Pad": _poke_pad,
+    "Ultra Ball": _ultra_ball,
+    "Hilda": _hilda,
+    "Dawn": _dawn,
+    "Night Stretcher": _night_stretcher,
+    "Energy Retrieval": _energy_retrieval,
+    "Switch": _switch,
+    # §2.1/§2.3 shuffle-draw + energy search
+    "Lillie's Determination": _lillies_determination,
+    "Judge": _judge,
+    "Crispin": _crispin,
 }
 
 _TRAINER_CAN_PLAY: dict[str, Callable] = {
@@ -544,6 +790,17 @@ _TRAINER_CAN_PLAY: dict[str, Callable] = {
     "Buddy-Buddy Poffin": can_play_poffin,
     "Cheren": can_play_cheren,
     "Boss's Orders": lambda state, me: len(state.players[1 - state.active_index].bench) > 0,
+    # §2.1: only offer a search/recovery card when it can actually find something.
+    "Poké Pad": lambda state, me: any(p_non_rule_box_pokemon(c) for c in me.deck),
+    "Ultra Ball": lambda state, me: len(me.hand) >= 3 and any(p_pokemon(c) for c in me.deck),
+    "Hilda": lambda state, me: any(p_evolution_pokemon(c) or p_energy(c) for c in me.deck),
+    "Dawn": lambda state, me: any(p_basic_pokemon(c) or p_stage1(c) or p_stage2(c) for c in me.deck),
+    "Night Stretcher": lambda state, me: any(p_pokemon_or_basic_energy(c) for c in me.discard),
+    "Energy Retrieval": lambda state, me: any(p_basic_energy(c) for c in me.discard),
+    "Switch": lambda state, me: me.active is not None and len(me.bench) > 0,
+    "Lillie's Determination": lambda state, me: len(me.deck) + len(me.hand) > 0,
+    "Judge": lambda state, me: len(me.deck) + len(me.hand) > 0,
+    "Crispin": lambda state, me: any(c.is_basic_energy for c in me.deck),
 }
 
 
