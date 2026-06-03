@@ -30,7 +30,8 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from src.engine.cards import CardDB
 from src.engine.decks import TOURNAMENT_LISTS, load_tournament_deck
 from src.engine.effects import (ATTACK_EFFECTS, ABILITY_EFFECTS, TRAINER_EFFECTS,
-                                 STADIUM_IMPLEMENTED)
+                                 STADIUM_IMPLEMENTED, TOOL_IMPLEMENTED,
+                                 PASSIVE_ABILITIES, SPECIAL_ENERGY_IMPLEMENTED)
 
 _REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -51,15 +52,8 @@ INFRA_CAVEATS: dict[str, str] = {}
 
 # Distinct cards (across both decks) that still need an effect. len() = burndown.
 EXPECTED_NEEDS_EFFECT = frozenset({
-    "Air Balloon", "Charmander", "Crushing Hammer",
-    "Dunsparce", "Duskull",
-    "Enriching Energy", "Fan Rotom",
-    "Meowth ex", "Moltres",
-    "Oricorio ex", "Powerglass",
-    "Team Rocket's Watchtower", "Unfair Stamp",
-    # §2.1 draw/search engine, §2.7 KO/damage engine, §2.6 Special Conditions all
-    # landed -> see IMPLEMENTED_BY. §2.6 completed Dusknoir (Shadow Bind), Munkidori
-    # (Mind Bend), Budew (Itchy Pollen).
+    # EMPTY — both tournament lists are fully faithful. Every non-vanilla card has a
+    # registry entry (or passive/tool/stadium/special-energy handler) AND a named test.
 })
 
 # A card may only be counted `implemented` if it is listed here WITH the test
@@ -94,6 +88,21 @@ IMPLEMENTED_BY = {
     "Munkidori":           ["tests/test_ko_engine.py", "tests/test_conditions.py"],  # Adrena-Brain + Mind Bend
     "Dusknoir":            ["tests/test_ko_engine.py", "tests/test_conditions.py"],  # Cursed Blast + Shadow Bind
     "Budew":               ["tests/test_conditions.py"],                            # Itchy Pollen
+    # §2.8 Tools + §2.10 Special Energy + passive Agile
+    "Air Balloon":         ["tests/test_tools.py"],
+    "Powerglass":          ["tests/test_tools.py"],
+    "Charmander":          ["tests/test_tools.py"],   # Agile (passive retreat)
+    "Enriching Energy":    ["tests/test_tools.py"],
+    # final cluster: accel / triggers / disruption / tail
+    "Oricorio ex":         ["tests/test_remaining.py"],   # Excited Turbo
+    "Fan Rotom":           ["tests/test_remaining.py"],   # Fan Call
+    "Meowth ex":           ["tests/test_remaining.py"],   # Last-Ditch Catch
+    "Crushing Hammer":     ["tests/test_remaining.py"],
+    "Team Rocket's Watchtower": ["tests/test_remaining.py"],  # Colorless ability suppression
+    "Moltres":             ["tests/test_remaining.py"],   # Fighting Wings
+    "Dunsparce":           ["tests/test_remaining.py"],   # Dig (shield)
+    "Duskull":             ["tests/test_remaining.py"],   # Come and Get You
+    "Unfair Stamp":        ["tests/test_remaining.py"],
 }
 
 
@@ -116,9 +125,12 @@ def classify(card) -> tuple[str, str]:
     if card.is_basic_energy:
         return "vanilla-ok", ""
     if card.is_energy:
+        if card.name in SPECIAL_ENERGY_IMPLEMENTED:
+            return "implemented", ""
         return "needs-effect", _effect_text(card)
     if card.is_trainer:
-        if card.name in TRAINER_EFFECTS or card.name in STADIUM_IMPLEMENTED:
+        if (card.name in TRAINER_EFFECTS or card.name in STADIUM_IMPLEMENTED
+                or card.name in TOOL_IMPLEMENTED):
             return "implemented", ""
         return "needs-effect", _effect_text(card)
     if card.is_pokemon:
@@ -129,7 +141,8 @@ def classify(card) -> tuple[str, str]:
             return "vanilla-ok", ""
         unimpl = []
         for ab in meaningful_abilities:
-            if (card.name, ab.name) not in ABILITY_EFFECTS:
+            if ((card.name, ab.name) not in ABILITY_EFFECTS
+                    and (card.name, ab.name) not in PASSIVE_ABILITIES):
                 unimpl.append(f"[Ability] {ab.name}")
         for a in meaningful_attacks:
             if (card.name, a.name) not in ATTACK_EFFECTS:

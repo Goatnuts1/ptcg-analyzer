@@ -269,6 +269,7 @@ def p_basic_energy(c):       return c.is_basic_energy
 def p_energy(c):             return c.is_energy
 def p_supporter(c):          return c.is_supporter
 def p_pokemon_or_basic_energy(c): return c.is_pokemon or c.is_basic_energy
+def p_colorless_le100(c):    return c.is_pokemon and "Colorless" in c.types and (c.hp or 999) <= 100
 
 
 # --------------------------------------------------------------------------- #
@@ -287,7 +288,7 @@ def p_pokemon_or_basic_energy(c): return c.is_pokemon or c.is_basic_energy
 # the chokepoints below). A Stadium not listed here is still playable via the
 # engine's Stadium zone, but its effect is unimplemented → the coverage test
 # keeps it `needs-effect`.
-STADIUM_IMPLEMENTED: set[str] = {"Battle Cage"}
+STADIUM_IMPLEMENTED: set[str] = {"Battle Cage", "Team Rocket's Watchtower"}
 
 
 def _on_bench(player: PlayerState, mon: InPlayPokemon) -> bool:
@@ -340,6 +341,9 @@ def apply_attack_damage(ctx: EffectContext, target: InPlayPokemon, amount: int,
     Active target, and Tera bench-immunity to a Benched one. Returns damage dealt."""
     if target is None or amount <= 0:
         return 0
+    if getattr(target, "shielded", False):     # Dunsparce Dig: immune to attack damage
+        ctx.state.emit(f"{target.card.name} is shielded — no attack damage")
+        return 0
     owner = owner if owner is not None else owner_of(ctx.state, target)
     source = source if source is not None else ctx.source
     on_bench = owner is not None and _on_bench(owner, target)
@@ -361,6 +365,8 @@ def place_counters(ctx: EffectContext, target: InPlayPokemon, counters: int,
     EFFECT. Battle Cage prevents counters on a Benched Pokémon placed by the
     OPPOSING player. Returns counters actually placed."""
     if target is None or counters <= 0:
+        return 0
+    if getattr(target, "shielded", False):     # Dig also blocks effects of attacks
         return 0
     owner = owner if owner is not None else owner_of(ctx.state, target)
     on_bench = owner is not None and _on_bench(owner, target)
@@ -416,6 +422,8 @@ def _ko_cleanup(state, scorer, victim, mon) -> None:
     victim.discard.append(mon.card)
     victim.discard.extend(mon.energy)
     victim.discard.extend(mon.evolved_from)
+    if mon.tool is not None:
+        victim.discard.append(mon.tool)
     for _ in range(prizes):
         if scorer.prizes:
             scorer.hand.append(scorer.prizes.pop())
@@ -606,6 +614,122 @@ def _itchy_pollen(ctx: EffectContext) -> None:
     ctx.state.emit("Itchy Pollen: opponent can't play Items next turn")
 
 
+# --- §2.x remaining cards: accel / triggers / disruption / tail ---
+def _excited_turbo(ctx: EffectContext) -> None:
+    """Oricorio: attach a Basic Fire Energy from hand to a Benched Fire Pokémon
+    (repeatable; gated on a Fire MEGA ex in play + a Fire Energy in hand)."""
+    fire_benched = [m for m in ctx.me.bench if "Fire" in m.card.types]
+    if not fire_benched:
+        return
+    target = min(fire_benched, key=lambda m: m.energy_count())   # least-loaded first
+    if attach_basic_energy_from_hand(ctx, "Fire", target):
+        ctx.state.emit(f"Excited Turbo: accelerated Fire onto {target.card.name}")
+
+
+def _fan_call(ctx: EffectContext) -> None:
+    """Fan Rotom: once on your first turn, search up to 3 Colorless Pokémon (≤100 HP)."""
+    n = search_deck(ctx, [p_colorless_le100] * 3, dest="hand")
+    if n:
+        ctx.state.emit(f"Fan Call: searched {n} Colorless Pokémon")
+
+
+def _last_ditch_catch(ctx: EffectContext) -> None:
+    """Meowth ex on-bench trigger: search your deck for a Supporter, put it in hand."""
+    if search_deck(ctx, [p_supporter], dest="hand"):
+        ctx.state.emit("Last-Ditch Catch: searched a Supporter")
+
+
+def _crushing_hammer(ctx: EffectContext) -> bool:
+    """Flip a coin; if heads, discard an Energy from 1 of the opponent's Pokémon."""
+    if flip(ctx):
+        targets = [m for m in ctx.opp.all_in_play() if m.energy]
+        if targets:
+            victim = max(targets, key=lambda m: m.energy_count())   # strip the most-loaded
+            e = victim.energy.pop()
+            ctx.opp.discard.append(e)
+            ctx.state.emit(f"Crushing Hammer: heads — discarded {e.name} from {victim.card.name}")
+    else:
+        ctx.state.emit("Crushing Hammer: tails")
+    return True          # the card is used either way (the flip IS the effect)
+
+
+def _unfair_stamp(ctx: EffectContext) -> bool:
+    """ACE SPEC: each player shuffles hand into deck; you draw 5, opponent draws 2."""
+    shuffle_hand_into_deck(ctx, ctx.me)
+    shuffle_hand_into_deck(ctx, ctx.opp)
+    ctx.me.draw(5)
+    ctx.opp.draw(2)
+    ctx.state.emit("Unfair Stamp: reset hands (you 5, opponent 2)")
+    return True
+
+
+def _fighting_wings(ctx: EffectContext) -> None:
+    """Moltres: 20, +90 more if the opponent's Active is a Pokémon ex."""
+    dmg = 20
+    d = ctx.opp.active
+    if d is not None and any(s.lower() == "ex" for s in d.card.subtypes):
+        dmg += 90
+    apply_attack_damage(ctx, d, dmg, owner=ctx.opp)
+
+
+def _come_and_get_you(ctx: EffectContext) -> None:
+    """Duskull: put up to 3 Duskull from your discard pile onto your Bench."""
+    placed = 0
+    for c in list(ctx.me.discard):
+        if placed >= 3 or len(ctx.me.bench) >= PlayerState.MAX_BENCH:
+            break
+        if c.name == "Duskull":
+            ctx.me.discard.remove(c)
+            ctx.me.bench.append(InPlayPokemon(card=c, played_this_turn=True))
+            placed += 1
+    if placed:
+        ctx.state.emit(f"Come and Get You: benched {placed} Duskull")
+
+
+def _dig(ctx: EffectContext) -> None:
+    """Dunsparce: 30, flip a coin; if heads, prevent all damage & effects of attacks
+    done to this Pokémon during the opponent's next turn."""
+    if flip(ctx):
+        ctx.source.shielded = True
+        ctx.state.emit(f"Dig: heads — {ctx.source.card.name} is shielded next turn")
+
+
+def _assault_landing(ctx: EffectContext) -> None:
+    """Fan Rotom: 70, but does nothing if there is no Stadium in play."""
+    if current_stadium_name(ctx.state) is not None:
+        apply_attack_damage(ctx, ctx.opp.active, 70, owner=ctx.opp)
+
+
+def _tuck_tail(ctx: EffectContext) -> None:
+    """Meowth ex: 60 (applied by the engine), then put THIS Pokémon and all attached
+    cards into your hand (removing it from play; promote if it was Active)."""
+    mon = ctx.source
+    me = ctx.me
+    me.hand.append(mon.card)
+    me.hand.extend(mon.energy)
+    me.hand.extend(mon.evolved_from)
+    if mon.tool is not None:
+        me.hand.append(mon.tool)
+    if me.active is mon:
+        me.active = None
+        if me.bench:
+            me.bench.sort(key=lambda m: m.remaining_hp, reverse=True)
+            me.active = me.bench.pop(0)
+    else:
+        me.bench = [m for m in me.bench if m is not mon]
+    ctx.state.emit("Tuck Tail: returned Meowth ex (and attached) to hand")
+
+
+# Attacks where the registered EFFECT computes/places ALL the damage, so the engine
+# must apply 0 base (otherwise the printed number would hit the Active a SECOND time
+# on top of the effect's chosen-target damage). Variable-damage ("+"/"×") attacks
+# are already handled separately.
+ATTACK_EFFECT_OWNS_DAMAGE: set[tuple[str, str]] = {
+    ("Mega Charizard Y ex", "Explosion Y"),   # 280 to a CHOSEN Pokémon, not the Active
+    ("Fan Rotom", "Assault Landing"),          # conditional (nothing without a Stadium)
+}
+
+
 # (card_name, attack_name) -> effect
 ATTACK_EFFECTS: dict[tuple[str, str], Callable[[EffectContext], None]] = {
     ("Dragapult ex", "Phantom Dive"): _phantom_dive,
@@ -618,6 +742,11 @@ ATTACK_EFFECTS: dict[tuple[str, str], Callable[[EffectContext], None]] = {
     ("Munkidori", "Mind Bend"): _mind_bend,
     ("Dusknoir", "Shadow Bind"): _shadow_bind,
     ("Budew", "Itchy Pollen"): _itchy_pollen,
+    ("Moltres", "Fighting Wings"): _fighting_wings,
+    ("Duskull", "Come and Get You"): _come_and_get_you,
+    ("Dunsparce", "Dig"): _dig,
+    ("Fan Rotom", "Assault Landing"): _assault_landing,
+    ("Meowth ex", "Tuck Tail"): _tuck_tail,
 }
 
 # (card_name, ability_name) -> effect
@@ -629,7 +758,32 @@ ABILITY_EFFECTS: dict[tuple[str, str], Callable[[EffectContext], None]] = {
     ("Dusknoir", "Cursed Blast"): _cursed_blast_13,
     ("Munkidori", "Adrena-Brain"): _adrena_brain,
     ("Fezandipiti ex", "Flip the Script"): _flip_the_script,
+    ("Oricorio ex", "Excited Turbo"): _excited_turbo,
+    ("Fan Rotom", "Fan Call"): _fan_call,
 }
+
+# Abilities usable any number of times per turn (not gated by ability_used_this_turn).
+REPEATABLE_ABILITIES: set[tuple[str, str]] = {("Oricorio ex", "Excited Turbo")}
+
+# Abilities that fire when the Pokémon is played from hand onto the Bench.
+# card_name -> effect(ctx with source = the new Pokémon).
+ON_BENCH_TRIGGERS: dict[str, Callable[[EffectContext], None]] = {
+    "Meowth ex": _last_ditch_catch,
+}
+
+
+def is_repeatable_ability(card_name: str, ability_name: str) -> bool:
+    return (card_name, ability_name) in REPEATABLE_ABILITIES
+
+
+def get_on_bench_trigger(card_name: str):
+    return ON_BENCH_TRIGGERS.get(card_name)
+
+
+def ability_suppressed(state: GameState, mon: InPlayPokemon) -> bool:
+    """Team Rocket's Watchtower: Colorless Pokémon (both players) have no Abilities."""
+    return ("Colorless" in mon.card.types
+            and current_stadium_name(state) == "Team Rocket's Watchtower")
 
 
 def _opp_of(state) -> PlayerState:
@@ -659,6 +813,15 @@ ABILITY_CAN_USE: dict[tuple[str, str], Callable] = {
     # Flip the Script: only if a Pokémon of yours was KO'd last turn, and you can draw.
     ("Fezandipiti ex", "Flip the Script"):
         lambda state, me, mon: me.koed_last_turn and len(me.deck) > 0,
+    # Excited Turbo: a Fire MEGA ex in play, a Basic Fire Energy in hand, a Benched Fire mon.
+    ("Oricorio ex", "Excited Turbo"):
+        lambda state, me, mon: any("MEGA" in m.card.subtypes and "Fire" in m.card.types
+                                   for m in me.all_in_play())
+            and any(c.is_basic_energy and "Fire" in c.types for c in me.hand)
+            and any("Fire" in m.card.types for m in me.bench),
+    # Fan Call: only on your first turn, and only if there's a target to find.
+    ("Fan Rotom", "Fan Call"):
+        lambda state, me, mon: me.turns_taken == 1 and any(p_colorless_le100(c) for c in me.deck),
 }
 
 
@@ -913,6 +1076,8 @@ TRAINER_EFFECTS: dict[str, Callable[[EffectContext], bool]] = {
     "Lillie's Determination": _lillies_determination,
     "Judge": _judge,
     "Crispin": _crispin,
+    "Crushing Hammer": _crushing_hammer,
+    "Unfair Stamp": _unfair_stamp,
 }
 
 _TRAINER_CAN_PLAY: dict[str, Callable] = {
@@ -931,7 +1096,58 @@ _TRAINER_CAN_PLAY: dict[str, Callable] = {
     "Lillie's Determination": lambda state, me: len(me.deck) + len(me.hand) > 0,
     "Judge": lambda state, me: len(me.deck) + len(me.hand) > 0,
     "Crispin": lambda state, me: any(c.is_basic_energy for c in me.deck),
+    # Crushing Hammer: only when the opponent has Energy to discard.
+    "Crushing Hammer": lambda state, me: any(
+        m.energy for m in state.players[1 - state.active_index].all_in_play()),
+    # Unfair Stamp (ACE SPEC): only if a Pokémon of yours was KO'd last turn.
+    "Unfair Stamp": lambda state, me: me.koed_last_turn,
 }
+
+
+# --------------------------------------------------------------------------- #
+# POKÉMON TOOLS (§2.8) + SPECIAL ENERGY (§2.10)
+# Passive Tool modifiers (Air Balloon retreat −2) live in game.retreat_cost.
+# End-of-turn Tool triggers (Powerglass) run here. Tools with NO active behavior
+# (purely passive) are listed in TOOL_IMPLEMENTED so the coverage test counts them.
+# --------------------------------------------------------------------------- #
+TOOL_IMPLEMENTED: set[str] = {"Air Balloon", "Powerglass"}
+
+# Abilities handled OUTSIDE the ATTACK/ABILITY registries (passives), but still
+# faithful — the coverage test treats these as implemented. (Agile -> retreat_cost.)
+# Abilities handled outside the active-use ABILITY_EFFECTS registry (passives or
+# on-bench triggers), but still faithful — the coverage test counts these.
+PASSIVE_ABILITIES: set[tuple[str, str]] = {
+    ("Charmander", "Agile"),                 # -> retreat_cost
+    ("Meowth ex", "Last-Ditch Catch"),       # -> ON_BENCH_TRIGGERS
+}
+
+
+def end_of_turn_tools(state: GameState, player: PlayerState) -> None:
+    """Run end-of-turn Pokémon Tool triggers for `player`. Powerglass: if the
+    holder is in the Active Spot, attach a Basic Energy from discard to it."""
+    if player.active is not None and player.active.tool is not None \
+            and player.active.tool.name == "Powerglass":
+        for i, c in enumerate(player.discard):
+            if c.is_basic_energy:
+                player.active.energy.append(player.discard.pop(i))
+                state.emit(f"Powerglass: attached {c.name} from discard")
+                break
+
+
+def _enriching_on_attach(ctx: EffectContext) -> None:
+    """Enriching Energy: when attached from hand to a Pokémon, draw 4 cards."""
+    draw(ctx, 4)
+    ctx.state.emit("Enriching Energy: drew 4")
+
+
+SPECIAL_ENERGY_ON_ATTACH: dict[str, Callable[[EffectContext], None]] = {
+    "Enriching Energy": _enriching_on_attach,
+}
+SPECIAL_ENERGY_IMPLEMENTED: set[str] = set(SPECIAL_ENERGY_ON_ATTACH)
+
+
+def get_special_energy_on_attach(card_name: str):
+    return SPECIAL_ENERGY_ON_ATTACH.get(card_name)
 
 
 def get_attack_effect(card_name: str, attack_name: str):

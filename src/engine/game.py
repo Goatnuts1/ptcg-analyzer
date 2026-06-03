@@ -125,6 +125,17 @@ def can_pay_cost(mon: InPlayPokemon, cost: tuple[str, ...]) -> bool:
     return len(provided) >= colorless_needed
 
 
+def retreat_cost(mon: InPlayPokemon) -> int:
+    """Effective retreat cost, accounting for Tools (Air Balloon −2) and passive
+    abilities (Agile: 0 if no Energy attached)."""
+    if not mon.energy and any(ab.name == "Agile" for ab in mon.card.abilities):
+        return 0
+    base = mon.card.retreat_cost
+    if mon.tool is not None and mon.tool.name == "Air Balloon":
+        base = max(0, base - 2)
+    return base
+
+
 # --------------------------------------------------------------------------- #
 # Legal action enumeration
 # --------------------------------------------------------------------------- #
@@ -180,18 +191,30 @@ def legal_actions(state: GameState) -> list[Action]:
         if fx.get_trainer_effect(c.name) and fx.can_play_trainer(state, p, c.name):
             actions.append(Action("play_trainer", hand_index=i))
 
-    # use an activated ability (once per turn per Pokemon, if registered and able)
+    # use an activated ability (once per turn per Pokemon unless repeatable; if
+    # registered, not suppressed by a Stadium, and currently able)
     for t, mon in in_play:
-        if mon and not mon.ability_used_this_turn:
-            for ab in mon.card.abilities:
-                if fx.get_ability_effect(mon.card.name, ab.name):
-                    guard = fx.get_ability_can_use(mon.card.name, ab.name)
-                    if guard is None or guard(state, p, mon):
-                        actions.append(Action("use_ability", target_index=t))
+        if not mon or fx.ability_suppressed(state, mon):
+            continue
+        for ab in mon.card.abilities:
+            if not fx.get_ability_effect(mon.card.name, ab.name):
+                continue
+            if mon.ability_used_this_turn and not fx.is_repeatable_ability(mon.card.name, ab.name):
+                continue
+            guard = fx.get_ability_can_use(mon.card.name, ab.name)
+            if guard is None or guard(state, p, mon):
+                actions.append(Action("use_ability", target_index=t))
+
+    # attach a Pokémon Tool to a Pokémon that doesn't already have one
+    for i, c in enumerate(p.hand):
+        if c.is_trainer and "Pokémon Tool" in c.subtypes:
+            for t, mon in [(-1, p.active)] + list(enumerate(p.bench)):
+                if mon is not None and mon.tool is None:
+                    actions.append(Action("attach_tool", hand_index=i, target_index=t))
 
     # retreat (if enough energy, a bench Pokemon to promote, and not retreat-locked)
     if (p.bench and not p.cant_retreat
-            and p.active.energy_count() >= p.active.card.retreat_cost):
+            and p.active.energy_count() >= retreat_cost(p.active)):
         for t in range(len(p.bench)):
             actions.append(Action("retreat", target_index=t))
 
@@ -229,7 +252,8 @@ def _resolve_attack(state: GameState, atk_index: int) -> None:
     #       effect computes the full hit (so weakness multiplies the total once)
     #   variable WITHOUT an effect -> fall back to the printed base so the attack
     #       still does something sensible (e.g. Iron Thorns' Destructo-Press)
-    if atk.damage_suffix in ("+", "×") and effect is not None:
+    owns_damage = (attacker.card.name, atk.name) in fx.ATTACK_EFFECT_OWNS_DAMAGE
+    if effect is not None and (atk.damage_suffix in ("+", "×") or owns_damage):
         base = 0
     else:
         base = atk.damage
@@ -260,8 +284,15 @@ def apply_action(state: GameState, action: Action) -> None:
 
     if action.kind == "play_basic":
         card = p.hand.pop(action.hand_index)
-        p.bench.append(InPlayPokemon(card=card, played_this_turn=True))
+        newmon = InPlayPokemon(card=card, played_this_turn=True)
+        p.bench.append(newmon)
         state.emit(f"benched {card.name}")
+        # on-bench-from-hand trigger (Meowth ex: Last-Ditch Catch), unless suppressed
+        trigger = fx.get_on_bench_trigger(card.name)
+        if trigger and not fx.ability_suppressed(state, newmon):
+            ctx = fx.EffectContext(state=state, me=p, opp=state.opponent,
+                                   source=newmon, db=state.db, rng=state.rng)
+            trigger(ctx)
         return
 
     if action.kind == "attach_energy":
@@ -270,6 +301,19 @@ def apply_action(state: GameState, action: Action) -> None:
         mon.energy.append(card)
         p.energy_attached_this_turn = True
         state.emit(f"attached {card.name} to {mon.card.name}")
+        # Special Energy on-attach trigger (Enriching Energy: draw 4)
+        on_attach = fx.get_special_energy_on_attach(card.name)
+        if on_attach:
+            ctx = fx.EffectContext(state=state, me=p, opp=state.opponent,
+                                   source=mon, db=state.db, rng=state.rng)
+            on_attach(ctx)
+        return
+
+    if action.kind == "attach_tool":
+        card = p.hand.pop(action.hand_index)
+        mon = p.active if action.target_index == -1 else p.bench[action.target_index]
+        mon.tool = card
+        state.emit(f"attached Tool {card.name} to {mon.card.name}")
         return
 
     if action.kind == "evolve":
@@ -291,7 +335,7 @@ def apply_action(state: GameState, action: Action) -> None:
 
     if action.kind == "retreat":
         # pay retreat cost: discard that many energy from the active
-        cost = p.active.card.retreat_cost
+        cost = retreat_cost(p.active)
         for _ in range(cost):
             if p.active.energy:
                 p.discard.append(p.active.energy.pop())
@@ -340,7 +384,8 @@ def apply_action(state: GameState, action: Action) -> None:
                 ctx = fx.EffectContext(state=state, me=p, opp=state.opponent,
                                        source=mon, db=state.db, rng=state.rng)
                 effect(ctx)
-                mon.ability_used_this_turn = True
+                if not fx.is_repeatable_ability(mon.card.name, ab.name):
+                    mon.ability_used_this_turn = True
                 state.emit(f"{mon.card.name} used ability {ab.name}")
                 # abilities can now KO (Cursed Blast places counters AND self-KOs)
                 fx.process_knockouts(state)
@@ -402,6 +447,7 @@ def start_turn(state: GameState) -> bool:
         mon.ability_used_this_turn = False
         mon.played_this_turn = False
         mon.evolved_this_turn = False
+        mon.shielded = False           # Dig's protection lasted through the opponent's turn
     # the starting player's first turn does NOT draw in some rule sets; modern
     # rules: player going first DOES draw. We follow modern: always draw.
     drawn = p.draw(1)
@@ -416,5 +462,7 @@ def start_turn(state: GameState) -> bool:
 
 
 def end_turn(state: GameState) -> None:
+    # end-of-turn Pokémon Tool triggers (Powerglass) for the player whose turn ends
+    fx.end_of_turn_tools(state, state.current)
     state.active_index = state.opponent_index()
     state.turn_number += 1
