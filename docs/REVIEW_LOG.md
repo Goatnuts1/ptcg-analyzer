@@ -134,3 +134,35 @@ red-by-design, which poisons the "all green = trustworthy" invariant. Reshaped
 drift (regression / unrecorded progress / `implemented`-without-a-named-test). All suites green.
 **Next:** resolve the validation-target fork, then build subsystems-first toward the first real
 matchup number vs Limitless.
+
+---
+
+## R9–R14 — Card-implementation milestone complete + validation + policy pieces 1–2
+**Reviewer:** user (ratified the scope at R8) · **Verdict:** card milestone DONE; validation run; policy work begun.
+
+**Card implementation (R9–R11): COMPLETE.** Both current Limitless tournament lists (Dragapult ex
+Dusknoir variant; Mega Charizard X/Y ex) are fully faithful — coverage snapshot
+`EXPECTED_NEEDS_EFFECT = {}`, ~70 cards/effects, every one unit-tested, 14 suites green. Subsystems:
+draw/search engine, KO/damage engine (generalized self-KO knockouts), Special Conditions
+(confuse/no-retreat/item-lock), Pokémon Tools, Special Energy, on-bench/first-turn triggers,
+ability-suppression (TRW). Recurring lesson proven 4× and guarded by test_agents.py: an implemented
+effect is inert unless the AGENT plays it — verify live-fire, not just unit tests.
+
+**Validation (R12): the sim does NOT yet reproduce the matchup.** Published Limitless ~84% Dragapult
+vs Mega Charizard X (16-3, small sample). Sim: greedy 53% → terminal-MCTS 57.5% → eval-MCTS 59.2%.
+NOT a card/engine-fidelity failure (cards faithful + tested) — it's AGENT/POLICY strength, exactly
+the pre-registered suspect list. Success criterion (set by user): land in a Dragapult-favored band
+(~68–82%) **for the right reasons**, not a tuned point.
+
+**Policy (R13 piece 1 / R14 piece 2):**
+- `position_value` (effect-aware eval: prizes, bench pressure, disruption, attacker development) is
+  sound in isolation but a 1-ply agent plays degenerate full games (board-wipe by turn 8, 0 spread).
+- eval-MCTS (position_value as MCTS leaf eval) is real, non-degenerate play: **Dragapult 59.2%, 42%
+  won by prizes**, and the right TACTICAL lines fire (Phantom Dive 36/120, gust 81, Cursed Blast 34,
+  Crushing Hammer 44). Still below the band by ~25 pts.
+
+**Residual gap (honest):** (1) single-turn tree — Dragapult's edge compounds across turns →
+multi-turn/ISMCTS (piece 2b); (2) eval has no term for STRATEGIC disruption (Budew/TRW/Battle Cage
+fire 0/120 — engine-denial / spread-denial unvalued). NO eval over-tuning per the standing rule.
+**Next:** piece 2b multi-turn search, piece 3 search-owned target policies, careful disruption-eval
+terms; this matchup is the regression metric. Full findings in docs/VALIDATION_RESULT.md.
