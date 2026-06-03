@@ -158,6 +158,22 @@ def main():
           f"Tera should NOT protect the Active (dmg={b.active.damage})")
 
     # ----------------------------------------------------------------- #
+    # 5. The greedy AGENT actually plays an available Stadium. Without this,
+    #    Battle Cage is offered every turn but never played -> silently inert in
+    #    live games (the spread runs unopposed and inflates Dragapult).
+    # ----------------------------------------------------------------- #
+    from src.engine.agents import GreedyAgent
+    st, a, b = fresh_state(db)
+    a.active = InPlayPokemon(card=db.get("Flutter Mane"))   # no energy -> can't attack
+    a.bench = [InPlayPokemon(card=db.get("Dreepy")) for _ in range(3)]  # no bench dev
+    a.hand = [db.get("Battle Cage")]                        # only a Stadium to play
+    b.active = InPlayPokemon(card=db.get("Dragapult ex"))
+    st.active_index = 0
+    act = GreedyAgent().choose(st)
+    check(act.kind == "play_stadium",
+          f"greedy should play an available Stadium, chose {act.kind!r}")
+
+    # ----------------------------------------------------------------- #
     if fails:
         print(f"FAIL ({len(fails)} issue(s)):")
         for f in fails:
