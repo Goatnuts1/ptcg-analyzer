@@ -52,3 +52,30 @@ cards:
 
 The harness is ready for that work: faithful decks, a green-on-correct coverage snapshot, a
 mirrored-seat matchup runner, and a documented suspect list.
+
+---
+
+## Policy milestone — piece 1: effect-aware valuation (findings)
+
+Built `src/engine/evaluation.py::position_value` — score the *resulting position* (prizes,
+damage-toward-KO = bench pressure, disruption flags, board/attacker development), so an action
+is worth the board it produces, not its printed number. Plus `EvalAgent` (1-ply lookahead) and
+`src/engine/matchup.py` (the regression metric: win% **+ right-lines evidence**).
+
+**The valuation is sound in isolation** (`test_evaluation.py`): it rewards bench pressure,
+prizes, and disruption, and — set up — ranks Phantom Dive's spread above passing (value 77 vs
+31), i.e. it values the effect, not the "200." EvalAgent correctly attacks when the attacker is
+ready.
+
+**But 1-ply is not enough for full games.** EvalAgent mirror (100 games): Dragapult 64% — and
+the line evidence shows it's **for the wrong reasons**: Phantom Dive 0/100, gust 0/100,
+disruption 0/100, only ~1% won by prizes. Games end ~turn 8 by board-wipe because a 1-ply agent
+over-develops one line and can't see the multi-turn setup→attack→prize arc. **This 64% is NOT a
+valid validation number** — it's a degenerate-play artifact.
+
+**Conclusion:** position_value is a correct, reusable evaluation; the limiter is *search depth*,
+exactly as the build order anticipated. **Piece 2 = MCTS using position_value as its leaf
+evaluation** (multi-turn lookahead) is what will make the agent express bench-spread + gust-into-
+KO + disruption over a real game. The matchup harness + right-lines instrumentation are in place
+to measure it. (No eval over-tuning — per the standing rule, we don't chase the point; we get the
+band for the right reasons via search.)

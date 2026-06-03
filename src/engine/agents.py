@@ -11,8 +11,9 @@ state, return an Action.
 from __future__ import annotations
 
 import random
-from .game import Action, legal_actions
+from .game import Action, legal_actions, apply_action
 from .state import GameState
+from .evaluation import position_value
 
 # v0 greedy Trainer policy (name-based; a real policy is MCTS's job). Without a
 # GENERAL branch here, every search/draw Trainer we implement is inert in live
@@ -146,3 +147,39 @@ class GreedyAgent:
 
         # 4. nothing useful
         return Action(kind="pass")
+
+
+class EvalAgent:
+    """1-ply lookahead over the effect-aware position_value (POLICY milestone, piece 1).
+
+    For each legal action it clones the state, applies the action, and scores the
+    RESULTING position. It picks the highest-scoring result, so an action is worth
+    exactly the board it produces — Phantom Dive's bench spread, Budew's Item-lock,
+    a Confused Active — with no per-card heuristics and no blindness to effect damage.
+
+    1-ply does NOT yet capture multi-step sequencing (gust-THEN-KO); that's piece 2
+    (MCTS using position_value as its leaf evaluation). But bench-spread and disruption
+    are 1-ply-visible, so this already expresses most of what greedy missed.
+    """
+
+    def __init__(self, rng: random.Random = None):
+        self.rng = rng or random.Random()
+
+    def choose(self, state: GameState) -> Action:
+        acts = legal_actions(state)
+        if not acts:
+            return Action(kind="pass")
+        me = state.active_index
+        best, best_v = None, None
+        for a in acts:
+            # fresh rng per clone so effects with randomness (flips/shuffles) sample;
+            # one sample is enough for a v0 ranking.
+            clone = state.clone(fresh_rng=random.Random(self.rng.randrange(1 << 30)))
+            try:
+                apply_action(clone, a)
+            except Exception:
+                continue
+            v = position_value(clone, me)
+            if best_v is None or v > best_v:
+                best, best_v = a, v
+        return best if best is not None else Action(kind="pass")
