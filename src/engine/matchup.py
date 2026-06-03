@@ -35,7 +35,7 @@ LINE_MARKERS = {
 }
 
 
-def _make_agent(kind: str, rng: random.Random, iters: int):
+def _make_agent(kind: str, rng: random.Random, iters: int, plies: int = 1):
     if kind == "random":
         return RandomAgent(rng)
     if kind == "greedy":
@@ -43,14 +43,14 @@ def _make_agent(kind: str, rng: random.Random, iters: int):
     if kind == "eval":
         return EvalAgent(rng)
     if kind == "mcts":
-        return MCTSAgent(iterations=iters, rng=rng)
+        return MCTSAgent(iterations=iters, rng=rng, search_plies=plies)
     if kind == "mcts-eval":
-        return MCTSAgent(iterations=iters, rollout="eval", rng=rng)
+        return MCTSAgent(iterations=iters, rollout="eval", rng=rng, search_plies=plies)
     raise ValueError(kind)
 
 
 def run_matchup(agent: str = "eval", n_per_orient: int = 30, iters: int = 120,
-                seed: int = 0) -> dict:
+                seed: int = 0, plies: int = 1) -> dict:
     db = CardDB.from_pool("data/standard_pool.json")
     drag_wins = char_wins = ties = 0
     line_counts = {name: 0 for name in LINE_MARKERS}
@@ -66,7 +66,7 @@ def run_matchup(agent: str = "eval", n_per_orient: int = 30, iters: int = 120,
                 deck_a, deck_b, drag_seat = d_char, d_drag, 1
             st = setup_game(deck_a, deck_b, seed=seed + orient * 100000 + i, db=db)
             start_turn(st)
-            finish_game(st, _make_agent(agent, rng, iters), _make_agent(agent, rng, iters))
+            finish_game(st, _make_agent(agent, rng, iters, plies), _make_agent(agent, rng, iters, plies))
             _resolve_tie(st)
             if st.winner is None:
                 ties += 1
@@ -96,10 +96,11 @@ def main():
     ap.add_argument("--agent", default="eval", choices=["random", "greedy", "eval", "mcts", "mcts-eval"])
     ap.add_argument("--games", type=int, default=30, help="games PER orientation (x2 total)")
     ap.add_argument("--iters", type=int, default=120, help="MCTS iterations (mcts only)")
+    ap.add_argument("--plies", type=int, default=1, help="MCTS search_plies (1=single-turn, 2=multi-turn)")
     ap.add_argument("--seed", type=int, default=0)
     args = ap.parse_args()
 
-    r = run_matchup(args.agent, args.games, args.iters, args.seed)
+    r = run_matchup(args.agent, args.games, args.iters, args.seed, args.plies)
     print(f"\nDragapult ex vs Mega Charizard X/Y ex — {r['agent'].upper()} mirror, {r['games']} games")
     print(f"  Dragapult ex   {r['drag_wins']:>3}  ({r['dragapult_winpct']:.1f}%)")
     print(f"  Charizard X/Y  {r['char_wins']:>3}  ({100 - r['dragapult_winpct']:.1f}%)  ties {r['ties']}")

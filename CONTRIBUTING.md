@@ -52,3 +52,4 @@ python3 -m src.engine.run --log --seed 7                            # watch one 
 ## Branch/PR suggestion
 Use a branch per milestone (`feat/mcts-agent`, `feat/charizard-line`) and open a
 PR so reviews attach to the diff. `main` stays green (all tests passing).
+(note: also run tests/test_mcts_negamax.py — negamax opponent-model guard)
