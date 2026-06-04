@@ -32,6 +32,11 @@ LINE_MARKERS = {
     "Crushing Hammer hit": "Crushing Hammer: heads",
     "TRW (ability lock)": "Stadium Team Rocket's Watchtower",
     "Battle Cage prevented spread": "Battle Cage: prevented",
+    # Piece-3 mechanism metrics: evidence the TARGETING changed, not just the
+    # headline win%. Emitted by SearchPolicy only on the real played action.
+    "gust→KO secured (policy)": "gust policy: KO",
+    "Cursed Blast→engine KO (policy)": "cursed-blast policy: engine",
+    "Phantom Dive→multi-setup (policy)": "phantom-dive policy: multi-setup",
 }
 
 

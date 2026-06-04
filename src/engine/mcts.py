@@ -48,6 +48,7 @@ from .game import (Action, PASS, legal_actions, apply_action,
                    start_turn, end_turn, check_win, MAX_TURNS)
 from .agents import GreedyAgent, RandomAgent
 from .evaluation import position_value
+from .policies import SearchPolicy
 
 
 def _logistic(x: float, scale: float = 60.0) -> float:
@@ -181,9 +182,17 @@ class MCTSAgent:
         self.rollout = rollout
         self.rng = rng or random.Random()
         self.search_plies = max(1, search_plies)
+        # Piece 3: search-owned target policy. Stateless (pure functions of board
+        # state), so one shared instance is reused. Attached to the state at the
+        # top of choose() so it shapes BOTH search lines (clone() propagates it)
+        # AND the actually-played action (effects run on the real state right
+        # after choose returns). start_turn clears it at the turn boundary, so it
+        # never leaks into the opponent's turn.
+        self._policy = SearchPolicy()
 
     # -- public interface: same as the other agents --
     def choose(self, state: GameState) -> Action:
+        state.targeting_policy = self._policy
         me = state.active_index
         root_legal = _deduped_legal(state)
         if len(root_legal) == 1:

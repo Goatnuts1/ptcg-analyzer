@@ -443,6 +443,11 @@ def start_turn(state: GameState) -> bool:
     p.cant_play_items = p.pending_cant_play_items
     p.pending_cant_retreat = False
     p.pending_cant_play_items = False
+    # Piece 3: targeting_policy is per-turn agent scratch. Clear it at the turn
+    # boundary so a policy attached by one player's agent can never leak into the
+    # other player's effect resolution. The acting agent (MCTSAgent) re-attaches
+    # at the top of choose(); Greedy/Random never attach, so they stay v0.
+    state.targeting_policy = None
     for mon in p.all_in_play():
         mon.ability_used_this_turn = False
         mon.played_this_turn = False

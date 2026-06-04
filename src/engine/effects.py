@@ -442,7 +442,18 @@ def _promote(victim: PlayerState) -> None:
 # --------------------------------------------------------------------------- #
 def _phantom_dive(ctx: EffectContext) -> None:
     # 200 base damage to Active is applied by the engine; the EFFECT is the spread.
-    place_counters_on_bench(ctx, counters=6, policy="maximize_ko")
+    # Piece 3: a search policy may own the distribution; else v0 pile-drives.
+    # The hook is scoped to THIS call site — place_counters_on_bench keeps its v0
+    # "maximize_ko" default for every other caller.
+    pol = getattr(ctx.state, "targeting_policy", None)
+    dist = None
+    if pol is not None:
+        dist = pol.phantom_dive_spread(ctx.state, ctx.me, ctx.opp, 6)
+    if dist:
+        for target, n in dist:
+            place_counters(ctx, target, n, owner=ctx.opp)   # Battle Cage may prevent
+    else:
+        place_counters_on_bench(ctx, counters=6, policy="maximize_ko")
 
 
 def _recon_directive(ctx: EffectContext) -> None:
@@ -542,7 +553,15 @@ def _cursed_blast(ctx: EffectContext, counters: int) -> None:
     """Put `counters` damage counters on 1 opp Pokémon, then THIS Pokémon is KO'd
     (its owner's opponent takes the prize — that's the cost)."""
     opp = ctx.opp
-    target = _pick_ko_target(opp, counters * 10) or opp.active
+    # Piece 3: the policy hook lives HERE (the _cursed_blast call site), NOT in
+    # _pick_ko_target — that helper is shared by Cruel Arrow / Explosion Y /
+    # Adrena-Brain, which must keep v0 targeting.
+    pol = getattr(ctx.state, "targeting_policy", None)
+    target = None
+    if pol is not None:
+        target = pol.cursed_blast_target(ctx.state, ctx.me, opp, counters * 10)
+    if target is None:
+        target = _pick_ko_target(opp, counters * 10) or opp.active
     if target is not None:
         place_counters(ctx, target, counters, owner=opp)   # Battle Cage may prevent on bench
     ctx.source.damage = ctx.source.card.hp or 9999          # self-KO; swept by process_knockouts
@@ -927,8 +946,16 @@ def _boss_orders(ctx: EffectContext) -> bool:
     to KO) — a hook MCTS will later own."""
     if not ctx.opp.bench:
         return False
-    victim = min(ctx.opp.bench, key=lambda m: m.remaining_hp)
-    ctx.opp.bench.remove(victim)
+    # Piece 3: a search policy may own this target choice; else v0 (lowest HP).
+    pol = getattr(ctx.state, "targeting_policy", None)
+    victim = None
+    if pol is not None:
+        victim = pol.gust_target(ctx.state, ctx.me, ctx.opp, ctx.me.active)
+    if victim is None or not any(victim is m for m in ctx.opp.bench):
+        victim = min(ctx.opp.bench, key=lambda m: m.remaining_hp)
+    # identity-based removal (the engine convention; value-equality could match a
+    # twin synthetic card)
+    ctx.opp.bench = [m for m in ctx.opp.bench if m is not victim]
     if ctx.opp.active:
         ctx.opp.bench.append(ctx.opp.active)
     ctx.opp.active = victim

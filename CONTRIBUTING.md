@@ -35,6 +35,10 @@ python3 tests/test_tools.py                                         # Tools / Sp
 python3 tests/test_remaining.py                                     # accel / triggers / disruption / tail
 python3 tests/test_evaluation.py                                    # effect-aware position valuation
 python3 tests/test_mcts_keys.py                                     # guard: no action kind vanishes from search
+python3 tests/test_piece3_gust_target.py                            # piece-3 seam: gust target policy
+python3 tests/test_piece3_cursed_blast_target.py                    # piece-3 seam: Cursed Blast engine-kill policy
+python3 tests/test_piece3_phantom_dive_spread.py                    # piece-3 seam: Phantom Dive spread policy
+python3 tests/test_piece3_policy_logic.py                           # piece-3: SearchPolicy decision correctness
 python3 -m src.engine.matchup --agent eval --games 30               # regression metric (win% + right-lines)
 python3 tests/test_decklist_coverage.py                             # coverage snapshot (green; red on drift)
 python3 -m src.engine.run --games 1000                              # simulate (0 tokens)

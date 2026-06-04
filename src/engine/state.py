@@ -163,6 +163,13 @@ class GameState:
     # symmetric, but ownership matters for "discard the outgoing Stadium".
     stadium: Optional[Card] = None
     stadium_owner: Optional[int] = None
+    # Search-owned target policy (piece 3). PER-TURN AGENT SCRATCH, default None:
+    # the three v0 targeting helpers in effects.py consult it when set, else fall
+    # back to v0. MCTSAgent attaches a SearchPolicy at the top of choose(); it is
+    # cleared by start_turn so it never leaks into the opponent's turn (which would
+    # silently change Greedy/Random reference behavior). Duck-typed — effects.py
+    # does NOT import policies.py.
+    targeting_policy: Optional[object] = None
 
     @property
     def current(self) -> PlayerState:
@@ -192,6 +199,9 @@ class GameState:
         )
         s.stadium = self.stadium
         s.stadium_owner = self.stadium_owner
+        # Propagate the policy so determinized search worlds evaluate policy lines,
+        # not v0 (the policy is a stateless pure function — sharing the ref is safe).
+        s.targeting_policy = self.targeting_policy
         return s
 
     def emit(self, msg: str) -> None:
