@@ -24,24 +24,43 @@ printed card text.
 
 ## Quick start
 
+You need Python 3. No third-party packages are required to run the simulator.
+
+**Step 1 — build the card pool** (run once):
+
 ```bash
-# 1. build the card pool (once)
 python3 src/fetch_standard_pool.py --out data/standard_pool.json
+```
 
-# 2. run a matchup — N games between two decks, with win rates
-python3 cli.py --list                                              # available decks
-python3 cli.py --deck1 dragapult --deck2 charizard_xy --games 5000
+**Step 2 — see which decks are available:**
 
-# 3. save a specific battle, then replay it step by step
+```bash
+python3 cli.py --list
+```
+
+**Step 3 — run a matchup** (any two deck names from Step 2):
+
+```bash
+python3 cli.py --deck1 dragapult --deck2 charizard_xy --games 1000
+```
+
+This prints each deck's win rate. Use `--games 5000` for a tighter number.
+
+**Step 4 (optional) — save a single battle and replay it:**
+
+```bash
 python3 cli.py --deck1 dragapult --deck2 raging_bolt --seed 42 --save-game myrun
 python3 cli.py --replay saved_games/myrun.json
 ```
 
-Matchups mirror seats (cancel the going-first edge) and are **fully deterministic**
-by `--seed`. `--agent` is `greedy` (default, ~900–1000 games/sec), `random`, or
-`mcts` (much stronger, much slower). A saved game stores the reproducible recipe +
-full step log; replay re-simulates from the seed and **verifies the log matches
-byte-for-byte**.
+### Good to know
+
+- Matchups mirror seats (so neither deck gets the going-first advantage).
+- Everything is **deterministic**: the same `--seed` always gives the same result.
+- `--agent` chooses the player: `greedy` (default, fast), `random`, or `mcts`
+  (stronger but much slower).
+- A saved game records the full battle; replaying it re-runs from the seed and
+  confirms it reproduces exactly.
 
 ## What's built
 
@@ -58,7 +77,14 @@ byte-for-byte**.
 | Validation | win rate vs published Limitless matchup | ✅ run — see findings below |
 | LLM | self-healing card scripts, result synthesis | ◻ planned |
 
-Full test suite: **21 suites green** (`for t in tests/test_*.py; do python3 "$t"; done`).
+Run the tests (each file is a standalone script, e.g.):
+
+```bash
+python3 tests/test_new_cards.py
+python3 tests/test_determinism.py
+```
+
+Full test suite: **21 suites green.**
 
 ## Cards implemented (~54, each unit-tested)
 
