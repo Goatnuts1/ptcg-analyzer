@@ -14,13 +14,19 @@ is deterministic: the same --seed reproduces the exact same set of games.
 from __future__ import annotations
 
 import argparse
+import json
+import os
 import random
+import re
 import time
 
 from src.engine.cards import CardDB
 from src.engine.decks import DECKS, load_deck
 from src.engine.agents import RandomAgent, GreedyAgent
 from src.engine.run import play_game
+
+SAVE_DIR = "saved_games"
+SAVE_FORMAT = 1
 
 
 def _make_agent(kind: str, rng: random.Random):
@@ -30,6 +36,90 @@ def _make_agent(kind: str, rng: random.Random):
         from src.engine.mcts import MCTSAgent
         return MCTSAgent(iterations=120, rollout="eval", rng=rng, search_plies=2)
     return GreedyAgent(rng)
+
+
+def _play_one(db, deck1, deck2, agent, seed):
+    """Play a single game, deck1 in seat 0 (fixed orientation = reproducible)."""
+    rng_a, rng_b = random.Random(seed), random.Random(seed + 1_000_000)
+    st = play_game(load_deck(db, deck1), load_deck(db, deck2),
+                   _make_agent(agent, rng_a), _make_agent(agent, rng_b),
+                   seed=seed, db=db)
+    return st
+
+
+def save_game(deck1, deck2, agent, seed, game_id, pool):
+    """Play one game and save the full record (recipe + step log) to JSON. Because
+    the engine is deterministic, the recipe (decks/agent/seed) reproduces the game
+    exactly — the saved file is both a readable record and a replayable battle."""
+    db = CardDB.from_pool(pool)
+    st = _play_one(db, deck1, deck2, agent, seed)
+    winner_deck = None if st.winner is None else (deck1, deck2)[st.winner]
+    record = {
+        "format_version": SAVE_FORMAT,
+        "game_id": game_id,
+        "deck1": deck1, "deck2": deck2,
+        "agent": agent, "seed": seed,
+        "winner_seat": st.winner,
+        "winner_deck": winner_deck,
+        "turns": st.turn_number,
+        "log": st.log,
+    }
+    os.makedirs(SAVE_DIR, exist_ok=True)
+    path = os.path.join(SAVE_DIR, f"{game_id}.json")
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(record, f, indent=2, ensure_ascii=False)
+    result = "tie" if winner_deck is None else f"{winner_deck} wins"
+    print(f"Saved game '{game_id}' -> {path}")
+    print(f"  {deck1} vs {deck2} (agent={agent}, seed={seed}) — {result} "
+          f"in {st.turn_number} turns, {len(st.log)} steps")
+
+
+_STEP_RE = re.compile(r"^T(\d+) P(\d+): (.*)$", re.S)
+
+
+def replay_game(path, pool):
+    """Load a saved game and print it step by step, grouped by turn. If the decks
+    are still in the registry, re-simulate from the seed and confirm the log matches
+    (a faithful-replay integrity check)."""
+    try:
+        with open(path, encoding="utf-8") as f:
+            rec = json.load(f)
+    except FileNotFoundError:
+        print(f"No saved game at {path!r}")
+        return
+    except json.JSONDecodeError as e:
+        print(f"{path!r} is not a valid saved game: {e}")
+        return
+
+    d1, d2 = rec.get("deck1"), rec.get("deck2")
+    print(f"Replaying '{rec.get('game_id', '?')}': {d1} vs {d2}  "
+          f"(agent={rec.get('agent')}, seed={rec.get('seed')})")
+    print("=" * 64)
+    last_turn = None
+    for i, line in enumerate(rec.get("log", []), 1):
+        m = _STEP_RE.match(line)
+        if m:
+            turn, player, msg = m.group(1), m.group(2), m.group(3)
+            if turn != last_turn:
+                print(f"\n── Turn {turn} ──")
+                last_turn = turn
+            print(f"  {i:>3}. P{player}: {msg}")
+        else:
+            print(f"  {i:>3}. {line}")
+    print("=" * 64)
+    wd = rec.get("winner_deck")
+    result = "tie" if wd is None else f"{wd} wins"
+    print(f"Result: {result} in {rec.get('turns')} turns ({len(rec.get('log', []))} steps)")
+
+    # Integrity check: re-run deterministically and confirm the saved log reproduces.
+    if d1 in DECKS and d2 in DECKS and rec.get("agent") and rec.get("seed") is not None:
+        db = CardDB.from_pool(pool)
+        st = _play_one(db, d1, d2, rec["agent"], rec["seed"])
+        if st.log == rec.get("log"):
+            print("✓ verified: re-simulated from seed — log matches (faithful replay)")
+        else:
+            print("⚠ WARNING: re-simulation does NOT match the saved log "
+                  "(engine changed since save, or the file was edited)")
 
 
 def run(deck1: str, deck2: str, games: int, agent: str, seed: int,
@@ -72,7 +162,28 @@ def main():
                     help="don't mirror seats (deck1 always goes first)")
     ap.add_argument("--pool", default="data/standard_pool.json")
     ap.add_argument("--list", action="store_true", help="list available decks and exit")
+    ap.add_argument("--save-game", metavar="GAME_ID",
+                    help="play ONE game (--deck1/--deck2/--agent/--seed) and save it to "
+                         f"{SAVE_DIR}/<GAME_ID>.json")
+    ap.add_argument("--replay", metavar="PATH",
+                    help="load a saved game JSON and print it step by step")
     args = ap.parse_args()
+
+    # --- replay mode: load and print a saved battle ---
+    if args.replay:
+        replay_game(args.replay, args.pool)
+        return
+
+    # --- save mode: play one game (fixed orientation) and persist it ---
+    if args.save_game:
+        if not (args.deck1 and args.deck2):
+            print("--save-game needs --deck1 and --deck2.")
+            return
+        try:
+            save_game(args.deck1, args.deck2, args.agent, args.seed, args.save_game, args.pool)
+        except KeyError as e:
+            print(e)
+        return
 
     if args.list or not (args.deck1 and args.deck2):
         print("Available decks:")
