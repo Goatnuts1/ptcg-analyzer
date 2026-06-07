@@ -178,3 +178,63 @@ TOURNAMENT_LISTS: dict[str, list[tuple[str, int]]] = {
 def load_tournament_deck(db: CardDB, name: str) -> list[Card]:
     """Expand a registered tournament list into Card objects (validates 60 cards)."""
     return _expand(db, TOURNAMENT_LISTS[name])
+
+
+# --------------------------------------------------------------------------- #
+# Raging Bolt ex — a third functional archetype (core-stabilization milestone).
+# Built to EXERCISE the new staple cards in live games: Carmine/Lacey/Kofu/Cyrano/
+# Colress's Tenacity/Drayton/Lana's Aid (draw+search), Pokégear/Poké Ball/Dusk-style
+# search, Energy Switch/Recycler/Sacred Ash (recovery+accel), Pokémon Catcher (gust),
+# Master Ball (ACE SPEC), Klefki (Stick 'n' Draw). Raging Bolt ex's Bellowing Thunder
+# discards Basic Energy for 70 each, so the deck runs a heavy Lightning/Fighting base.
+# --------------------------------------------------------------------------- #
+DECK_RAGING_BOLT = [
+    # Pokémon (10)
+    ("Raging Bolt ex", 4),
+    ("Hoothoot", 3),
+    ("Noctowl", 2),
+    ("Klefki", 1),
+    # Supporters (10)
+    ("Carmine", 3),
+    ("Lacey", 2),
+    ("Cyrano", 1),
+    ("Colress's Tenacity", 1),
+    ("Kofu", 1),
+    ("Drayton", 1),
+    ("Lana's Aid", 1),
+    # Items (23)
+    ("Pokégear 3.0", 3),
+    ("Poké Ball", 3),
+    ("Buddy-Buddy Poffin", 3),
+    ("Energy Switch", 2),
+    ("Energy Recycler", 2),
+    ("Pokémon Catcher", 2),
+    ("Boss's Orders", 2),
+    ("Ultra Ball", 2),
+    ("Sacred Ash", 1),
+    ("Master Ball", 1),          # ACE SPEC
+    ("Switch", 1),
+    ("Night Stretcher", 1),
+    # Energy (17)
+    ("Basic Lightning Energy", 10),
+    ("Basic Fighting Energy", 7),
+]
+
+
+# --------------------------------------------------------------------------- #
+# Unified deck registry for the CLI. Friendly name -> recipe. Covers the real
+# tournament lists and the playable archetypes; fixtures stay out (they're for
+# engine tests, not matchups).
+# --------------------------------------------------------------------------- #
+DECKS: dict[str, list[tuple[str, int]]] = {
+    "dragapult": TOURNAMENT_DRAGAPULT,
+    "charizard_xy": TOURNAMENT_CHARIZARD_XY,
+    "raging_bolt": DECK_RAGING_BOLT,
+}
+
+
+def load_deck(db: CardDB, name: str) -> list[Card]:
+    """Expand any registered deck by friendly name (validates the 60-card rule)."""
+    if name not in DECKS:
+        raise KeyError(f"unknown deck {name!r}; choose from: {', '.join(sorted(DECKS))}")
+    return _expand(db, DECKS[name])

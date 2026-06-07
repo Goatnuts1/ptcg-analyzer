@@ -270,6 +270,41 @@ def p_energy(c):             return c.is_energy
 def p_supporter(c):          return c.is_supporter
 def p_pokemon_or_basic_energy(c): return c.is_pokemon or c.is_basic_energy
 def p_colorless_le100(c):    return c.is_pokemon and "Colorless" in c.types and (c.hp or 999) <= 100
+def p_pokemon_ex(c):         return c.is_pokemon and any(s.lower() == "ex" for s in c.subtypes)
+def p_stadium(c):            return c.is_trainer and "Stadium" in c.subtypes
+def p_trainer(c):            return c.is_trainer
+def p_non_rule_box_pkmn_or_basic_energy(c):
+    return (c.is_pokemon and not _has_rule_box(c)) or c.is_basic_energy
+def p_any(c):                return True
+
+
+def look_and_take(ctx: EffectContext, look: int, predicates, from_bottom: bool = False) -> int:
+    """'Look at the top (or bottom) `look` cards; take one best match per predicate
+    into hand; shuffle the others back into your deck.' Models Pokégear 3.0, Drayton,
+    Dusk Ball — strictly weaker than a full deck search (you only see a window)."""
+    me = ctx.me
+    if not me.deck:
+        return 0
+    look = min(look, len(me.deck))
+    if from_bottom:
+        window, rest = me.deck[-look:], me.deck[:-look]
+    else:
+        window, rest = me.deck[:look], me.deck[look:]
+    pool = list(window)
+    taken = []
+    for pred in predicates:
+        cands = [c for c in pool if pred(c)]
+        if not cands:
+            continue
+        pick = max(cands, key=_search_value)
+        pool.remove(pick)
+        taken.append(pick)
+    me.hand.extend(taken)
+    # "Shuffle the other cards back into your deck" — leftovers + the rest, reshuffled.
+    me.deck = rest + pool
+    if ctx.rng:
+        ctx.rng.shuffle(me.deck)
+    return len(taken)
 
 
 # --------------------------------------------------------------------------- #
@@ -720,6 +755,16 @@ def _tuck_tail(ctx: EffectContext) -> None:
     ctx.state.emit("Tuck Tail: returned Meowth ex (and attached) to hand")
 
 
+def _stick_n_draw(ctx: EffectContext) -> None:
+    """Klefki attack: discard a card from your hand; if you do, draw 2. (0 base.)"""
+    me = ctx.me
+    if me.hand:
+        i = min(range(len(me.hand)), key=lambda i: _search_value(me.hand[i]))
+        me.discard.append(me.hand.pop(i))
+        draw(ctx, 2)
+        ctx.state.emit("Stick 'n' Draw: discarded 1, drew 2")
+
+
 # Attacks where the registered EFFECT computes/places ALL the damage, so the engine
 # must apply 0 base (otherwise the printed number would hit the Active a SECOND time
 # on top of the effect's chosen-target damage). Variable-damage ("+"/"×") attacks
@@ -747,6 +792,7 @@ ATTACK_EFFECTS: dict[tuple[str, str], Callable[[EffectContext], None]] = {
     ("Dunsparce", "Dig"): _dig,
     ("Fan Rotom", "Assault Landing"): _assault_landing,
     ("Meowth ex", "Tuck Tail"): _tuck_tail,
+    ("Klefki", "Stick 'n' Draw"): _stick_n_draw,
 }
 
 # (card_name, ability_name) -> effect
@@ -1057,6 +1103,180 @@ def _crispin(ctx: EffectContext) -> bool:
     return True
 
 
+# --- NEW core-stabilization staples (meta-relevant search/draw/recovery/gust) ---
+def _carmine(ctx: EffectContext) -> bool:
+    """Discard your hand and draw 5 cards."""
+    discard_hand_and_draw(ctx, 5)
+    ctx.state.emit("Carmine: discarded hand, drew 5")
+    return True
+
+
+def _lacey(ctx: EffectContext) -> bool:
+    """Shuffle your hand into your deck; draw 4 (8 if the opponent has <=3 Prizes left)."""
+    shuffle_hand_into_deck(ctx, ctx.me)
+    n = 8 if len(ctx.opp.prizes) <= 3 else 4
+    drew = ctx.me.draw(n)
+    ctx.state.emit(f"Lacey: drew {drew}")
+    return True
+
+
+def _kofu(ctx: EffectContext) -> bool:
+    """Put 2 cards from your hand on the bottom of your deck, then draw 4."""
+    me = ctx.me
+    if len(me.hand) < 2:
+        return False
+    order = sorted(range(len(me.hand)), key=lambda i: _search_value(me.hand[i]))
+    for i in sorted(order[:2], reverse=True):       # bottom the 2 lowest-value cards
+        me.deck.append(me.hand.pop(i))
+    me.draw(4)
+    ctx.state.emit("Kofu: bottomed 2, drew 4")
+    return True
+
+
+def _cyrano(ctx: EffectContext) -> bool:
+    """Search your deck for up to 3 Pokémon ex, put them into your hand."""
+    n = search_deck(ctx, [p_pokemon_ex] * 3, dest="hand")
+    if n:
+        ctx.state.emit(f"Cyrano: searched {n} Pokémon ex")
+    return n > 0
+
+
+def _colress_tenacity(ctx: EffectContext) -> bool:
+    """Search your deck for a Stadium and an Energy, put them into your hand."""
+    n = search_deck(ctx, [p_stadium, p_energy], dest="hand")
+    if n:
+        ctx.state.emit(f"Colress's Tenacity: searched {n} card(s)")
+    return n > 0
+
+
+def _lanas_aid(ctx: EffectContext) -> bool:
+    """Put up to 3 (non-Rule-Box Pokémon / Basic Energy) from discard into hand."""
+    n = recover_from_discard(ctx, [p_non_rule_box_pkmn_or_basic_energy] * 3)
+    if n:
+        ctx.state.emit(f"Lana's Aid: recovered {n} from discard")
+    return n > 0
+
+
+def _drayton(ctx: EffectContext) -> bool:
+    """Look at the top 7; take a Pokémon and a Trainer; shuffle the rest back."""
+    n = look_and_take(ctx, 7, [p_pokemon, p_trainer])
+    if n:
+        ctx.state.emit(f"Drayton: took {n} card(s) from the top 7")
+    return n > 0
+
+
+def _hassel(ctx: EffectContext) -> bool:
+    """If one of your Pokémon was KO'd last turn: look at top 8, take up to 3."""
+    n = look_and_take(ctx, 8, [p_any] * 3)
+    if n:
+        ctx.state.emit(f"Hassel: took {n} card(s) from the top 8")
+    return n > 0
+
+
+def _poke_ball(ctx: EffectContext) -> bool:
+    """Flip a coin. If heads, search your deck for a Pokémon, put it into your hand."""
+    if flip(ctx):
+        if search_deck(ctx, [p_pokemon], dest="hand"):
+            ctx.state.emit("Poké Ball: heads — searched a Pokémon")
+        else:
+            ctx.state.emit("Poké Ball: heads — no Pokémon found")
+    else:
+        ctx.state.emit("Poké Ball: tails")
+    return True            # the flip IS the effect; the card is used either way
+
+
+def _master_ball(ctx: EffectContext) -> bool:
+    """ACE SPEC: search your deck for a Pokémon, put it into your hand."""
+    n = search_deck(ctx, [p_pokemon], dest="hand")
+    if n:
+        ctx.state.emit("Master Ball: searched a Pokémon")
+    return n > 0
+
+
+def _dusk_ball(ctx: EffectContext) -> bool:
+    """Look at the bottom 7 of your deck; take a Pokémon; shuffle the rest back."""
+    n = look_and_take(ctx, 7, [p_pokemon], from_bottom=True)
+    if n:
+        ctx.state.emit("Dusk Ball: took a Pokémon from the bottom 7")
+    return n > 0
+
+
+def _pokegear(ctx: EffectContext) -> bool:
+    """Look at the top 7 of your deck; take a Supporter; shuffle the rest back."""
+    n = look_and_take(ctx, 7, [p_supporter])
+    if n:
+        ctx.state.emit("Pokégear 3.0: found a Supporter")
+    return n > 0
+
+
+def _energy_switch(ctx: EffectContext) -> bool:
+    """Move a Basic Energy from 1 of your Pokémon to another. v0: feed the Active
+    from a benched Pokémon (accelerate the attacker); fall back to Active->Bench."""
+    me = ctx.me
+    bench_donors = [m for m in me.bench if any(e.is_basic_energy for e in m.energy)]
+    if me.active is not None and bench_donors:
+        donor, recip = max(bench_donors, key=lambda m: m.energy_count()), me.active
+    elif me.active is not None and me.bench and any(e.is_basic_energy for e in me.active.energy):
+        donor, recip = me.active, max(me.bench, key=lambda m: m.energy_count())
+    else:
+        return False
+    for i, e in enumerate(donor.energy):
+        if e.is_basic_energy:
+            recip.energy.append(donor.energy.pop(i))
+            ctx.state.emit(f"Energy Switch: moved {e.name} to {recip.card.name}")
+            return True
+    return False
+
+
+def _energy_recycler(ctx: EffectContext) -> bool:
+    """Shuffle up to 5 Basic Energy cards from your discard pile into your deck."""
+    moved = 0
+    for c in list(ctx.me.discard):
+        if moved >= 5:
+            break
+        if c.is_basic_energy:
+            ctx.me.discard.remove(c)
+            ctx.me.deck.append(c)
+            moved += 1
+    if moved:
+        if ctx.rng:
+            ctx.rng.shuffle(ctx.me.deck)
+        ctx.state.emit(f"Energy Recycler: shuffled {moved} Basic Energy into deck")
+    return moved > 0
+
+
+def _sacred_ash(ctx: EffectContext) -> bool:
+    """Shuffle up to 5 Pokémon from your discard pile into your deck."""
+    moved = 0
+    for c in list(ctx.me.discard):
+        if moved >= 5:
+            break
+        if c.is_pokemon:
+            ctx.me.discard.remove(c)
+            ctx.me.deck.append(c)
+            moved += 1
+    if moved:
+        if ctx.rng:
+            ctx.rng.shuffle(ctx.me.deck)
+        ctx.state.emit(f"Sacred Ash: shuffled {moved} Pokémon into deck")
+    return moved > 0
+
+
+def _pokemon_catcher(ctx: EffectContext) -> bool:
+    """Flip a coin. If heads, switch in 1 of the opponent's Benched Pokémon (gust)."""
+    if flip(ctx):
+        if ctx.opp.bench:
+            victim = min(ctx.opp.bench, key=lambda m: m.remaining_hp)
+            ctx.opp.bench.remove(victim)
+            if ctx.opp.active:
+                ctx.opp.bench.append(ctx.opp.active)
+            ctx.opp.active = victim
+            ctx.state.emit(f"Pokémon Catcher: heads — dragged up {victim.card.name}")
+    else:
+        ctx.state.emit("Pokémon Catcher: tails")
+    return True            # the flip IS the effect; the card is used either way
+
+
 # card_name -> (effect, can_play_predicate)
 # can_play takes (state, me) and returns bool.
 TRAINER_EFFECTS: dict[str, Callable[[EffectContext], bool]] = {
@@ -1078,6 +1298,23 @@ TRAINER_EFFECTS: dict[str, Callable[[EffectContext], bool]] = {
     "Crispin": _crispin,
     "Crushing Hammer": _crushing_hammer,
     "Unfair Stamp": _unfair_stamp,
+    # --- core-stabilization staples ---
+    "Carmine": _carmine,
+    "Lacey": _lacey,
+    "Kofu": _kofu,
+    "Cyrano": _cyrano,
+    "Colress's Tenacity": _colress_tenacity,
+    "Lana's Aid": _lanas_aid,
+    "Drayton": _drayton,
+    "Hassel": _hassel,
+    "Poké Ball": _poke_ball,
+    "Master Ball": _master_ball,
+    "Dusk Ball": _dusk_ball,
+    "Pokégear 3.0": _pokegear,
+    "Energy Switch": _energy_switch,
+    "Energy Recycler": _energy_recycler,
+    "Sacred Ash": _sacred_ash,
+    "Pokémon Catcher": _pokemon_catcher,
 }
 
 _TRAINER_CAN_PLAY: dict[str, Callable] = {
@@ -1101,6 +1338,24 @@ _TRAINER_CAN_PLAY: dict[str, Callable] = {
         m.energy for m in state.players[1 - state.active_index].all_in_play()),
     # Unfair Stamp (ACE SPEC): only if a Pokémon of yours was KO'd last turn.
     "Unfair Stamp": lambda state, me: me.koed_last_turn,
+    # --- core-stabilization staples (only offer when the card can do something) ---
+    "Carmine": lambda state, me: len(me.deck) > 0,
+    "Lacey": lambda state, me: len(me.deck) + len(me.hand) > 0,
+    "Kofu": lambda state, me: len(me.hand) >= 2 and len(me.deck) > 0,
+    "Cyrano": lambda state, me: any(p_pokemon_ex(c) for c in me.deck),
+    "Colress's Tenacity": lambda state, me: any(p_stadium(c) or p_energy(c) for c in me.deck),
+    "Lana's Aid": lambda state, me: any(p_non_rule_box_pkmn_or_basic_energy(c) for c in me.discard),
+    "Drayton": lambda state, me: any(p_pokemon(c) or p_trainer(c) for c in me.deck),
+    "Hassel": lambda state, me: me.koed_last_turn and len(me.deck) > 0,
+    "Poké Ball": lambda state, me: any(p_pokemon(c) for c in me.deck),
+    "Master Ball": lambda state, me: any(p_pokemon(c) for c in me.deck),
+    "Dusk Ball": lambda state, me: any(p_pokemon(c) for c in me.deck),
+    "Pokégear 3.0": lambda state, me: any(p_supporter(c) for c in me.deck),
+    "Energy Switch": lambda state, me: (me.active is not None and len(me.bench) > 0
+        and any(e.is_basic_energy for m in me.all_in_play() for e in m.energy)),
+    "Energy Recycler": lambda state, me: any(p_basic_energy(c) for c in me.discard),
+    "Sacred Ash": lambda state, me: any(p_pokemon(c) for c in me.discard),
+    "Pokémon Catcher": lambda state, me: len(state.players[1 - state.active_index].bench) > 0,
 }
 
 

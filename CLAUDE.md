@@ -16,16 +16,27 @@ engine (CPU only, zero tokens). The model's jobs are bounded:
 Every model output is validated against the engine before it's trusted.
 
 ## Current state
-- Data layer: done + tested. `data/standard_pool.json` = 1,273 cards (marks H/I/J).
-- Engine v0: done + tested. `src/engine/` plays full legal games at ~1,700
-  games/sec, zero tokens. Core rules faithful incl. evolution timing.
-- Effect system: done + tested. `effects.py` = primitives + registries for
-  attacks, abilities, and Trainers. 8 cards implemented (Dragapult line + Rare
-  Candy, Buddy-Buddy Poffin, Cheren, Boss's Orders), each validated vs card text.
-  Trainer play wired in (Items unlimited, Supporters once/turn, can_play gating).
-  Basic energy injected in the loader. `db` threaded through state for searches.
-- Validated: greedy beats random ~99%; effects fire in real games; Dragapult
-  attacks as early as turn 3 via Rare Candy.
+- Data layer: done + tested. `data/standard_pool.json` = **1,276 cards** (marks
+  H/I/J; 3 in the tracked `data/manual_cards.json` supplement, merged by the fetch
+  script and deduped by name).
+- Engine: done + tested. `src/engine/` plays full legal games, zero tokens. Core
+  rules faithful incl. evolution timing, Stadiums + the two bench chokepoints
+  (Battle Cage counters / Tera attack-damage), Special Conditions, Tools, Special
+  Energy, MEGA 3-prize rule, self-KO prize awards, ability suppression (TRW).
+- **Deterministic — a tested invariant.** Same seed = byte-identical game,
+  in-process (greedy + MCTS) AND cross-process (hash-seed-independent). Guarded by
+  `tests/test_determinism.py`. If this breaks, every win rate is worthless.
+- Effect system: done + tested. `effects.py` = primitives + registries for attacks,
+  abilities, Trainers, Tools, Special Energy. **~54 distinct cards implemented**,
+  each asserted against its card text. Includes the two namesake archetype lines
+  plus a draw/search/recovery staple suite.
+- Decks (`decks.py`): two faithful tournament lists (`dragapult`, `charizard_xy`)
+  and a third archetype (`raging_bolt`), in the `DECKS` registry; `load_deck(db,name)`.
+- Agents (`agents.py`): RandomAgent, GreedyAgent (hand-written priorities + general
+  Item/Supporter fallbacks so no implemented Trainer is ever inert), EvalAgent
+  (1-ply over `position_value`). MCTS in `mcts.py` (see below).
+- Validated: greedy beats random ~99%; MCTS beats greedy ~61%; effects fire in
+  real games. Matchup-fidelity findings in `docs/VALIDATION_RESULT.md`.
 
 ## Effect system (`src/engine/effects.py`)
 Hybrid: primitives + registries. Attack/ability registries keyed by
@@ -36,11 +47,11 @@ IMPORTANT: in play_trainer the card is popped from hand BEFORE the effect runs,
 because effects mutate the hand (learned bug — index shift).
 
 - MCTS agent: done + tested. `src/engine/mcts.py` = GameState.clone() +
-  determinize() (PIMC, handles hidden info) + single-turn UCT with greedy
-  rollouts. Beats greedy 61% across mirrored seats (deterministic). ~1 game/sec
-  at 120 iterations. `tests/test_mcts.py` checks clone/determinize correctness
-  (instant) and strength (~35s; skip with --fast).
-- Validated: greedy beats random ~99%; MCTS beats greedy ~61%; effects fire.
+  determinize() (PIMC, handles hidden info) + UCT. Now supports a `position_value`
+  leaf evaluation (`rollout="eval"`, far cheaper than terminal rollouts) and a
+  multi-turn negamax tree across the turn boundary (`search_plies=N`). Beats greedy
+  ~61% (single-turn, greedy rollout). `tests/test_mcts*.py` check clone/determinize
+  correctness, negamax sign handling, and strength.
 
 ## MCTS notes (`src/engine/mcts.py`)
 - clone() shares immutable Card refs, copies mutable wrappers — keep it that way.
@@ -51,14 +62,40 @@ because effects mutate the hand (learned bug — index shift).
 - Actions are de-duplicated by semantic key (same card from different hand slots,
   same energy type to same target) so the iteration budget isn't wasted.
 
-## Next task
-VALIDATION is now the priority. Two real archetypes exist (Dragapult, Mega
-Charizard X ex) but as FIXTURE decks. To trust a matchup number:
-1. Build faithful ~60-card tournament lists for both (proper draw/search counts,
-   energy ratios, tech cards) — pull current lists from Limitless.
-2. Run the matchup with MCTS and compare to the published win rate (target within
-   ~5-8%). Log it in REVIEW_LOG. THAT comparison is what tells us if the sim
-   reflects reality.
-Note on card legality: the Mega ex mechanic is current (mark I). Old SV-base ex
-(Charizard ex, Gardevoir ex, mark G) rotated OUT — always check the pool, never
-card-name memory. Optional later: multi-turn ISMCTS; more archetypes.
+## Using it — the CLI (`cli.py`)
+The "crunch all day" entry point. Decks are referenced by name from `DECKS`.
+```
+python3 cli.py --list                                           # available decks
+python3 cli.py --deck1 dragapult --deck2 charizard_xy --games 5000   # win rates
+python3 cli.py --deck1 dragapult --deck2 raging_bolt --seed 42 --save-game myrun
+python3 cli.py --replay saved_games/myrun.json                  # step-by-step replay
+```
+Matchups mirror seats (cancels the going-first edge) and are deterministic by
+`--seed`. `--agent` is `greedy` (default, ~900–1000 games/sec), `random`, or `mcts`
+(far slower). Save files store the reproducible recipe + full step log; replay
+re-simulates from the seed and verifies the log matches byte-for-byte.
+`src/engine/run.py` is the lower-level batch loop; `src/engine/matchup.py` is the
+instrumented validation runner (win% + right-lines evidence).
+
+## Validation status (see `docs/VALIDATION_RESULT.md`)
+Card-implementation milestone is COMPLETE (both tournament lists fully faithful).
+The matchup number, however, reads more EVEN than reality: sim rates Dragapult vs
+Mega Charizard ~53–59%, published Limitless ~84%. This is NOT a card/engine-fidelity
+failure — it's **agent/policy strength**: greedy and single-turn eval-MCTS don't yet
+express Dragapult's multi-turn spread+disruption plan. The strength lever (deeper
+MCTS / better target policies) is the open frontier, deliberately deprioritized in
+favor of a solid, usable, trustworthy core.
+
+## Known limitations (be honest about these)
+- **Greedy mispilots complex decks.** It ranks attacks by printed damage and can't
+  sequence multi-step plans, so e.g. `raging_bolt` (discard-energy-for-damage,
+  2-type cost) underperforms (~16–28% vs dragapult) and games frequently end by
+  self-deck-out rather than prizes. The CARDS are correct (unit-tested); the
+  *piloting* is weak. Use `--agent mcts` for stronger (slower) play, or read win
+  rates as greedy-piloted, not optimal.
+- Full multi-turn ISMCTS / hidden-hand-aware eval are not built (see VALIDATION_RESULT).
+
+## Card legality
+The Mega ex mechanic is current (mark I). Old SV-base ex (Charizard ex, Gardevoir
+ex, mark G) rotated OUT — always check the pool, never card-name memory. Rotation
+lives in one place: `STANDARD_LEGAL_MARKS` in `src/engine/legality.py`.
