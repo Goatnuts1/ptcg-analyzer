@@ -189,8 +189,9 @@ def load_tournament_deck(db: CardDB, name: str) -> list[Card]:
 # discards Basic Energy for 70 each, so the deck runs a heavy Lightning/Fighting base.
 # --------------------------------------------------------------------------- #
 DECK_RAGING_BOLT = [
-    # Pokémon (10)
+    # Pokémon (12)
     ("Raging Bolt ex", 4),
+    ("Tapu Koko ex", 2),         # Linked Lightning — fast Lightning secondary attacker
     ("Hoothoot", 3),
     ("Noctowl", 2),
     ("Klefki", 1),
@@ -215,9 +216,103 @@ DECK_RAGING_BOLT = [
     ("Master Ball", 1),          # ACE SPEC
     ("Switch", 1),
     ("Night Stretcher", 1),
-    # Energy (17)
-    ("Basic Lightning Energy", 10),
+    # Energy (15)
+    ("Basic Lightning Energy", 8),
     ("Basic Fighting Energy", 7),
+]
+
+
+# --------------------------------------------------------------------------- #
+# feature/more-cards — three more archetypes that exercise the new card effects
+# in live games. Each is a legal 60 (validated in tests/test_decklist_coverage
+# style; checked by tests/test_more_cards.py). Energy bases match the attackers'
+# printed costs so they actually function under greedy.
+# --------------------------------------------------------------------------- #
+
+# Mega Gardevoir ex (Psychic): Ralts -> Kirlia -> Mega Gardevoir ex (Overflowing
+# Wishes accel + Mega Symphonia scaling), backed by Basic Psychic ex attackers
+# (Mega Diancie, Iron Crown, Latias).
+DECK_GARDEVOIR = [
+    # Pokémon (16)
+    ("Ralts", 4),
+    ("Kirlia", 4),
+    ("Mega Gardevoir ex", 3),
+    ("Mega Diancie ex", 2),
+    ("Iron Crown ex", 2),
+    ("Latias ex", 1),
+    # Supporters (12)
+    ("Carmine", 3),
+    ("Lacey", 2),
+    ("Cyrano", 2),
+    ("Kofu", 1),
+    ("Drayton", 1),
+    ("Boss's Orders", 3),
+    # Items (17)
+    ("Rare Candy", 4),
+    ("Buddy-Buddy Poffin", 4),
+    ("Ultra Ball", 3),
+    ("Poké Pad", 2),
+    ("Pokégear 3.0", 2),
+    ("Switch", 1),
+    ("Master Ball", 1),          # ACE SPEC
+    # Energy (15)
+    ("Basic Psychic Energy", 15),
+]
+
+# Colorless toolbox: Lugia / Snorlax / Cyclizar / Mega Kangaskhan / Terapagos —
+# all attack with Colorless-cost moves, so a single basic-energy base powers them.
+DECK_COLORLESS = [
+    # Pokémon (10)
+    ("Lugia ex", 4),
+    ("Snorlax ex", 2),
+    ("Cyclizar ex", 2),
+    ("Mega Kangaskhan ex", 1),
+    ("Terapagos ex", 1),
+    # Supporters (11)
+    ("Carmine", 3),
+    ("Lacey", 2),
+    ("Cyrano", 2),
+    ("Kofu", 2),
+    ("Boss's Orders", 2),
+    # Items (22)
+    ("Buddy-Buddy Poffin", 4),
+    ("Ultra Ball", 4),
+    ("Poké Pad", 3),
+    ("Pokégear 3.0", 3),
+    ("Energy Switch", 2),
+    ("Switch", 2),
+    ("Night Stretcher", 2),
+    ("Sacred Ash", 1),
+    ("Master Ball", 1),          # ACE SPEC
+    # Energy (17)
+    ("Basic Water Energy", 17),  # Colorless costs accept any type
+]
+
+# Fire: Reshiram (Scorching Fire) / Volcanion (Scorching Cyclone) / Ethan's Ho-Oh
+# (Shining Feathers heal), heavy Fire base with recovery.
+DECK_FIRE = [
+    # Pokémon (9)
+    ("Reshiram ex", 4),
+    ("Volcanion ex", 3),
+    ("Ethan's Ho-Oh ex", 2),
+    # Supporters (11)
+    ("Carmine", 3),
+    ("Lacey", 2),
+    ("Cyrano", 1),
+    ("Crispin", 2),              # Basic-energy accel
+    ("Boss's Orders", 3),
+    # Items (20)
+    ("Buddy-Buddy Poffin", 3),
+    ("Ultra Ball", 3),
+    ("Poké Pad", 2),
+    ("Pokégear 3.0", 3),
+    ("Energy Switch", 2),
+    ("Energy Recycler", 2),
+    ("Switch", 2),
+    ("Sacred Ash", 2),
+    ("Master Ball", 1),          # ACE SPEC
+    # Energy (20)
+    ("Basic Fire Energy", 20),
 ]
 
 
@@ -230,6 +325,9 @@ DECKS: dict[str, list[tuple[str, int]]] = {
     "dragapult": TOURNAMENT_DRAGAPULT,
     "charizard_xy": TOURNAMENT_CHARIZARD_XY,
     "raging_bolt": DECK_RAGING_BOLT,
+    "gardevoir": DECK_GARDEVOIR,
+    "colorless": DECK_COLORLESS,
+    "fire": DECK_FIRE,
 }
 
 
