@@ -19,12 +19,17 @@ from .evaluation import position_value
 # GENERAL branch here, every search/draw Trainer we implement is inert in live
 # games — only the hardcoded few would ever be played. These lists keep the
 # consistency engine actually firing so the decks function and rollouts are sane.
-_CONSISTENCY_ITEMS = ("Poké Pad", "Nest Ball", "Night Stretcher", "Energy Retrieval")
+_CONSISTENCY_ITEMS = ("Poké Pad", "Nest Ball", "Night Stretcher", "Energy Retrieval",
+                      # core-stabilization search/recovery staples
+                      "Poké Ball", "Master Ball", "Dusk Ball", "Pokégear 3.0",
+                      "Energy Switch", "Energy Recycler", "Sacred Ash")
 # Disruption / comeback Items greedy plays when offered (their can_play already
 # gates them: Crushing Hammer needs opp Energy; Unfair Stamp needs a KO last turn).
-_UTILITY_ITEMS = ("Crushing Hammer", "Unfair Stamp", "Counter Catcher")
-_DRAW_SUPPORTERS = ("Lillie's Determination", "Judge", "Cheren")
-_SEARCH_SUPPORTERS = ("Hilda", "Dawn", "Crispin", "Arven")
+_UTILITY_ITEMS = ("Crushing Hammer", "Unfair Stamp", "Counter Catcher", "Pokémon Catcher")
+_DRAW_SUPPORTERS = ("Lillie's Determination", "Judge", "Cheren",
+                    "Carmine", "Lacey", "Kofu", "Hassel", "Drayton")
+_SEARCH_SUPPORTERS = ("Hilda", "Dawn", "Crispin", "Arven",
+                      "Cyrano", "Colress's Tenacity", "Lana's Aid")
 # Boss's Orders (gust) is situational — greedy can't judge the KO it sets up, so it
 # sits last and MCTS owns the timing. (§5 deviation.)
 _OTHER_SUPPORTERS = ("Boss's Orders",)
@@ -114,6 +119,16 @@ class GreedyAgent:
             if name == "Ultra Ball" and len(p.hand) > 4:    # afford the 2-card discard
                 return a
 
+        # 1c'. GENERAL Item fallback — play any other offered Item. The engine only
+        # offers an Item whose can_play says it does something, and playing it pops
+        # it from hand (no re-offer loop). Without this, every newly-implemented
+        # Item not named above would sit in hand forever (the recurring inertness
+        # bug). Supporters are excluded here — they're handled (1-per-turn) below.
+        for a in trainers:
+            c = p.hand[a.hand_index]
+            if c.is_item and not c.is_supporter:
+                return a
+
         # 1d. one Supporter per turn: refill the hand when low, else set up. (Legal
         # actions already hides Supporters once one is played this turn.)
         supporter_order = (_DRAW_SUPPORTERS + _SEARCH_SUPPORTERS + _OTHER_SUPPORTERS
@@ -124,6 +139,15 @@ class GreedyAgent:
                 c = p.hand[a.hand_index]
                 if c.name == want and c.is_supporter:
                     return a
+
+        # 1d'. GENERAL Supporter fallback — play any other offered Supporter (still
+        # 1/turn; legal_actions hides them after one is played). Future-proofs new
+        # Supporters against the inertness bug. Held BELOW the named draw/search ones
+        # so the well-understood lines take priority.
+        for a in trainers:
+            c = p.hand[a.hand_index]
+            if c.is_supporter:
+                return a
 
         # 1e. attach a Pokémon Tool when one is available (free setup; otherwise
         # Air Balloon / Powerglass would sit in hand, never played).
