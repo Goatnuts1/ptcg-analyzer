@@ -218,9 +218,10 @@ def legal_actions(state: GameState) -> list[Action]:
         for t in range(len(p.bench)):
             actions.append(Action("retreat", target_index=t))
 
-    # attack: starting player cannot attack on the very first turn
+    # attack: starting player cannot attack on the very first turn, and a Pokémon
+    # under a "can't attack this turn" lock (Eon Blade, etc.) can't attack either.
     first_turn_no_attack = (state.turn_number == 1)
-    if not first_turn_no_attack:
+    if not first_turn_no_attack and not p.active.cannot_attack:
         for ai, atk in enumerate(p.active.card.attacks):
             if can_pay_cost(p.active, atk.cost):
                 actions.append(Action("attack", attack_index=ai))
@@ -448,6 +449,10 @@ def start_turn(state: GameState) -> bool:
         mon.played_this_turn = False
         mon.evolved_this_turn = False
         mon.shielded = False           # Dig's protection lasted through the opponent's turn
+        # promote a pending "can't attack next turn" lock to active for THIS turn,
+        # then clear pending; a turn later this clears the active flag too.
+        mon.cannot_attack = mon.pending_cannot_attack
+        mon.pending_cannot_attack = False
     # the starting player's first turn does NOT draw in some rule sets; modern
     # rules: player going first DOES draw. We follow modern: always draw.
     drawn = p.draw(1)

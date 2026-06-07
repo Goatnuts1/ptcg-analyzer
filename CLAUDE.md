@@ -27,11 +27,13 @@ Every model output is validated against the engine before it's trusted.
   in-process (greedy + MCTS) AND cross-process (hash-seed-independent). Guarded by
   `tests/test_determinism.py`. If this breaks, every win rate is worthless.
 - Effect system: done + tested. `effects.py` = primitives + registries for attacks,
-  abilities, Trainers, Tools, Special Energy. **~54 distinct cards implemented**,
-  each asserted against its card text. Includes the two namesake archetype lines
-  plus a draw/search/recovery staple suite.
+  abilities, Trainers, Tools, Special Energy. **~69 distinct cards implemented**,
+  each asserted against its card text. Includes the namesake archetype lines, a
+  draw/search/recovery staple suite, and the Mega Gardevoir / Colorless / Fire
+  attacker sets.
 - Decks (`decks.py`): two faithful tournament lists (`dragapult`, `charizard_xy`)
-  and a third archetype (`raging_bolt`), in the `DECKS` registry; `load_deck(db,name)`.
+  plus four built archetypes (`raging_bolt`, `gardevoir`, `colorless`, `fire`), in
+  the `DECKS` registry; `load_deck(db, name)`.
 - Agents (`agents.py`): RandomAgent, GreedyAgent (hand-written priorities + general
   Item/Supporter fallbacks so no implemented Trainer is ever inert), EvalAgent
   (1-ply over `position_value`). MCTS in `mcts.py` (see below).

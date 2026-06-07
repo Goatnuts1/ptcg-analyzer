@@ -42,6 +42,11 @@ class InPlayPokemon:
     confused: bool = False             # Special Condition (cleared off the Active Spot)
     tool: Optional[Card] = None        # attached Pokémon Tool (max 1)
     shielded: bool = False             # immune to attack damage & effects (Dunsparce Dig)
+    # "During your next turn, this Pokémon can't attack" (Latias ex Eon Blade, etc.).
+    # pending_* is set by the attack; start_turn promotes it to the active flag on the
+    # owner's NEXT turn and clears it the turn after — same one-turn pattern as cant_retreat.
+    cannot_attack: bool = False
+    pending_cannot_attack: bool = False
 
     def clone(self) -> "InPlayPokemon":
         """Copy the mutable wrapper but SHARE Card refs (Cards are frozen/immutable).
@@ -57,6 +62,8 @@ class InPlayPokemon:
             confused=self.confused,
             tool=self.tool,
             shielded=self.shielded,
+            cannot_attack=self.cannot_attack,
+            pending_cannot_attack=self.pending_cannot_attack,
         )
 
     @property

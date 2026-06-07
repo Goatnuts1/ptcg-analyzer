@@ -765,6 +765,158 @@ def _stick_n_draw(ctx: EffectContext) -> None:
         ctx.state.emit("Stick 'n' Draw: discarded 1, drew 2")
 
 
+# --------------------------------------------------------------------------- #
+# feature/more-cards — new meta archetypes (Mega Gardevoir / Colorless / Fire).
+# Variable-damage ("×"/"+") attacks: engine applies 0 base, the effect computes the
+# whole hit via damage_active_with_weakness (so Weakness multiplies the total once).
+# Fixed-damage attacks: engine applies the printed number, the effect adds the rider.
+# --------------------------------------------------------------------------- #
+
+# --- Mega Gardevoir ex line (Psychic) ---
+def _collect(ctx: EffectContext) -> None:
+    """Ralts: draw a card."""
+    draw(ctx, 1)
+
+
+def _call_sign(ctx: EffectContext) -> None:
+    """Kirlia: search your deck for up to 3 Pokémon, put them into your hand."""
+    n = search_deck(ctx, [p_pokemon] * 3, dest="hand")
+    if n:
+        ctx.state.emit(f"Call Sign: searched {n} Pokémon")
+
+
+def _overflowing_wishes(ctx: EffectContext) -> None:
+    """Mega Gardevoir ex: for each of your Benched Pokémon, search your deck for a
+    Basic Psychic Energy and attach it to that Pokémon. (No damage.)"""
+    attached = 0
+    for mon in list(ctx.me.bench):
+        for i, c in enumerate(ctx.me.deck):
+            if c.is_basic_energy and "Psychic" in c.types:
+                mon.energy.append(ctx.me.deck.pop(i))
+                attached += 1
+                break
+    if ctx.rng:
+        ctx.rng.shuffle(ctx.me.deck)
+    if attached:
+        ctx.state.emit(f"Overflowing Wishes: accelerated {attached} Psychic Energy")
+
+
+def _mega_symphonia(ctx: EffectContext) -> None:
+    """Mega Gardevoir ex: 50 damage for each Psychic Energy attached to all of your
+    Pokémon. (Variable — engine applied 0 base.)"""
+    n = sum(1 for m in ctx.me.all_in_play() for e in m.energy if "Psychic" in (e.types or []))
+    damage_active_with_weakness(ctx, 50 * n)
+
+
+def _garland_ray(ctx: EffectContext) -> None:
+    """Mega Diancie ex: discard up to 2 Energy from this Pokémon; 120 damage each.
+    (Variable.) v0: discard up to 2 for maximum damage."""
+    src = ctx.source
+    discarded = 0
+    while discarded < 2 and src.energy:
+        ctx.me.discard.append(src.energy.pop())
+        discarded += 1
+    damage_active_with_weakness(ctx, 120 * discarded)
+
+
+def _twin_shotels(ctx: EffectContext) -> None:
+    """Iron Crown ex: 50 damage to 2 of the opponent's Pokémon. Not affected by
+    Weakness/Resistance or any effects on those Pokémon — so apply it directly."""
+    opp_mons = ([ctx.opp.active] if ctx.opp.active else []) + list(ctx.opp.bench)
+    targets = sorted(opp_mons, key=lambda m: m.remaining_hp)[:2]   # the 2 closest to KO
+    for m in targets:
+        m.damage += 50
+    if targets:
+        ctx.state.emit(f"Twin Shotels: 50 to {len(targets)} Pokémon")
+
+
+def _eon_blade(ctx: EffectContext) -> None:
+    """Latias ex: 200 (engine), and during your next turn this Pokémon can't attack."""
+    ctx.source.pending_cannot_attack = True
+    ctx.state.emit("Eon Blade: this Pokémon can't attack next turn")
+
+
+# --- Colorless toolbox ---
+def _hyper_whirlpool(ctx: EffectContext) -> None:
+    """Lugia ex: 140 (engine). Flip a coin until tails; for each heads, discard an
+    Energy from the opponent's Active Pokémon."""
+    heads = 0
+    while heads < 20 and flip(ctx):
+        heads += 1
+    removed = 0
+    for _ in range(heads):
+        if ctx.opp.active and ctx.opp.active.energy:
+            ctx.opp.discard.append(ctx.opp.active.energy.pop())
+            removed += 1
+    ctx.state.emit(f"Hyper Whirlpool: {heads} heads, discarded {removed} Energy")
+
+
+def _toss_and_turn(ctx: EffectContext) -> None:
+    """Snorlax ex: flip 3 coins; 120 damage for each heads. (Variable.)"""
+    heads = sum(1 for _ in range(3) if flip(ctx))
+    damage_active_with_weakness(ctx, 120 * heads)
+
+
+def _break_through(ctx: EffectContext) -> None:
+    """Cyclizar ex: 130 (engine), and 30 to 1 of the opponent's Benched Pokémon."""
+    if ctx.opp.bench:
+        t = min(ctx.opp.bench, key=lambda m: m.remaining_hp)
+        apply_attack_damage(ctx, t, 30, owner=ctx.opp)
+
+
+def _zircon_road(ctx: EffectContext) -> None:
+    """Cyclizar ex: 180 (engine), and you may draw 5 cards."""
+    draw(ctx, 5)
+
+
+def _run_errand(ctx: EffectContext) -> None:
+    """Mega Kangaskhan ex (ability): if Active, draw 2 cards (once per turn)."""
+    draw(ctx, 2)
+    ctx.state.emit("Run Errand: drew 2")
+
+
+def _rapid_fire_combo(ctx: EffectContext) -> None:
+    """Mega Kangaskhan ex: 200 + 50 for each heads, flipping until tails. (Variable.)"""
+    heads = 0
+    while heads < 20 and flip(ctx):
+        heads += 1
+    damage_active_with_weakness(ctx, 200 + 50 * heads)
+
+
+def _unified_beatdown(ctx: EffectContext) -> None:
+    """Terapagos ex: 30 damage for each of your Benched Pokémon. (Variable.)"""
+    damage_active_with_weakness(ctx, 30 * len(ctx.me.bench))
+
+
+# --- Fire ---
+def _scorching_fire(ctx: EffectContext) -> None:
+    """Reshiram ex: 200 (engine), then discard an Energy from this Pokémon."""
+    if ctx.source.energy:
+        ctx.me.discard.append(ctx.source.energy.pop())
+
+
+def _scorching_cyclone(ctx: EffectContext) -> None:
+    """Volcanion ex: 160 (engine), then move an Energy from this Pokémon to 1 of
+    your Benched Pokémon (v0: the least-loaded bencher)."""
+    if ctx.source.energy and ctx.me.bench:
+        target = min(ctx.me.bench, key=lambda m: m.energy_count())
+        target.energy.append(ctx.source.energy.pop())
+        ctx.state.emit(f"Scorching Cyclone: moved Energy to {target.card.name}")
+
+
+def _shining_feathers(ctx: EffectContext) -> None:
+    """Ethan's Ho-Oh ex: 160 (engine), then heal 50 damage from each of your Pokémon."""
+    for m in ctx.me.all_in_play():
+        heal(ctx, m, 50)
+    ctx.state.emit("Shining Feathers: healed 50 from each of your Pokémon")
+
+
+# --- Lightning ---
+def _linked_lightning(ctx: EffectContext) -> None:
+    """Tapu Koko ex: 60 + 20 for each of your Benched Pokémon. (Variable.)"""
+    damage_active_with_weakness(ctx, 60 + 20 * len(ctx.me.bench))
+
+
 # Attacks where the registered EFFECT computes/places ALL the damage, so the engine
 # must apply 0 base (otherwise the printed number would hit the Active a SECOND time
 # on top of the effect's chosen-target damage). Variable-damage ("+"/"×") attacks
@@ -772,6 +924,7 @@ def _stick_n_draw(ctx: EffectContext) -> None:
 ATTACK_EFFECT_OWNS_DAMAGE: set[tuple[str, str]] = {
     ("Mega Charizard Y ex", "Explosion Y"),   # 280 to a CHOSEN Pokémon, not the Active
     ("Fan Rotom", "Assault Landing"),          # conditional (nothing without a Stadium)
+    ("Iron Crown ex", "Twin Shotels"),         # 50 to 2 CHOSEN Pokémon, not the Active
 }
 
 
@@ -793,6 +946,24 @@ ATTACK_EFFECTS: dict[tuple[str, str], Callable[[EffectContext], None]] = {
     ("Fan Rotom", "Assault Landing"): _assault_landing,
     ("Meowth ex", "Tuck Tail"): _tuck_tail,
     ("Klefki", "Stick 'n' Draw"): _stick_n_draw,
+    # --- feature/more-cards ---
+    ("Ralts", "Collect"): _collect,
+    ("Kirlia", "Call Sign"): _call_sign,
+    ("Mega Gardevoir ex", "Overflowing Wishes"): _overflowing_wishes,
+    ("Mega Gardevoir ex", "Mega Symphonia"): _mega_symphonia,
+    ("Mega Diancie ex", "Garland Ray"): _garland_ray,
+    ("Iron Crown ex", "Twin Shotels"): _twin_shotels,
+    ("Latias ex", "Eon Blade"): _eon_blade,
+    ("Lugia ex", "Hyper Whirlpool"): _hyper_whirlpool,
+    ("Snorlax ex", "Toss-and-Turn Press"): _toss_and_turn,
+    ("Cyclizar ex", "Break Through"): _break_through,
+    ("Cyclizar ex", "Zircon Road"): _zircon_road,
+    ("Mega Kangaskhan ex", "Rapid-Fire Combo"): _rapid_fire_combo,
+    ("Terapagos ex", "Unified Beatdown"): _unified_beatdown,
+    ("Reshiram ex", "Scorching Fire"): _scorching_fire,
+    ("Volcanion ex", "Scorching Cyclone"): _scorching_cyclone,
+    ("Ethan's Ho-Oh ex", "Shining Feathers"): _shining_feathers,
+    ("Tapu Koko ex", "Linked Lightning"): _linked_lightning,
 }
 
 # (card_name, ability_name) -> effect
@@ -806,6 +977,7 @@ ABILITY_EFFECTS: dict[tuple[str, str], Callable[[EffectContext], None]] = {
     ("Fezandipiti ex", "Flip the Script"): _flip_the_script,
     ("Oricorio ex", "Excited Turbo"): _excited_turbo,
     ("Fan Rotom", "Fan Call"): _fan_call,
+    ("Mega Kangaskhan ex", "Run Errand"): _run_errand,
 }
 
 # Abilities usable any number of times per turn (not gated by ability_used_this_turn).
@@ -868,6 +1040,9 @@ ABILITY_CAN_USE: dict[tuple[str, str], Callable] = {
     # Fan Call: only on your first turn, and only if there's a target to find.
     ("Fan Rotom", "Fan Call"):
         lambda state, me, mon: me.turns_taken == 1 and any(p_colorless_le100(c) for c in me.deck),
+    # Run Errand: only when this Pokémon is the Active and there are cards to draw.
+    ("Mega Kangaskhan ex", "Run Errand"):
+        lambda state, me, mon: mon is me.active and len(me.deck) > 0,
 }
 
 
