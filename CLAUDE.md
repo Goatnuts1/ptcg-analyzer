@@ -69,6 +69,7 @@ The "crunch all day" entry point. Decks are referenced by name from `DECKS`.
 ```
 python3 cli.py --list                                           # available decks
 python3 cli.py --deck1 dragapult --deck2 charizard_xy --games 5000   # win rates
+python3 cli.py --round-robin --games 200                        # every deck vs every deck (matrix + tiers)
 python3 cli.py --deck1 dragapult --deck2 raging_bolt --seed 42 --save-game myrun
 python3 cli.py --replay saved_games/myrun.json                  # step-by-step replay
 ```
