@@ -150,6 +150,46 @@ def run(deck1: str, deck2: str, games: int, agent: str, seed: int,
     return {"d1_wins": d1_wins, "d2_wins": d2_wins, "ties": ties}
 
 
+def round_robin(decks: list[str], games: int, agent: str, seed: int, pool: str) -> dict:
+    """Play every deck against every other deck and return a win-rate matrix.
+
+    matrix[a][b] = a's win % vs b (decided games only). overall[a] = a's mean win %
+    across all opponents — a meta tier ranking. Deterministic by `seed`."""
+    n = len(decks)
+    matrix = {a: {b: None for b in decks} for a in decks}
+    for i in range(n):
+        for j in range(i + 1, n):
+            a, b = decks[i], decks[j]
+            r = run(a, b, games, agent, seed, mirror=True, pool=pool)
+            decided = r["d1_wins"] + r["d2_wins"]
+            a_pct = 100 * r["d1_wins"] / decided if decided else 50.0
+            matrix[a][b] = a_pct
+            matrix[b][a] = 100 - a_pct
+    overall = {a: (sum(v for v in matrix[a].values() if v is not None)
+                   / max(1, n - 1)) for a in decks}
+    return {"matrix": matrix, "overall": overall, "decks": decks}
+
+
+def print_round_robin(res: dict, games: int, agent: str, seed: int) -> None:
+    decks, matrix, overall = res["decks"], res["matrix"], res["overall"]
+    w = max(len(d) for d in decks)
+    pairs = len(decks) * (len(decks) - 1) // 2
+    print(f"\nRound-robin — {len(decks)} decks, {pairs} matchups × {games} games "
+          f"({agent}, mirrored seats, seed {seed})")
+    print("Cell = row deck's win % vs column deck.\n")
+    header = " " * (w + 2) + "".join(f"{d[:8]:>9}" for d in decks) + f"{'OVERALL':>10}"
+    print(header)
+    for a in decks:
+        row = f"{a:<{w}}  "
+        for b in decks:
+            row += "      —  " if a == b else f"{matrix[a][b]:>8.0f}%"
+        row += f"{overall[a]:>9.1f}%"
+        print(row)
+    print("\nTier ranking (by overall win %):")
+    for rank, (a, pct) in enumerate(sorted(overall.items(), key=lambda kv: -kv[1]), 1):
+        print(f"  {rank}. {a:<{w}}  {pct:5.1f}%")
+
+
 def main():
     ap = argparse.ArgumentParser(description="Run N games between two decks; report win rates.")
     ap.add_argument("--deck1", help="first deck name (see --list)")
@@ -167,11 +207,21 @@ def main():
                          f"{SAVE_DIR}/<GAME_ID>.json")
     ap.add_argument("--replay", metavar="PATH",
                     help="load a saved game JSON and print it step by step")
+    ap.add_argument("--round-robin", action="store_true",
+                    help="play every deck vs every deck; print a win-rate matrix + tier ranking")
     args = ap.parse_args()
 
     # --- replay mode: load and print a saved battle ---
     if args.replay:
         replay_game(args.replay, args.pool)
+        return
+
+    # --- round-robin mode: the whole meta at a glance ---
+    if args.round_robin:
+        decks = sorted(DECKS)
+        games = args.games if args.games != 1000 else 200   # lighter default for many pairs
+        res = round_robin(decks, games, args.agent, args.seed, args.pool)
+        print_round_robin(res, games, args.agent, args.seed)
         return
 
     # --- save mode: play one game (fixed orientation) and persist it ---

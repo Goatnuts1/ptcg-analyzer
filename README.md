@@ -46,7 +46,15 @@ python3 cli.py --deck1 dragapult --deck2 charizard_xy --games 1000
 
 This prints each deck's win rate. Use `--games 5000` for a tighter number.
 
-**Step 4 (optional) — save a single battle and replay it:**
+**Step 4 — see the whole meta at once** (every deck vs every deck):
+
+```bash
+python3 cli.py --round-robin --games 200
+```
+
+This prints a win-rate matrix and a tier ranking across all decks.
+
+**Step 5 (optional) — save a single battle and replay it:**
 
 ```bash
 python3 cli.py --deck1 dragapult --deck2 raging_bolt --seed 42 --save-game myrun
@@ -73,7 +81,7 @@ python3 cli.py --replay saved_games/myrun.json
 | Effects | `src/engine/effects.py` — primitives + registries, **~69 cards** each tested vs card text | ✅ working |
 | Decks | `dragapult`, `charizard_xy` (tournament lists) + `raging_bolt`, `gardevoir`, `colorless`, `fire` | ✅ `DECKS` registry |
 | Agents | greedy (+ general fallbacks), EvalAgent (1-ply), eval-MCTS (multi-turn negamax) | ✅ working |
-| CLI | `cli.py` — matchups, `--save-game`, `--replay`, `--list` | ✅ working |
+| CLI | `cli.py` — matchups, `--round-robin` (win-rate matrix), `--save-game`, `--replay`, `--list` | ✅ working |
 | Validation | win rate vs published Limitless matchup | ✅ run — see findings below |
 | LLM | self-healing card scripts, result synthesis | ◻ planned |
 
@@ -84,7 +92,7 @@ python3 tests/test_new_cards.py
 python3 tests/test_determinism.py
 ```
 
-Full test suite: **22 suites green.**
+Full test suite: **23 suites green.**
 
 ## Cards implemented (~69, each unit-tested)
 
