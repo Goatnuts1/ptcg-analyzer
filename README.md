@@ -1,141 +1,116 @@
 # ptcg-analyzer
 
-A Pokémon TCG deck analyzer. The long-term goal is an all-day, token-cheap
-simulator that runs game scenarios to tune decks and find edges. This repo
-currently contains **the data layer** — the foundation everything else reads from.
+A Pokémon TCG deck analyzer: an all-day, token-cheap simulator that plays game
+scenarios to tune decks and find edges. A deterministic engine plays full legal
+games on CPU only — **zero tokens, zero LLM in the game loop.**
 
 ## Architecture (the one rule)
 
-The LLM is **not** in the game loop. A deterministic engine plays the games
-(zero tokens, pure CPU). The model only authors card scripts, self-heals on
-errors, and synthesizes results. The engine is always the source of truth.
+The LLM is **not** in the game loop. A deterministic engine plays the games (zero
+tokens, pure CPU). The model only authors card scripts from card text, self-heals
+when the engine throws, and synthesizes aggregate results. The engine is always
+the source of truth, and every effect ships with a test asserting it matches the
+printed card text.
 
 ```
   [Card DB]  ->  fetch_standard_pool.py  ->  data/standard_pool.json
                                                   |
                                                   v
-                              (next) deterministic engine + agents
-                                                  |
+                          deterministic engine + agents  ->  cli.py (win rates,
+                                                  |             save / replay)
                                                   v
-                              (later) LLM heal / synthesize / online review
+                          (later) LLM heal / synthesize / online review
 ```
-
-## What's built
-
-| Stage | Component | Status |
-|-------|-----------|--------|
-| Data  | `src/fetch_standard_pool.py` — pull + filter, writes metadata sidecar | ✅ working |
-| Data  | `tests/test_pool.py` — 9 invariant checks on the pool | ✅ working |
-| Viz   | `viz/data_explorer.html` — card-data inspector + next-best-move demo | ✅ working |
-| Engine | `src/engine/` — Card model, state, rules engine, agents, runner | ✅ v0 working |
-| Engine | `tests/test_engine.py` — termination, prize, cost, agent-sanity checks | ✅ working |
-| Effects | `src/engine/effects.py` — effects: Dragapult + Charizard + Raging Bolt + Trainers | ✅ working |
-| Effects | `tests/test_effects.py` — per-card effect validation (13 cards) | ✅ working |
-| Engine | variable damage (`×`/`+`) + MEGA 3-prize rule | ✅ working |
-| Agents | `src/engine/mcts.py` — determinized UCT search agent | ✅ working |
-| Agents | `tests/test_mcts.py` — clone/determinize correctness + strength vs greedy | ✅ working |
-| Validation | win rates vs published matchups | ⏳ needs faithful decklists |
-| LLM   | self-healing card scripts, result synthesis | ◻ planned |
-
-### Archetypes implemented (13 cards)
-
-- **Dragapult ex** (Stage 2 spread): Phantom Dive, Recon Directive.
-- **Mega Charizard X ex** (Stage 2 MEGA, gives up **3** prizes): Inferno X (`90×`
-  Fire discard). Charmander → Charmeleon → Mega Charizard X ex (Rare Candy skips middle).
-- **Raging Bolt ex / Teal Mask Ogerpon ex** (Basic, energy-scaling): Bellowing
-  Thunder (`70×`), Burst Roar, Teal Dance, Myriad Leaf Shower (`30+`).
-- **Trainers:** Rare Candy, Buddy-Buddy Poffin, Cheren, Boss's Orders.
-
-⚠️ **Matchup numbers are internal, not validated.** Mega Charizard vs Dragapult
-≈ 50% (greedy) / 46% (MCTS) — even and plausible, but these are *fixture* decks,
-not tournament lists. Comparing to a published Limitless number needs faithful
-60-card lists on both sides; that's the next milestone.
-
-### MCTS agent (`mcts.py`)
-
-A search-based agent — still zero tokens, pure CPU. Three pieces:
-1. **`GameState.clone()`** — deep-copies mutable wrappers, shares immutable Card
-   refs. This is what makes search cheap.
-2. **`determinize()`** — Pokémon is imperfect-information; naive search that reads
-   the shuffled deck would cheat. Before each simulation we sample one world
-   consistent with the acting player's knowledge (their hand + public board),
-   reshuffling all hidden zones (Perfect-Information Monte Carlo).
-3. **Single-turn UCT** — the tree branches on the acting player's actions within
-   the current turn (the sequencing decision greedy can't do); the rest of the
-   game is rolled out with a greedy policy.
-
-**Result:** MCTS beats the greedy heuristic **61%** across mirrored seats
-(deterministic, fixed seeds), at ~1 game/sec with 120 iterations. The edge is
-real but bounded — greedy already makes the obvious plays, so MCTS's gain is
-sequencing and finding non-obvious lines (lethal setups, gust targets).
-
-Run it: `python3 -m src.engine.run --games 10 --agent-a mcts --agent-b greedy`
-
-**v1 scope (documented honestly):** the tree is single-turn; full multi-turn
-ISMCTS is a later upgrade. Determinization assumes the simulator knows both
-decklists (true in self-play).
-
-### Effect system (`effects.py`)
-
-Hybrid design: reusable **primitives** + **registries** mapping a card's
-attack/ability/Trainer to a hand-written effect. A `can_play` predicate gates
-Trainer legality so the engine never offers a card that would do nothing.
-
-Implemented + tested (8 cards):
-- **Dragapult line:** Phantom Dive (200 + 6-counter bench spread), Recon
-  Directive (dig 2 / take 1), plus enforced evolution timing.
-- **Trainers:** Rare Candy (Basic→Stage 2 skip), Buddy-Buddy Poffin (fetch 2
-  small Basics), Cheren (draw 3), Boss's Orders (gust a benched Pokémon up).
-
-With the Trainer engine, the Dragapult deck functions: Rare Candy fires in ~28%
-of greedy games and the fastest Phantom Dive is now **turn 3** (vs turn 7 before).
-
-⚠️ **Win rates are still NOT trustworthy matchup numbers.** Current greedy-vs-greedy
-has Dragapult at ~36% vs the fast Lightning fixture — but that reflects *weak
-piloting* of a clunky Stage 2 deck, not the real matchup. A Stage 2 deck lives or
-dies on sequencing, which a greedy agent can't do. Trustworthy percentages need
-**MCTS** (next milestone), and each result validated against a published matchup.
-
-**Validation rule:** no effect is trusted without a test asserting it matches the
-printed card text exactly.
-
-### Engine v0 — what works and what's stubbed
-
-Run it: `python3 -m src.engine.run --games 1000` (≈2,000 games/sec, **zero tokens**).
-
-**Faithful:** setup + mulligan, 6 prizes, coin-flip + first/second, turn loop,
-draw, bench Basics, one energy/turn, evolution, retreat, attacks with base
-damage, **typed energy-cost checking**, weakness (×2) / resistance, knockouts,
-prize-taking, all three win conditions (prizes, no-Pokémon, deck-out).
-
-**Stubbed (clean hooks, not yet real):** attack *effect text* (attacks do base
-damage only), abilities, Trainer-card effects, special conditions
-(poison/sleep/…), special-energy bonuses, variable `×`/`+` damage.
-
-⚠️ **Win rates from v0 are NOT meaningful matchup numbers.** Effects are stubbed,
-agents are weak, and the two decks are throwaway fixtures. The deliverable is a
-*correct core loop*, proven by greedy beating random ~99%. Real percentages come
-after effects + MCTS.
 
 ## Quick start
 
 ```bash
-python3 src/fetch_standard_pool.py --out data/standard_pool.json   # build pool
-python3 tests/test_pool.py                                          # validate it
+# 1. build the card pool (once)
+python3 src/fetch_standard_pool.py --out data/standard_pool.json
+
+# 2. run a matchup — N games between two decks, with win rates
+python3 cli.py --list                                              # available decks
+python3 cli.py --deck1 dragapult --deck2 charizard_xy --games 5000
+
+# 3. save a specific battle, then replay it step by step
+python3 cli.py --deck1 dragapult --deck2 raging_bolt --seed 42 --save-game myrun
+python3 cli.py --replay saved_games/myrun.json
 ```
 
-Last build: **1,273 unique Standard-legal cards** (marks H / I / J,
-2026 season). Re-run the fetch whenever a new set releases.
+Matchups mirror seats (cancel the going-first edge) and are **fully deterministic**
+by `--seed`. `--agent` is `greedy` (default, ~900–1000 games/sec), `random`, or
+`mcts` (much stronger, much slower). A saved game stores the reproducible recipe +
+full step log; replay re-simulates from the seed and **verifies the log matches
+byte-for-byte**.
+
+## What's built
+
+| Area | Component | Status |
+|------|-----------|--------|
+| Data | `src/fetch_standard_pool.py` + `data/manual_cards.json` supplement | ✅ 1,276 cards (marks H/I/J) |
+| Engine | `src/engine/` — Card model, state, rules engine, agents, runner | ✅ full legal games |
+| Engine | Stadiums + bench chokepoints (Battle Cage / Tera), Special Conditions, Tools, Special Energy, MEGA 3-prize, self-KO prizes, ability suppression | ✅ implemented + tested |
+| Determinism | same seed = byte-identical game (in-process **and** cross-process) | ✅ `tests/test_determinism.py` |
+| Effects | `src/engine/effects.py` — primitives + registries, **~54 cards** each tested vs card text | ✅ working |
+| Decks | `dragapult`, `charizard_xy` (faithful tournament lists), `raging_bolt` | ✅ `DECKS` registry |
+| Agents | greedy (+ general fallbacks), EvalAgent (1-ply), eval-MCTS (multi-turn negamax) | ✅ working |
+| CLI | `cli.py` — matchups, `--save-game`, `--replay`, `--list` | ✅ working |
+| Validation | win rate vs published Limitless matchup | ✅ run — see findings below |
+| LLM | self-healing card scripts, result synthesis | ◻ planned |
+
+Full test suite: **21 suites green** (`for t in tests/test_*.py; do python3 "$t"; done`).
+
+## Cards implemented (~54, each unit-tested)
+
+- **Dragapult ex** line (Stage 2 spread): Phantom Dive, Recon Directive, + the
+  Dusknoir/Dusclops Cursed-Blast KO engine, Munkidori, Fezandipiti, Budew, etc.
+- **Mega Charizard X / Y ex** (Stage 2 MEGA, gives up **3** prizes): Inferno X,
+  Explosion Y, the Dunsparce/Oricorio/Fan Rotom support.
+- **Raging Bolt ex / Teal Mask Ogerpon ex** (Basic, energy-scaling): Bellowing
+  Thunder, Burst Roar, Teal Dance, Myriad Leaf Shower.
+- **Trainer / staple suite:** Rare Candy, Buddy-Buddy Poffin, Ultra Ball, Poké
+  Pad, Boss's Orders, Switch, Night Stretcher, Crushing Hammer, Lillie's
+  Determination, Judge, Hilda, Dawn, Crispin, plus the core-stabilization staples
+  (Carmine, Lacey, Kofu, Cyrano, Colress's Tenacity, Lana's Aid, Drayton, Hassel,
+  Poké Ball, Master Ball, Dusk Ball, Pokégear 3.0, Energy Switch, Energy Recycler,
+  Sacred Ash, Pokémon Catcher, Klefki).
+
+## Agents (`agents.py`, `mcts.py`)
+
+- **Greedy** — hand-written priorities (evolve, develop, lethal, consistency
+  trainers, attack), with general Item/Supporter fallbacks so no implemented
+  Trainer is ever inert. Fast; the default.
+- **EvalAgent** — 1-ply lookahead over `position_value` (effect-aware: prizes,
+  bench pressure, disruption, development).
+- **MCTS** — determinized UCT (PIMC for hidden info). Supports a `position_value`
+  leaf eval (`rollout="eval"`) and a multi-turn negamax tree across the turn
+  boundary (`search_plies=N`). Beats greedy ~61% (single-turn).
+
+## Validation status (`docs/VALIDATION_RESULT.md`)
+
+Card implementation is **complete** — both tournament lists are fully faithful.
+The honest result: the sim rates Dragapult vs Mega Charizard ~53–59%, while the
+published Limitless number is ~84%. This is **not** a card/engine-fidelity failure
+(cards are tested) — it's **agent/policy strength**: greedy and single-turn
+eval-MCTS don't yet express Dragapult's multi-turn spread+disruption plan.
+
+### Known limitations (read win rates accordingly)
+
+- **Greedy mispilots complex decks.** It ranks attacks by printed damage and can't
+  sequence multi-step plans, so e.g. `raging_bolt` underperforms and games often
+  end by self-deck-out, not prizes. The cards are correct; the piloting is weak.
+  Use `--agent mcts` for stronger play, or treat greedy win rates as a fast,
+  approximate signal — not optimal play.
+- Full multi-turn ISMCTS / hidden-hand-aware evaluation are not built yet.
 
 ## Data source
 
-Official dump: `PokemonTCG/pokemon-tcg-data` (no API key, works offline after
-first pull). Live API alternative documented at the bottom of the fetch script.
+Official dump: `PokemonTCG/pokemon-tcg-data` (no API key, works offline after the
+first pull). A small hand-maintained `data/manual_cards.json` supplements newer
+Mega-era cards the upstream dump hasn't published; the fetch script merges it
+(deduped by name) so a re-fetch reproduces all 1,276 cards deterministically.
 
 ## When the format rotates
 
-Change one line in `src/fetch_standard_pool.py`:
-```python
-LEGAL_MARKS = {"H", "I", "J"}   # update to the new legal marks, re-run fetch + test
-```
-The test's size bounds may also need a nudge; everything else is automatic.
+Rotation lives in one place — `STANDARD_LEGAL_MARKS` in `src/engine/legality.py`
+(imported by the fetch script). Update the set, re-run the fetch, re-run the tests.
