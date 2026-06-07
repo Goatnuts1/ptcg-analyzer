@@ -1,7 +1,9 @@
 # Validation Result — Dragapult ex vs Mega Charizard X/Y ex
 
-**Status: findings for review — NOT a final verdict.** (Per the standing rule: the matchup
-number goes to the user before any REVIEW_LOG verdict is written.)
+**Status: RATIFIED (2026-06-06, see R20 below + REVIEW_LOG R20).** Simulator directionally
+validated; matchup-fidelity milestone CLOSED against an uncertainty-aware target. The historical
+sections below trace how the verdict was reached (R12 → R19 chased a mis-specified 84%/68–82% band;
+R20 resolved that the band itself was the error). The R20 section is the standing conclusion.
 
 ## What was validated
 
@@ -223,3 +225,83 @@ per the CORRECTION — not the piece-3 driver). Two independent implementations 
 mechanism. Note: cowork's run was 2-seed-chunked
 (0+999) for a shell-timeout; **this doc's number is the clean single-seed-0 mirrored run** — use it
 for the REVIEW_LOG.
+
+---
+
+## Policy milestone — piece 3 ablation + the depth-vs-structure-vs-target investigation (R20)
+
+After piece 3 (search-owned target policies) **regressed** the matchup instead of closing it, the
+question "what actually causes the sim ≈58% vs published 84% gap?" was reopened and answered with
+three measurement-only experiments (no spec/weight tuning — the standing rule held throughout).
+
+### (a) Piece-3 ablation — the target policies hurt, and one arm carries it
+Per-policy symmetric ablation (`src/engine/matchup_ablation.py`, seed 0, n=120/arm, same seeds):
+
+| arm | win% | Δ vs OFF |
+|-----|-----:|---------:|
+| OFF (v0) | 50.8% | — |
+| GUST_ONLY | 50.0% | −0.8pt (≈1 game, noise) |
+| CURSED_ONLY | 48.3% | **−2.5pt** |
+| PHANTOM_ONLY | 50.8% | +0.0pt |
+| ALL_ON (R19) | 48.3% | **−2.5pt** |
+
+**CURSED_ONLY's Δ equals ALL_ON's Δ** — the Cursed Blast engine-piece target policy carries the
+entire R19 regression; gust/phantom are inert. This is the H1 signature from the ablation's own
+docstring: the engine-piece allowlist over-weights *replaceable-from-deck* targets (Dragapult
+spends a Cursed Blast self-KO to snipe Charizard's Dudunsparce, which re-evolves off a spare
+Dunsparce — a tempo cost dressed up as engine destruction). **Verdict held — surfaced, not tuned.**
+R19's target policies are NOT in the validation harness (`matchup.py` uses plain `MCTSAgent`); the
+clean baseline below is unaffected.
+
+### (b) Search-scaling diagnostic — depth helps modestly, does NOT march to 84%
+eval-MCTS, same seeds, n=40/config (wide CI — read the trend): 100it/2ply **57.5%**, 400it/2ply
+**65.0%**, 1000it/2ply **60.0%**, 200it/3ply **52.5%**, 600it/3ply **65.0%**. Budget moves it
+~57→60–65% but is **noise-dominated and non-monotonic** (1000it < 400it). Conclusion: the gap is
+*partly* search depth (+5–8pt, with diminishing/noisy returns) but **mostly not** — depth alone
+cannot bridge a 25-pt gap. (This is the data that says building 2c full ISMCTS is unlikely to be
+worth its correctness risk for the few points on offer.)
+
+### (c) Asymmetric-strength — 84% is NOT reproduced by any sensible skill gap
+The published 84% is a mirror of **unequal humans** (Charizard pilots went 3-16); the sim is a mirror
+of **equal agents**. Pitting strong vs weak (n=50/cell, seed 0):
+
+| Dragapult | Charizard | drag% | note |
+|-----------|-----------|------:|------|
+| eval-MCTS | eval-MCTS | 58.0% | same-skill strong (baseline) |
+| eval-MCTS | EvalAgent (1-ply) | 72.0% | **discount** — EvalAgent is degenerate (over-develops, board-wiped ~T8); strong Dragapult farms it, not a "weaker but sensible" opponent |
+| eval-MCTS | greedy | 56.0% | strong vs greedy — the maximal *clean* skill gap |
+| EvalAgent | greedy | 52.0% | 1-ply vs greedy |
+| greedy | greedy | 48.0% | same-skill greedy |
+
+The maximal **clean** skill gap (strong Dragapult vs greedy Charizard) is only **56%** — *below* the
+same-skill mirror. Skill asymmetry does not explain the gap; every clean configuration lands 48–65%.
+
+### (d) Clean confirmation number (the sim's same-skill matchup estimate)
+eval-MCTS 300it/2ply, **disjoint** seeds {0, 1000, 2000}, 120 games/seed (an earlier run with seeds
+{0,1,2} was discarded — those windows overlapped ~98% and gave a falsely-precise CI):
+
+| | win% | Wilson 95% CI | n |
+|---|-----:|:-------------:|--:|
+| **Sim (same-skill mirror)** | **56.7%** | **[51.5%, 61.7%]** | 360 (independent) |
+| Published (Limitless CRI) | 84% (16-3-0) | [62%, 94%] | 19 |
+
+Per-seed: 59.2 / 55.0 / 55.8 — stable ~57%. The two intervals **nearly touch but do not overlap**
+(sim ceiling 61.7 vs published floor 62.0).
+
+### Honest verdict
+- **Milestone as originally specified (land in ~68–82% "for the right reasons"): NOT met.** The sim
+  sits at ~57% and no honest lever (depth, skill-asymmetry) reaches the band.
+- **But the gap is dominated by target mis-specification, not sim infidelity.** The ~68–82% band was
+  derived from an over-precise reading of a **19-game** sample. Properly, the published number's own
+  95% CI floor is ~62% — only ~0.3pt above the sim's CI ceiling. At point estimates the gap is ~27pt;
+  at the honest interval boundary it is ~0pt.
+- **The sim is directionally correct and roughly calibrated.** It robustly identifies Dragapult as
+  favored at ~57%, with the right lines firing (Phantom Dive, gust, TRW stadium war, Cursed Blast).
+  The residual disagreement is attributable to (i) a same-skill mirror vs a skill-skewed human sample
+  — the real 84% bakes in Charizard pilots going 3-16 — and (ii) modest, noisy search depth.
+- **Recommendation:** accept the simulator as **directionally validated** against an
+  uncertainty-aware target; record **56.7% [51.5, 61.7]** as the sim's same-skill estimate of the
+  matchup. 2c (full ISMCTS) and a hidden-hand-aware eval term remain available levers but are **not
+  clearly worth their cost** — the scaling and asymmetry data say they would buy a few points, not
+  close to 84%, and 84% is not the right yardstick for a same-skill mirror. **Do not tune toward the
+  point estimate** (forbidden, and it would fabricate fidelity).

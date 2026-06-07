@@ -166,3 +166,41 @@ multi-turn/ISMCTS (piece 2b); (2) eval has no term for STRATEGIC disruption (Bud
 fire 0/120 — engine-denial / spread-denial unvalued). NO eval over-tuning per the standing rule.
 **Next:** piece 2b multi-turn search, piece 3 search-owned target policies, careful disruption-eval
 terms; this matchup is the regression metric. Full findings in docs/VALIDATION_RESULT.md.
+
+---
+
+## R20 — Matchup-fidelity verdict: the 84% target was the problem, not the sim
+**Reviewer:** user · **Verdict: RATIFIED (2026-06-06).** Simulator **directionally validated**; the
+original ~68–82% band is mis-specified and is replaced with an uncertainty-aware target. The
+matchup-fidelity milestone is **CLOSED** on this basis. Full evidence + tables in
+`docs/VALIDATION_RESULT.md` (R20 section).
+
+**What prompted this:** piece 3 (search-owned target policies, R19) *regressed* the matchup instead
+of closing the gap. A per-policy ablation (`src/engine/matchup_ablation.py`) isolated the cause —
+**Cursed Blast targeting carries the entire −2.5pt** (CURSED_ONLY Δ = ALL_ON Δ; gust/phantom inert),
+the H1 signature: the engine-piece allowlist over-weights replaceable-from-deck targets. Surfaced,
+not tuned. R19 policies are NOT in the validation harness, so the baseline is clean.
+
+**The investigation (3 measurement-only experiments — no tuning):**
+1. **Search-scaling:** budget moves the number ~57→60–65% but noise-dominated/non-monotonic
+   (1000it < 400it). Depth is *part* of the gap (+5–8pt), not most of it. Building 2c full ISMCTS
+   is not clearly worth its correctness risk for the points on offer.
+2. **Asymmetric-strength:** the published 84% is a mirror of *unequal* humans (Charizard pilots 3-16);
+   the sim is a mirror of *equal* agents. The maximal *clean* skill gap (strong Dragapult vs greedy
+   Charizard) is only 56%; every clean config lands 48–65%. Skill-skew does not reach 84%.
+3. **Clean confirmation:** eval-MCTS 300it/2ply, disjoint seeds {0,1000,2000}, n=360 →
+   **56.7% Dragapult, Wilson 95% CI [51.5%, 61.7%]** (an earlier {0,1,2} run was discarded:
+   ~98% overlapping windows gave a falsely-precise CI — caught and re-run).
+
+**The honest read:** sim **56.7% [51.5, 61.7]** vs published **84% [62, 94] on only 19 games**. The
+intervals nearly touch (61.7 vs 62.0). At point estimates the gap is ~27pt; at the honest interval
+boundary it is ~0pt. The sim correctly identifies Dragapult as favored with the right lines firing.
+The "25-pt gap" that drove R12–R19 was largely an artifact of treating a tiny, skill-skewed sample
+as ground truth. **Recommendation:** accept directional validation; record 56.7% as the sim's
+same-skill matchup estimate; keep 2c / hidden-hand eval as deferred, not-clearly-worth-it levers.
+**Do not tune toward 84%** — forbidden, and it would fabricate fidelity.
+
+**Ratified.** The simulator is accepted as complete and directionally validated: deterministic,
+token-free, faithful cards (0 needs-effect, 22 suites green), and a matchup number that correctly
+identifies the favored deck within the published sample's own uncertainty. 2c full ISMCTS and a
+hidden-hand-aware eval term remain documented future levers, not blockers.
