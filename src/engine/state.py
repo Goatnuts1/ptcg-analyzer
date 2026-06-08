@@ -47,6 +47,10 @@ class InPlayPokemon:
     # owner's NEXT turn and clears it the turn after — same one-turn pattern as cant_retreat.
     cannot_attack: bool = False
     pending_cannot_attack: bool = False
+    # "During your next turn, this Pokémon can't use [Attack]" (Mega Brave, Brave
+    # Slash, ...). Per-attack-name locks; same one-turn promote/clear as above.
+    locked_attacks: list[str] = field(default_factory=list)
+    pending_locked_attacks: list[str] = field(default_factory=list)
 
     def clone(self) -> "InPlayPokemon":
         """Copy the mutable wrapper but SHARE Card refs (Cards are frozen/immutable).
@@ -64,6 +68,8 @@ class InPlayPokemon:
             shielded=self.shielded,
             cannot_attack=self.cannot_attack,
             pending_cannot_attack=self.pending_cannot_attack,
+            locked_attacks=list(self.locked_attacks),
+            pending_locked_attacks=list(self.pending_locked_attacks),
         )
 
     @property

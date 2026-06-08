@@ -917,6 +917,137 @@ def _linked_lightning(ctx: EffectContext) -> None:
     damage_active_with_weakness(ctx, 60 + 20 * len(ctx.me.bench))
 
 
+# --------------------------------------------------------------------------- #
+# feature/more-decks — Fighting / Dark / Metal / Water archetypes.
+# --------------------------------------------------------------------------- #
+def _attach_basic_from_discard(ctx: EffectContext, etype: str, target: InPlayPokemon,
+                               upto: int) -> int:
+    """Attach up to `upto` Basic <etype> Energy from your discard pile to `target`."""
+    n = 0
+    for c in list(ctx.me.discard):
+        if n >= upto:
+            break
+        if c.is_basic_energy and etype in c.types:
+            ctx.me.discard.remove(c)
+            target.energy.append(c)
+            n += 1
+    return n
+
+
+# --- Fighting (Mega Lucario) ---
+def _aura_jab(ctx: EffectContext) -> None:
+    """Mega Lucario ex: 130 (engine), then attach up to 3 Basic Fighting Energy from
+    your discard pile to your Benched Pokémon."""
+    placed = 0
+    for mon in ctx.me.bench:
+        if placed >= 3:
+            break
+        placed += _attach_basic_from_discard(ctx, "Fighting", mon, 3 - placed)
+    if placed:
+        ctx.state.emit(f"Aura Jab: attached {placed} Fighting Energy from discard")
+
+
+def _regi_charge(ctx: EffectContext) -> None:
+    """Regirock ex: attach up to 2 Basic Fighting Energy from discard to this Pokémon."""
+    n = _attach_basic_from_discard(ctx, "Fighting", ctx.source, 2)
+    if n:
+        ctx.state.emit(f"Regi Charge: attached {n} Fighting Energy from discard")
+
+
+def _giant_rock(ctx: EffectContext) -> None:
+    """Regirock ex: 140, +140 more if the opponent's Active is a Stage 2. (Variable.)"""
+    dmg = 140
+    if ctx.opp.active and "Stage 2" in ctx.opp.active.card.subtypes:
+        dmg += 140
+    damage_active_with_weakness(ctx, dmg)
+
+
+def _power_stomp(ctx: EffectContext) -> None:
+    """Iron Boulder ex: 200 (engine), then discard 2 Energy from this Pokémon."""
+    for _ in range(2):
+        if ctx.source.energy:
+            ctx.me.discard.append(ctx.source.energy.pop())
+
+
+def _retribution_strike(ctx: EffectContext) -> None:
+    """Koraidon ex: 20 + 10 for each damage counter on this Pokémon. (Variable.)"""
+    damage_active_with_weakness(ctx, 20 + (ctx.source.damage // 10) * 10)
+
+
+def _kaiser_tackle(ctx: EffectContext) -> None:
+    """Koraidon ex: 280 (engine), and this Pokémon does 60 damage to itself."""
+    ctx.source.damage += 60
+
+
+# --- Dark (Mega Absol) ---
+def _terminal_period(ctx: EffectContext) -> None:
+    """Mega Absol ex: if the opponent's Active has EXACTLY 6 damage counters (60),
+    it is Knocked Out. (No base damage; process_knockouts sweeps it.)"""
+    t = ctx.opp.active
+    if t is not None and t.damage == 60:
+        t.damage = t.card.hp or 9999
+        ctx.state.emit("Terminal Period: KO (exactly 6 damage counters)")
+
+
+def _claw_of_darkness(ctx: EffectContext) -> None:
+    """Mega Absol ex: 200 (engine), then discard a card from the opponent's hand
+    (v0: the highest-value card — deterministic disruption)."""
+    if ctx.opp.hand:
+        i = max(range(len(ctx.opp.hand)), key=lambda i: _search_value(ctx.opp.hand[i]))
+        c = ctx.opp.hand.pop(i)
+        ctx.opp.discard.append(c)
+        ctx.state.emit(f"Claw of Darkness: discarded {c.name} from opponent's hand")
+
+
+# --- Metal (Mega Mawile) ---
+def _gobble_down(ctx: EffectContext) -> None:
+    """Mega Mawile ex: 80 damage for each Prize card you have taken. (Variable.)"""
+    taken = 6 - len(ctx.me.prizes)
+    damage_active_with_weakness(ctx, 80 * taken)
+
+
+def _huge_bite(ctx: EffectContext) -> None:
+    """Mega Mawile ex: 260, but if the opponent's Active already has any damage on it
+    this attack's base is only 30. (Owns its damage — conditional base.)"""
+    base = 30 if (ctx.opp.active and ctx.opp.active.damage > 0) else 260
+    damage_active_with_weakness(ctx, base)
+
+
+def _insta_strike(ctx: EffectContext) -> None:
+    """Hop's Zacian ex: 30 (engine), and 30 to 1 of the opponent's Benched Pokémon."""
+    if ctx.opp.bench:
+        t = min(ctx.opp.bench, key=lambda m: m.remaining_hp)
+        apply_attack_damage(ctx, t, 30, owner=ctx.opp)
+
+
+# --- Water (Dondozo / Lapras) ---
+def _avenging_billow(ctx: EffectContext) -> None:
+    """Dondozo ex: 30 + 10 for each damage counter on this Pokémon. (Variable.)"""
+    damage_active_with_weakness(ctx, 30 + (ctx.source.damage // 10) * 10)
+
+
+def _dynamic_dive(ctx: EffectContext) -> None:
+    """Dondozo ex: 120, and you may do 120 more (then 50 to itself). v0: always take
+    the extra for maximum damage. (Variable — engine applied 0 base.)"""
+    damage_active_with_weakness(ctx, 240)
+    ctx.source.damage += 50
+
+
+def _power_splash(ctx: EffectContext) -> None:
+    """Lapras ex: 40 damage for each Energy attached to this Pokémon. (Variable.)"""
+    damage_active_with_weakness(ctx, 40 * ctx.source.energy_count())
+
+
+def _mega_brave(ctx: EffectContext) -> None:
+    """Mega Lucario ex: 270 (engine), then this Pokémon can't use Mega Brave next turn."""
+    ctx.source.pending_locked_attacks.append("Mega Brave")
+
+
+def _brave_slash(ctx: EffectContext) -> None:
+    """Hop's Zacian ex: 240 (engine), then this Pokémon can't use Brave Slash next turn."""
+    ctx.source.pending_locked_attacks.append("Brave Slash")
+
+
 # Attacks where the registered EFFECT computes/places ALL the damage, so the engine
 # must apply 0 base (otherwise the printed number would hit the Active a SECOND time
 # on top of the effect's chosen-target damage). Variable-damage ("+"/"×") attacks
@@ -925,6 +1056,7 @@ ATTACK_EFFECT_OWNS_DAMAGE: set[tuple[str, str]] = {
     ("Mega Charizard Y ex", "Explosion Y"),   # 280 to a CHOSEN Pokémon, not the Active
     ("Fan Rotom", "Assault Landing"),          # conditional (nothing without a Stadium)
     ("Iron Crown ex", "Twin Shotels"),         # 50 to 2 CHOSEN Pokémon, not the Active
+    ("Mega Mawile ex", "Huge Bite"),           # conditional base (30 vs 260) — owns it
 }
 
 
@@ -964,6 +1096,23 @@ ATTACK_EFFECTS: dict[tuple[str, str], Callable[[EffectContext], None]] = {
     ("Volcanion ex", "Scorching Cyclone"): _scorching_cyclone,
     ("Ethan's Ho-Oh ex", "Shining Feathers"): _shining_feathers,
     ("Tapu Koko ex", "Linked Lightning"): _linked_lightning,
+    # --- feature/more-decks (Fighting / Dark / Metal / Water) ---
+    ("Mega Lucario ex", "Aura Jab"): _aura_jab,
+    ("Regirock ex", "Regi Charge"): _regi_charge,
+    ("Regirock ex", "Giant Rock"): _giant_rock,
+    ("Iron Boulder ex", "Power Stomp"): _power_stomp,
+    ("Koraidon ex", "Retribution Strike"): _retribution_strike,
+    ("Koraidon ex", "Kaiser Tackle"): _kaiser_tackle,
+    ("Mega Absol ex", "Terminal Period"): _terminal_period,
+    ("Mega Absol ex", "Claw of Darkness"): _claw_of_darkness,
+    ("Mega Mawile ex", "Gobble Down"): _gobble_down,
+    ("Mega Mawile ex", "Huge Bite"): _huge_bite,
+    ("Hop's Zacian ex", "Insta-Strike"): _insta_strike,
+    ("Dondozo ex", "Avenging Billow"): _avenging_billow,
+    ("Dondozo ex", "Dynamic Dive"): _dynamic_dive,
+    ("Lapras ex", "Power Splash"): _power_splash,
+    ("Mega Lucario ex", "Mega Brave"): _mega_brave,
+    ("Hop's Zacian ex", "Brave Slash"): _brave_slash,
 }
 
 # (card_name, ability_name) -> effect

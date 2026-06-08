@@ -78,8 +78,8 @@ python3 cli.py --replay saved_games/myrun.json
 | Engine | `src/engine/` — Card model, state, rules engine, agents, runner | ✅ full legal games |
 | Engine | Stadiums + bench chokepoints (Battle Cage / Tera), Special Conditions, Tools, Special Energy, MEGA 3-prize, self-KO prizes, ability suppression | ✅ implemented + tested |
 | Determinism | same seed = byte-identical game (in-process **and** cross-process) | ✅ `tests/test_determinism.py` |
-| Effects | `src/engine/effects.py` — primitives + registries, **~69 cards** each tested vs card text | ✅ working |
-| Decks | `dragapult`, `charizard_xy` (tournament lists) + `raging_bolt`, `gardevoir`, `colorless`, `fire` | ✅ `DECKS` registry |
+| Effects | `src/engine/effects.py` — primitives + registries, **~78 cards** each tested vs card text | ✅ working |
+| Decks | `dragapult`, `charizard_xy` (tournament lists) + `raging_bolt`, `gardevoir`, `colorless`, `fire`, `fighting`, `dark`, `metal`, `water` (10 total) | ✅ `DECKS` registry |
 | Agents | greedy (+ general fallbacks), EvalAgent (1-ply), eval-MCTS (multi-turn negamax) | ✅ working |
 | CLI | `cli.py` — matchups, `--round-robin` (win-rate matrix), `--save-game`, `--replay`, `--list` | ✅ working |
 | Validation | win rate vs published Limitless matchup | ✅ run — see findings below |
@@ -92,9 +92,9 @@ python3 tests/test_new_cards.py
 python3 tests/test_determinism.py
 ```
 
-Full test suite: **23 suites green.**
+Full test suite: **24 suites green.**
 
-## Cards implemented (~69, each unit-tested)
+## Cards implemented (~78, each unit-tested)
 
 - **Dragapult ex** line (Stage 2 spread): Phantom Dive, Recon Directive, + the
   Dusknoir/Dusclops Cursed-Blast KO engine, Munkidori, Fezandipiti, Budew, etc.
@@ -108,6 +108,9 @@ Full test suite: **23 suites green.**
 - **Colorless toolbox:** Lugia ex, Snorlax ex, Cyclizar ex, Mega Kangaskhan ex,
   Terapagos ex.
 - **Fire:** Reshiram ex, Volcanion ex, Ethan's Ho-Oh ex. **Lightning:** Tapu Koko ex.
+- **Fighting:** Mega Lucario ex (Aura Jab/Mega Brave), Regirock ex, Iron Boulder ex,
+  Koraidon ex. **Dark:** Mega Absol ex. **Metal:** Mega Mawile ex, Hop's Zacian ex.
+  **Water:** Dondozo ex, Lapras ex.
 - **Trainer / staple suite:** Rare Candy, Buddy-Buddy Poffin, Ultra Ball, Poké
   Pad, Boss's Orders, Switch, Night Stretcher, Crushing Hammer, Lillie's
   Determination, Judge, Hilda, Dawn, Crispin, plus the core-stabilization staples
