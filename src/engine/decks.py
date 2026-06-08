@@ -317,6 +317,123 @@ DECK_FIRE = [
 
 
 # --------------------------------------------------------------------------- #
+# feature/more-decks — four more archetypes (Fighting / Dark / Metal / Water) so
+# the round-robin meta matrix stays meaningful. Each a legal 60, energy base
+# matched to its attackers' costs.
+# --------------------------------------------------------------------------- #
+
+# Fighting (Mega Lucario): Riolu -> Mega Lucario ex (Aura Jab discard-accel),
+# with Regirock (Regi Charge accel + Giant Rock anti-Stage2), Iron Boulder, Koraidon.
+DECK_FIGHTING = [
+    # Pokémon (11)
+    ("Mega Lucario ex", 3),
+    ("Riolu", 3),
+    ("Regirock ex", 2),
+    ("Iron Boulder ex", 2),
+    ("Koraidon ex", 1),
+    # Supporters (10)
+    ("Carmine", 3),
+    ("Lacey", 2),
+    ("Cyrano", 2),
+    ("Boss's Orders", 3),
+    # Items (22)
+    ("Buddy-Buddy Poffin", 4),
+    ("Ultra Ball", 3),
+    ("Pokégear 3.0", 3),
+    ("Crispin", 3),
+    ("Poké Pad", 2),
+    ("Energy Switch", 2),
+    ("Sacred Ash", 2),
+    ("Switch", 2),
+    ("Master Ball", 1),          # ACE SPEC
+    # Energy (17)
+    ("Basic Fighting Energy", 17),
+]
+
+# Dark (Mega Absol): Terminal Period finisher + Claw of Darkness disruption, with
+# Darkrai ex (plain hitter) and Munkidori (Adrena-Brain counter-shift).
+DECK_DARK = [
+    # Pokémon (9)
+    ("Mega Absol ex", 3),
+    ("Darkrai ex", 3),
+    ("Munkidori", 3),
+    # Supporters (10)
+    ("Carmine", 3),
+    ("Lacey", 2),
+    ("Cyrano", 2),
+    ("Boss's Orders", 3),
+    # Items (22)
+    ("Buddy-Buddy Poffin", 3),
+    ("Ultra Ball", 3),
+    ("Pokégear 3.0", 3),
+    ("Crispin", 3),
+    ("Poké Pad", 2),
+    ("Energy Switch", 2),
+    ("Night Stretcher", 2),
+    ("Switch", 2),
+    ("Sacred Ash", 1),
+    ("Master Ball", 1),          # ACE SPEC
+    # Energy (19)
+    ("Basic Darkness Energy", 19),
+]
+
+# Metal (Mega Mawile): Gobble Down (prize-scaling) + Huge Bite, with Hop's Zacian
+# (Insta-Strike bench snipe), Genesect (plain), Klefki (Stick 'n' Draw).
+DECK_METAL = [
+    # Pokémon (10)
+    ("Mega Mawile ex", 3),
+    ("Hop's Zacian ex", 3),
+    ("Genesect ex", 2),
+    ("Klefki", 2),
+    # Supporters (11)
+    ("Carmine", 3),
+    ("Lacey", 2),
+    ("Cyrano", 3),
+    ("Boss's Orders", 3),
+    # Items (22)
+    ("Buddy-Buddy Poffin", 4),
+    ("Ultra Ball", 3),
+    ("Pokégear 3.0", 3),
+    ("Crispin", 3),
+    ("Poké Pad", 2),
+    ("Energy Switch", 2),
+    ("Switch", 2),
+    ("Sacred Ash", 2),
+    ("Master Ball", 1),          # ACE SPEC
+    # Energy (17)
+    ("Basic Metal Energy", 17),
+]
+
+# Water (Dondozo / Lapras): Avenging Billow + Dynamic Dive bruiser, Lapras Power
+# Splash (energy-scaling), Keldeo backup.
+DECK_WATER = [
+    # Pokémon (10)
+    ("Dondozo ex", 3),
+    ("Lapras ex", 3),
+    ("Keldeo ex", 2),
+    ("Hoothoot", 2),
+    # Supporters (11)
+    ("Carmine", 3),
+    ("Lacey", 2),
+    ("Cyrano", 3),
+    ("Boss's Orders", 3),
+    # Items (22)
+    ("Buddy-Buddy Poffin", 3),
+    ("Ultra Ball", 3),
+    ("Pokégear 3.0", 3),
+    ("Crispin", 3),
+    ("Poké Pad", 2),
+    ("Energy Switch", 2),
+    ("Switch", 2),
+    ("Sacred Ash", 2),
+    ("Night Stretcher", 1),
+    ("Master Ball", 1),          # ACE SPEC
+    # Energy (17)
+    ("Basic Water Energy", 17),
+]
+
+
+# --------------------------------------------------------------------------- #
 # Unified deck registry for the CLI. Friendly name -> recipe. Covers the real
 # tournament lists and the playable archetypes; fixtures stay out (they're for
 # engine tests, not matchups).
@@ -328,6 +445,10 @@ DECKS: dict[str, list[tuple[str, int]]] = {
     "gardevoir": DECK_GARDEVOIR,
     "colorless": DECK_COLORLESS,
     "fire": DECK_FIRE,
+    "fighting": DECK_FIGHTING,
+    "dark": DECK_DARK,
+    "metal": DECK_METAL,
+    "water": DECK_WATER,
 }
 
 

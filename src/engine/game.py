@@ -223,7 +223,7 @@ def legal_actions(state: GameState) -> list[Action]:
     first_turn_no_attack = (state.turn_number == 1)
     if not first_turn_no_attack and not p.active.cannot_attack:
         for ai, atk in enumerate(p.active.card.attacks):
-            if can_pay_cost(p.active, atk.cost):
+            if can_pay_cost(p.active, atk.cost) and atk.name not in p.active.locked_attacks:
                 actions.append(Action("attack", attack_index=ai))
 
     return actions
@@ -453,6 +453,8 @@ def start_turn(state: GameState) -> bool:
         # then clear pending; a turn later this clears the active flag too.
         mon.cannot_attack = mon.pending_cannot_attack
         mon.pending_cannot_attack = False
+        mon.locked_attacks = list(mon.pending_locked_attacks)   # per-attack cooldowns
+        mon.pending_locked_attacks = []
     # the starting player's first turn does NOT draw in some rule sets; modern
     # rules: player going first DOES draw. We follow modern: always draw.
     drawn = p.draw(1)
