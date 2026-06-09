@@ -29,12 +29,12 @@ SAVE_DIR = "saved_games"
 SAVE_FORMAT = 1
 
 
-def _make_agent(kind: str, rng: random.Random):
+def _make_agent(kind: str, rng: random.Random, iters: int = 120):
     if kind == "random":
         return RandomAgent(rng)
     if kind == "mcts":
         from src.engine.mcts import MCTSAgent
-        return MCTSAgent(iterations=120, rollout="eval", rng=rng, search_plies=2)
+        return MCTSAgent(iterations=iters, rollout="eval", rng=rng, search_plies=2)
     return GreedyAgent(rng)
 
 
@@ -123,7 +123,7 @@ def replay_game(path, pool):
 
 
 def run(deck1: str, deck2: str, games: int, agent: str, seed: int,
-        mirror: bool, pool: str) -> dict:
+        mirror: bool, pool: str, iters: int = 120) -> dict:
     db = CardDB.from_pool(pool)
     load_deck(db, deck1)            # validate names up front (raises with a helpful msg)
     load_deck(db, deck2)
@@ -137,8 +137,8 @@ def run(deck1: str, deck2: str, games: int, agent: str, seed: int,
         name_a, name_b = (deck2, deck1) if swap else (deck1, deck2)
         deck_a, deck_b = load_deck(db, name_a), load_deck(db, name_b)
         rng_a, rng_b = random.Random(s), random.Random(s + 1_000_000)
-        st = play_game(deck_a, deck_b, _make_agent(agent, rng_a),
-                       _make_agent(agent, rng_b), seed=s, db=db)
+        st = play_game(deck_a, deck_b, _make_agent(agent, rng_a, iters),
+                       _make_agent(agent, rng_b, iters), seed=s, db=db)
         if st.winner is None:
             ties += 1
         else:
@@ -150,7 +150,8 @@ def run(deck1: str, deck2: str, games: int, agent: str, seed: int,
     return {"d1_wins": d1_wins, "d2_wins": d2_wins, "ties": ties}
 
 
-def round_robin(decks: list[str], games: int, agent: str, seed: int, pool: str) -> dict:
+def round_robin(decks: list[str], games: int, agent: str, seed: int, pool: str,
+                iters: int = 120) -> dict:
     """Play every deck against every other deck and return a win-rate matrix.
 
     matrix[a][b] = a's win % vs b (decided games only). overall[a] = a's mean win %
@@ -160,7 +161,7 @@ def round_robin(decks: list[str], games: int, agent: str, seed: int, pool: str) 
     for i in range(n):
         for j in range(i + 1, n):
             a, b = decks[i], decks[j]
-            r = run(a, b, games, agent, seed, mirror=True, pool=pool)
+            r = run(a, b, games, agent, seed, mirror=True, pool=pool, iters=iters)
             decided = r["d1_wins"] + r["d2_wins"]
             a_pct = 100 * r["d1_wins"] / decided if decided else 50.0
             matrix[a][b] = a_pct
@@ -196,7 +197,11 @@ def main():
     ap.add_argument("--deck2", help="second deck name (see --list)")
     ap.add_argument("--games", type=int, default=1000, help="number of games (default 1000)")
     ap.add_argument("--agent", choices=["greedy", "random", "mcts"], default="greedy",
-                    help="agent piloting both decks (default greedy; mcts is far slower)")
+                    help="agent piloting both decks (default greedy; mcts is far slower "
+                         "but pilots combo/setup decks much more fairly)")
+    ap.add_argument("--iters", type=int, default=0,
+                    help="MCTS iterations (default 120 for single matchups, 50 for "
+                         "--round-robin); higher = stronger + slower")
     ap.add_argument("--seed", type=int, default=0, help="base RNG seed (deterministic)")
     ap.add_argument("--no-mirror", action="store_true",
                     help="don't mirror seats (deck1 always goes first)")
@@ -219,8 +224,19 @@ def main():
     # --- round-robin mode: the whole meta at a glance ---
     if args.round_robin:
         decks = sorted(DECKS)
-        games = args.games if args.games != 1000 else 200   # lighter default for many pairs
-        res = round_robin(decks, games, args.agent, args.seed, args.pool)
+        pairs = len(decks) * (len(decks) - 1) // 2
+        if args.agent == "mcts":
+            # MCTS is the fairer pilot for combo/setup decks (greedy over-rates simple
+            # aggro by ~14pt — see README "Reading the matrix"). It's much slower, so
+            # use a lighter default game/iter count for the full sweep.
+            games = args.games if args.games != 1000 else 24
+            iters = args.iters if args.iters else 50
+            print(f"(MCTS round-robin: {pairs} matchups × {games} games at {iters} iters — "
+                  f"slow but pilots combo decks fairly. Lower --games/--iters for speed.)")
+        else:
+            games = args.games if args.games != 1000 else 200
+            iters = args.iters if args.iters else 120
+        res = round_robin(decks, games, args.agent, args.seed, args.pool, iters=iters)
         print_round_robin(res, games, args.agent, args.seed)
         return
 
@@ -245,7 +261,8 @@ def main():
 
     t0 = time.time()
     r = run(args.deck1, args.deck2, args.games, args.agent, args.seed,
-            mirror=not args.no_mirror, pool=args.pool)
+            mirror=not args.no_mirror, pool=args.pool,
+            iters=args.iters if args.iters else 120)
     dt = time.time() - t0
     n = args.games
     seats = "deck1 first" if args.no_mirror else "mirrored seats"

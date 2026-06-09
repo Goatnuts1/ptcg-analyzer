@@ -54,6 +54,13 @@ def main():
     same = all(res2["matrix"][a][b] == m[a][b] for a in DECKS for b in DECKS)
     check(same, "round-robin not deterministic for a fixed seed")
 
+    # 5. the MCTS / iters path runs and produces a well-formed matrix (tiny config).
+    mres = cli.round_robin(["dragapult", "fire"], 1, agent="mcts", seed=0,
+                           pool=POOL, iters=8)
+    check(abs(mres["matrix"]["dragapult"]["fire"]
+              + mres["matrix"]["fire"]["dragapult"] - 100) < 1e-6,
+          "MCTS round-robin should produce a complementary matrix too")
+
     if fails:
         print(f"FAIL ({len(fails)} issue(s)):")
         for f in fails:
