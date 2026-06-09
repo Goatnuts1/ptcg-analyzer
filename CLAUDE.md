@@ -96,6 +96,13 @@ favor of a solid, usable, trustworthy core.
   self-deck-out rather than prizes. The CARDS are correct (unit-tested); the
   *piloting* is weak. Use `--agent mcts` for stronger (slower) play, or read win
   rates as greedy-piloted, not optimal.
+- **The greedy `--round-robin` matrix over-rates aggro.** Greedy plays a simple
+  beatdown near-optimally but butchers combo/setup decks, so the matrix inflates
+  aggressive decks and deflates combo decks. Measured: `fighting` (Mega Lucario)
+  reads 86.8% under greedy but ~73% under MCTS-both (−14pt); its 64% edge vs
+  `gardevoir` flips to a 43% loss when both sides are piloted well. Treat the matrix
+  as a fast first read, not a power ranking; confirm standouts with
+  `cli.py --round-robin --agent mcts` (uses 50 iters / 24 games per pair by default).
 - Full multi-turn ISMCTS / hidden-hand-aware eval are not built (see VALIDATION_RESULT).
 
 ## Card legality

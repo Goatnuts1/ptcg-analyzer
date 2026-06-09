@@ -144,6 +144,14 @@ eval-MCTS don't yet express Dragapult's multi-turn spread+disruption plan.
   end by self-deck-out, not prizes. The cards are correct; the piloting is weak.
   Use `--agent mcts` for stronger play, or treat greedy win rates as a fast,
   approximate signal — not optimal play.
+- **Reading the `--round-robin` matrix — greedy over-rates aggro.** Because greedy
+  pilots a simple one-line beatdown near-optimally but mangles combo/setup/evolution
+  engines, the greedy matrix **systematically inflates simple aggressive decks and
+  deflates combo decks.** Measured: the `fighting` (Mega Lucario) deck reads **86.8%
+  overall under greedy but ~73% under MCTS-both** (−14pt), and its 64% edge over
+  `gardevoir` *flips to a 43% loss* once both sides are piloted well. The matrix is a
+  fast first read of the meta, **not** a power ranking — confirm any standout with
+  `python3 cli.py --round-robin --agent mcts` (slower; pilots combo decks fairly).
 - Full multi-turn ISMCTS / hidden-hand-aware evaluation are not built yet.
 
 ## Data source
