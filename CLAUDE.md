@@ -72,7 +72,12 @@ python3 cli.py --deck1 dragapult --deck2 charizard_xy --games 5000   # win rates
 python3 cli.py --round-robin --games 200                        # every deck vs every deck (matrix + tiers)
 python3 cli.py --deck1 dragapult --deck2 raging_bolt --seed 42 --save-game myrun
 python3 cli.py --replay saved_games/myrun.json                  # step-by-step replay
+python3 cli.py --import-deck --name mydeck                      # paste a TCG Live export (stdin)
 ```
+Deck import (`src/importers/tcglive.py`): paste a Pokémon TCG Live deck export and it
+parses qty+name (stripping set codes like `MEG 50`), matches against the pool
+(accent/case-insensitive, energy normalised), reports matched/missing + legality, and
+writes the engine-format recipe to `decks/imported/<name>.json`.
 Matchups mirror seats (cancels the going-first edge) and are deterministic by
 `--seed`. `--agent` is `greedy` (default, ~900–1000 games/sec), `random`, or `mcts`
 (far slower). Save files store the reproducible recipe + full step log; replay

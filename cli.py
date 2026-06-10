@@ -20,10 +20,13 @@ import random
 import re
 import time
 
+import sys
+
 from src.engine.cards import CardDB
 from src.engine.decks import DECKS, load_deck
 from src.engine.agents import RandomAgent, GreedyAgent
 from src.engine.run import play_game
+from src.importers.tcglive import import_deck, format_summary, save_deck
 
 SAVE_DIR = "saved_games"
 SAVE_FORMAT = 1
@@ -191,6 +194,39 @@ def print_round_robin(res: dict, games: int, agent: str, seed: int) -> None:
         print(f"  {rank}. {a:<{w}}  {pct:5.1f}%")
 
 
+def import_tcglive(args) -> None:
+    """Read a TCG Live deck export (stdin or --from-file), match it against the pool,
+    print a summary + legality, and save it to decks/imported/<name>.json."""
+    if args.from_file:
+        with open(args.from_file, encoding="utf-8") as f:
+            text = f.read()
+    else:
+        if sys.stdin.isatty():
+            print("Paste your Pokémon TCG Live deck export, then press Ctrl-D:\n")
+        text = sys.stdin.read()
+    if not text.strip():
+        print("No deck list provided.")
+        return
+
+    db = CardDB.from_pool(args.pool)
+    res = import_deck(text, db)
+    name = args.name or "imported_deck"
+    print(format_summary(res, name))
+
+    # Legality check when every card resolved (4-copy rule, 1 ACE SPEC, 60 cards).
+    if res.recipe and not res.missing:
+        from src.engine.legality import validate_deck
+        violations = validate_deck(db, res.recipe)
+        print("  Legal ✓ (60 cards, copy + ACE SPEC rules OK)" if not violations
+              else "  Legality: " + "; ".join(violations))
+
+    path = save_deck(res, name)
+    print(f"\nSaved -> {path}")
+    if res.missing:
+        print("  (Missing cards are recorded in the file; fill them in or pick legal "
+              "substitutes before playing.)")
+
+
 def main():
     ap = argparse.ArgumentParser(description="Run N games between two decks; report win rates.")
     ap.add_argument("--deck1", help="first deck name (see --list)")
@@ -214,7 +250,17 @@ def main():
                     help="load a saved game JSON and print it step by step")
     ap.add_argument("--round-robin", action="store_true",
                     help="play every deck vs every deck; print a win-rate matrix + tier ranking")
+    ap.add_argument("--import-deck", action="store_true",
+                    help="import a pasted Pokémon TCG Live deck export (reads stdin)")
+    ap.add_argument("--from-file", metavar="PATH",
+                    help="with --import-deck: read the deck list from a file instead of stdin")
+    ap.add_argument("--name", metavar="NAME", help="name for an imported deck")
     args = ap.parse_args()
+
+    # --- import mode: parse a TCG Live deck export into the engine's recipe ---
+    if args.import_deck:
+        import_tcglive(args)
+        return
 
     # --- replay mode: load and print a saved battle ---
     if args.replay:

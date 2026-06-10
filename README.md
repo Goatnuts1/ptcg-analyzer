@@ -61,6 +61,17 @@ python3 cli.py --deck1 dragapult --deck2 raging_bolt --seed 42 --save-game myrun
 python3 cli.py --replay saved_games/myrun.json
 ```
 
+**Import a deck from Pokémon TCG Live:**
+
+```bash
+python3 cli.py --import-deck --name mydeck
+```
+
+Paste the TCG Live "Copy Deck List" export (then Ctrl-D). It strips set codes, matches
+cards against the pool (accent/case-insensitive, energy normalised), reports any
+missing/rotated cards and legality, and saves the recipe to `decks/imported/mydeck.json`.
+Use `--from-file <path>` instead of pasting.
+
 ### Good to know
 
 - Matchups mirror seats (so neither deck gets the going-first advantage).
