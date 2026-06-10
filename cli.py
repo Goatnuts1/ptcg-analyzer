@@ -27,6 +27,8 @@ from src.engine.decks import DECKS, load_deck
 from src.engine.agents import RandomAgent, GreedyAgent
 from src.engine.run import play_game
 from src.importers.tcglive import import_deck, format_summary, save_deck
+from src.analysis.ratings import compute_elo
+from src.analysis.report import matrix_to_csv, matrix_to_html, who_would_win
 
 SAVE_DIR = "saved_games"
 SAVE_FORMAT = 1
@@ -174,7 +176,7 @@ def round_robin(decks: list[str], games: int, agent: str, seed: int, pool: str,
     return {"matrix": matrix, "overall": overall, "decks": decks}
 
 
-def print_round_robin(res: dict, games: int, agent: str, seed: int) -> None:
+def print_round_robin(res: dict, games: int, agent: str, seed: int, elo: dict) -> None:
     decks, matrix, overall = res["decks"], res["matrix"], res["overall"]
     w = max(len(d) for d in decks)
     pairs = len(decks) * (len(decks) - 1) // 2
@@ -189,9 +191,39 @@ def print_round_robin(res: dict, games: int, agent: str, seed: int) -> None:
             row += "      —  " if a == b else f"{matrix[a][b]:>8.0f}%"
         row += f"{overall[a]:>9.1f}%"
         print(row)
-    print("\nTier ranking (by overall win %):")
-    for rank, (a, pct) in enumerate(sorted(overall.items(), key=lambda kv: -kv[1]), 1):
-        print(f"  {rank}. {a:<{w}}  {pct:5.1f}%")
+    print("\nTier ranking (Elo from win rates — rewards beating strong decks):")
+    for rank, (a, r) in enumerate(sorted(elo.items(), key=lambda kv: -kv[1]), 1):
+        print(f"  {rank:>2}. {a:<{w}}  Elo {r:<5}  ({overall[a]:.1f}% overall)")
+
+
+def _export_matrix(res: dict, elo: dict, path: str, agent: str, games: int) -> None:
+    """Write the round-robin matrix to a .csv or .html file (format inferred by extension)."""
+    decks, matrix, overall = res["decks"], res["matrix"], res["overall"]
+    if path.lower().endswith(".html") or path.lower().endswith(".htm"):
+        title = f"Deck meta matrix ({agent}, {games} games/pair)"
+        content = matrix_to_html(decks, matrix, overall, elo, title=title)
+    else:
+        content = matrix_to_csv(decks, matrix, overall, elo)
+    out_dir = os.path.dirname(path)
+    if out_dir:
+        os.makedirs(out_dir, exist_ok=True)
+    with open(path, "w", encoding="utf-8") as f:
+        f.write(content)
+    print(f"\nExported matrix -> {path}")
+
+
+def who_would_win_cmd(args) -> None:
+    """'Who would win?' — a quick, friendly single-matchup readout (no jargon)."""
+    d1, d2 = args.who_would_win
+    games = args.games if args.games != 1000 else 200
+    try:
+        r = run(d1, d2, games, args.agent, args.seed, mirror=True, pool=args.pool,
+                iters=args.iters if args.iters else 120)
+    except KeyError as e:
+        print(e)
+        return
+    print()
+    print(who_would_win(d1, d2, r["d1_wins"], r["d2_wins"], r["ties"], games))
 
 
 def import_tcglive(args) -> None:
@@ -249,13 +281,22 @@ def main():
     ap.add_argument("--replay", metavar="PATH",
                     help="load a saved game JSON and print it step by step")
     ap.add_argument("--round-robin", action="store_true",
-                    help="play every deck vs every deck; print a win-rate matrix + tier ranking")
+                    help="play every deck vs every deck; print a win-rate matrix + Elo ranking")
+    ap.add_argument("--export", metavar="PATH",
+                    help="with --round-robin: write the matrix to a .csv or .html file")
+    ap.add_argument("--who-would-win", nargs=2, metavar=("DECK1", "DECK2"),
+                    help="fun, plain-language readout of who wins between two decks")
     ap.add_argument("--import-deck", action="store_true",
                     help="import a pasted Pokémon TCG Live deck export (reads stdin)")
     ap.add_argument("--from-file", metavar="PATH",
                     help="with --import-deck: read the deck list from a file instead of stdin")
     ap.add_argument("--name", metavar="NAME", help="name for an imported deck")
     args = ap.parse_args()
+
+    # --- fun mode: who would win between two decks? ---
+    if args.who_would_win:
+        who_would_win_cmd(args)
+        return
 
     # --- import mode: parse a TCG Live deck export into the engine's recipe ---
     if args.import_deck:
@@ -283,7 +324,10 @@ def main():
             games = args.games if args.games != 1000 else 200
             iters = args.iters if args.iters else 120
         res = round_robin(decks, games, args.agent, args.seed, args.pool, iters=iters)
-        print_round_robin(res, games, args.agent, args.seed)
+        elo = compute_elo(decks, res["matrix"])
+        print_round_robin(res, games, args.agent, args.seed, elo)
+        if args.export:
+            _export_matrix(res, elo, args.export, args.agent, games)
         return
 
     # --- save mode: play one game (fixed orientation) and persist it ---

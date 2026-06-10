@@ -52,7 +52,21 @@ This prints each deck's win rate. Use `--games 5000` for a tighter number.
 python3 cli.py --round-robin --games 200
 ```
 
-This prints a win-rate matrix and a tier ranking across all decks.
+This prints a win-rate matrix and an **Elo** tier ranking (Elo rewards beating
+*strong* decks, not just winning a lot). Export it for a spreadsheet or a
+color-coded browser heatmap:
+
+```bash
+python3 cli.py --round-robin --export meta.csv     # spreadsheet
+python3 cli.py --round-robin --export meta.html    # color-coded heatmap + Elo board
+```
+
+**Just want a quick answer?** Ask who would win:
+
+```bash
+python3 cli.py --who-would-win gardevoir fire
+# 🏆  gardevoir wins about 6 out of 10 games — a close one! 😅
+```
 
 **Step 5 (optional) — save a single battle and replay it:**
 
@@ -92,7 +106,7 @@ Use `--from-file <path>` instead of pasting.
 | Effects | `src/engine/effects.py` — primitives + registries, **~78 cards** each tested vs card text | ✅ working |
 | Decks | `dragapult`, `charizard_xy` (tournament lists) + `raging_bolt`, `gardevoir`, `colorless`, `fire`, `fighting`, `dark`, `metal`, `water` (10 total) | ✅ `DECKS` registry |
 | Agents | greedy (+ general fallbacks), EvalAgent (1-ply), eval-MCTS (multi-turn negamax) | ✅ working |
-| CLI | `cli.py` — matchups, `--round-robin` (win-rate matrix), `--save-game`, `--replay`, `--list` | ✅ working |
+| CLI | `cli.py` — matchups, `--round-robin` (matrix + Elo + CSV/HTML export), `--who-would-win`, `--import-deck`, `--save-game`, `--replay`, `--list` | ✅ working |
 | Validation | win rate vs published Limitless matchup | ✅ run — see findings below |
 | LLM | self-healing card scripts, result synthesis | ◻ planned |
 
@@ -103,7 +117,7 @@ python3 tests/test_new_cards.py
 python3 tests/test_determinism.py
 ```
 
-Full test suite: **24 suites green.**
+Full test suite: **26 suites green.**
 
 ## Cards implemented (~78, each unit-tested)
 
