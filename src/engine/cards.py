@@ -184,3 +184,7 @@ class CardDB:
 
     def __len__(self) -> int:
         return len(self._by_name)
+
+    def names(self) -> list[str]:
+        """All known card names (used by the deck importer to match by name)."""
+        return list(self._by_name)
