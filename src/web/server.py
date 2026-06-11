@@ -61,9 +61,9 @@ def render_home(decks=None) -> str:
   <button name="action" value="whowins">🥊 Who would win?</button>
 </form>
 <form action="/matrix" method="get">
-  <b>Whole meta:</b> games per pair <input name="games" value="60" size="4">
-  <button>📊 Show meta matrix (heatmap + Elo)</button>
-  <br><small>(plays every deck vs every deck — takes a few seconds)</small>
+  <b>Which deck is best?</b> games per pair <input name="games" value="60" size="4">
+  <button>🏆 Rank all decks (heatmap + Elo + best deck)</button>
+  <br><small>(plays every deck vs every deck and ranks them — takes a few seconds)</small>
 </form>
 <p><b>Available decks:</b> {_html.escape(decklist)}</p>
 <p><small>Tip: import your own from Pokémon TCG Live with
@@ -94,8 +94,17 @@ def render_whowins(deck1: str, deck2: str, summary: str) -> str:
 
 
 def render_matrix(decks, res: dict, elo: dict, games: int) -> str:
-    frag = matrix_fragment(decks, res["matrix"], res["overall"], elo)
-    return _page(f"Meta matrix ({games} games/pair, greedy)", frag)
+    best = max(decks, key=lambda d: elo[d])
+    overall = res["overall"]
+    headline = (
+        f'<p class="big">🏆 Best deck this run: <b>{_html.escape(best)}</b> — '
+        f'Elo {elo[best]} · {overall[best]:.0f}% overall.</p>\n'
+        '<p><small>⚠️ This quick view uses the fast <b>greedy</b> pilot, which '
+        'over-rates simple aggressive decks (~14 pts). For the trustworthy ranking, '
+        'run <code>python3 cli.py --round-robin --agent mcts --export best.html</code> '
+        '(slower, pilots combo decks fairly).</small></p>\n')
+    frag = matrix_fragment(decks, res["matrix"], overall, elo)
+    return _page(f"Meta matrix ({games} games/pair, greedy)", headline + frag)
 
 
 class _Handler(BaseHTTPRequestHandler):

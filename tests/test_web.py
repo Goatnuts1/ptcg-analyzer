@@ -46,6 +46,8 @@ def main():
            "overall": {"A": 70.0, "B": 30.0}}
     mx = server.render_matrix(decks, res, {"A": 1600, "B": 1400}, 50)
     check("<table>" in mx and "70%" in mx and "Elo 1600" in mx, "matrix page renders the heatmap")
+    check("Best deck this run: <b>A</b>" in mx, "matrix page names the best deck (top Elo)")
+    check("greedy" in mx and "mcts" in mx, "matrix page carries the greedy-bias caveat")
 
     # --- live smoke ---
     httpd = server.make_server(0)              # ephemeral port
