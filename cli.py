@@ -286,12 +286,20 @@ def main():
                     help="with --round-robin: write the matrix to a .csv or .html file")
     ap.add_argument("--who-would-win", nargs=2, metavar=("DECK1", "DECK2"),
                     help="fun, plain-language readout of who wins between two decks")
+    ap.add_argument("--serve", nargs="?", type=int, const=8000, default=None, metavar="PORT",
+                    help="launch the local web UI (default port 8000), then open it in a browser")
     ap.add_argument("--import-deck", action="store_true",
                     help="import a pasted Pokémon TCG Live deck export (reads stdin)")
     ap.add_argument("--from-file", metavar="PATH",
                     help="with --import-deck: read the deck list from a file instead of stdin")
     ap.add_argument("--name", metavar="NAME", help="name for an imported deck")
     args = ap.parse_args()
+
+    # --- web UI ---
+    if args.serve is not None:
+        from src.web.server import serve
+        serve(port=args.serve, pool=args.pool)
+        return
 
     # --- fun mode: who would win between two decks? ---
     if args.who_would_win:

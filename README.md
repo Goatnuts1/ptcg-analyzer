@@ -25,6 +25,14 @@ printed card text.
 ## Quick start
 
 You need Python 3. No third-party packages are required to run the simulator.
+**New here? See [USAGE.md](USAGE.md) for plain-English instructions.** The fastest way
+in is the local web UI:
+
+```bash
+python3 cli.py --serve        # then open http://127.0.0.1:8000 in your browser
+```
+
+Or use the terminal commands below.
 
 **Step 1 — build the card pool** (run once):
 
@@ -107,6 +115,7 @@ Use `--from-file <path>` instead of pasting.
 | Decks | `dragapult`, `charizard_xy` (tournament lists) + `raging_bolt`, `gardevoir`, `colorless`, `fire`, `fighting`, `dark`, `metal`, `water` (10 total) | ✅ `DECKS` registry |
 | Agents | greedy (+ general fallbacks), EvalAgent (1-ply), eval-MCTS (multi-turn negamax) | ✅ working |
 | CLI | `cli.py` — matchups, `--round-robin` (matrix + Elo + CSV/HTML export), `--who-would-win`, `--import-deck`, `--save-game`, `--replay`, `--list` | ✅ working |
+| Web UI | `src/web/server.py` (stdlib only) — `--serve` opens a click-to-run local page | ✅ working |
 | Validation | win rate vs published Limitless matchup | ✅ run — see findings below |
 | LLM | self-healing card scripts, result synthesis | ◻ planned |
 
@@ -117,7 +126,7 @@ python3 tests/test_new_cards.py
 python3 tests/test_determinism.py
 ```
 
-Full test suite: **26 suites green.**
+Full test suite: **27 suites green.**
 
 ## Cards implemented (~78, each unit-tested)
 

@@ -38,9 +38,9 @@ def _cell_color(p):
     return f"rgb({r},{g},{b})"
 
 
-def matrix_to_html(decks: list[str], matrix: dict, overall: dict, elo: dict,
-                   title: str = "Deck meta matrix") -> str:
-    """A standalone HTML page: color-coded win-rate heatmap + an Elo-ranked leaderboard."""
+def matrix_fragment(decks: list[str], matrix: dict, overall: dict, elo: dict) -> str:
+    """The heatmap table + Elo leaderboard as an HTML fragment (no <html> wrapper),
+    so it can be embedded in a standalone export OR the live web UI."""
     esc = _html.escape
     th = "".join(f"<th>{esc(d)}</th>" for d in decks)
     rows = []
@@ -55,26 +55,30 @@ def matrix_to_html(decks: list[str], matrix: dict, overall: dict, elo: dict,
     board = "".join(
         f"<li><b>{esc(d)}</b> — Elo {elo[d]} · {overall[d]:.1f}% overall</li>"
         for d in sorted(decks, key=lambda d: -elo[d]))
-    return f"""<!doctype html>
-<html><head><meta charset="utf-8"><title>{esc(title)}</title>
-<style>
- body{{font-family:system-ui,Arial,sans-serif;margin:2rem;color:#222}}
- table{{border-collapse:collapse;margin:1rem 0}}
- th,td{{border:1px solid #bbb;padding:.4rem .6rem;text-align:center;font-size:.9rem}}
- th{{background:#f3f3f3}} td.ov{{background:#f8f8f8;font-weight:600}}
- caption{{caption-side:top;font-weight:600;margin-bottom:.5rem}}
- ol{{line-height:1.6}}
-</style></head><body>
-<h1>{esc(title)}</h1>
-<p>Cell = row deck's win % vs column deck. Green = favored, red = unfavored.</p>
-<table><caption>Win-rate matrix</caption>
-<tr><th></th>{th}<th class='ov'>overall</th><th class='ov'>elo</th></tr>
-{''.join(rows)}
-</table>
-<h2>Tier ranking (by Elo)</h2>
-<ol>{board}</ol>
-</body></html>
-"""
+    return (
+        "<p>Cell = row deck's win % vs column deck. Green = favored, red = unfavored.</p>\n"
+        "<table><caption>Win-rate matrix</caption>\n"
+        f"<tr><th></th>{th}<th class='ov'>overall</th><th class='ov'>elo</th></tr>\n"
+        f"{''.join(rows)}\n</table>\n"
+        f"<h2>Tier ranking (by Elo)</h2>\n<ol>{board}</ol>")
+
+
+_MATRIX_CSS = (
+    " body{font-family:system-ui,Arial,sans-serif;margin:2rem;color:#222}"
+    " table{border-collapse:collapse;margin:1rem 0}"
+    " th,td{border:1px solid #bbb;padding:.4rem .6rem;text-align:center;font-size:.9rem}"
+    " th{background:#f3f3f3} td.ov{background:#f8f8f8;font-weight:600}"
+    " caption{caption-side:top;font-weight:600;margin-bottom:.5rem} ol{line-height:1.6}")
+
+
+def matrix_to_html(decks: list[str], matrix: dict, overall: dict, elo: dict,
+                   title: str = "Deck meta matrix") -> str:
+    """A standalone HTML page: color-coded win-rate heatmap + an Elo-ranked leaderboard."""
+    esc = _html.escape
+    return (f"<!doctype html>\n<html><head><meta charset=\"utf-8\">"
+            f"<title>{esc(title)}</title>\n<style>\n{_MATRIX_CSS}\n</style></head><body>\n"
+            f"<h1>{esc(title)}</h1>\n{matrix_fragment(decks, matrix, overall, elo)}\n"
+            f"</body></html>\n")
 
 
 def who_would_win(deck1: str, deck2: str, w1: int, w2: int, ties: int, games: int) -> str:
