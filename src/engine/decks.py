@@ -233,13 +233,14 @@ DECK_RAGING_BOLT = [
 # Wishes accel + Mega Symphonia scaling), backed by Basic Psychic ex attackers
 # (Mega Diancie, Iron Crown, Latias).
 DECK_GARDEVOIR = [
-    # Pokémon (16)
+    # Pokémon (14) — A/B tuned: pure Mega Gardevoir line (4 of the Stage 2 for
+    # consistency) + Mega Diancie ex, dropping Iron Crown/Latias. Mega Symphonia
+    # scales with Psychic Energy on ALL your Pokémon, so going all-in on the
+    # Overflowing-Wishes accel + a heavy Energy base hits much harder (+7pts overall).
     ("Ralts", 4),
     ("Kirlia", 4),
-    ("Mega Gardevoir ex", 3),
+    ("Mega Gardevoir ex", 4),
     ("Mega Diancie ex", 2),
-    ("Iron Crown ex", 2),
-    ("Latias ex", 1),
     # Supporters (12)
     ("Carmine", 3),
     ("Lacey", 2),
@@ -255,8 +256,8 @@ DECK_GARDEVOIR = [
     ("Pokégear 3.0", 2),
     ("Switch", 1),
     ("Master Ball", 1),          # ACE SPEC
-    # Energy (15)
-    ("Basic Psychic Energy", 15),
+    # Energy (17)
+    ("Basic Psychic Energy", 17),
 ]
 
 # Colorless toolbox: Lugia / Snorlax / Cyclizar / Mega Kangaskhan / Terapagos —
