@@ -438,6 +438,35 @@ DECK_WATER = [
 # tournament lists and the playable archetypes; fixtures stay out (they're for
 # engine tests, not matchups).
 # --------------------------------------------------------------------------- #
+# Mega Greninja ex (Water, Stage 2 MEGA) — the snipe/spread board-control deck.
+# Froakie -> Frogadier -> Mega Greninja ex (Rare Candy skips Frogadier). Mortal
+# Shuriken places 60 on any opponent Pokémon each turn (discarding a Basic Water from
+# hand), so the deck runs a heavy Water base + recovery (Energy Recycler / Night
+# Stretcher) to keep feeding it; Ninja Spinner returns Water to hand to refuel it.
+DECK_GRENINJA = [
+    # Pokémon (10) — 4 Mega Greninja for setup consistency (A/B tested: +5% vs a 3-of)
+    ("Froakie", 4),
+    ("Frogadier", 2),
+    ("Mega Greninja ex", 4),
+    # Supporters (11)
+    ("Carmine", 4),
+    ("Lacey", 2),
+    ("Cyrano", 2),
+    ("Boss's Orders", 3),
+    # Items (23)
+    ("Rare Candy", 4),
+    ("Buddy-Buddy Poffin", 4),
+    ("Ultra Ball", 4),
+    ("Poké Pad", 3),
+    ("Switch", 2),
+    ("Night Stretcher", 2),
+    ("Energy Recycler", 2),
+    ("Sacred Ash", 1),
+    ("Master Ball", 1),          # ACE SPEC
+    # Energy (16)
+    ("Basic Water Energy", 16),
+]
+
 DECKS: dict[str, list[tuple[str, int]]] = {
     "dragapult": TOURNAMENT_DRAGAPULT,
     "charizard_xy": TOURNAMENT_CHARIZARD_XY,
@@ -449,6 +478,7 @@ DECKS: dict[str, list[tuple[str, int]]] = {
     "dark": DECK_DARK,
     "metal": DECK_METAL,
     "water": DECK_WATER,
+    "greninja": DECK_GRENINJA,
 }
 
 
