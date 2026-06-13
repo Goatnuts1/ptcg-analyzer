@@ -325,12 +325,13 @@ DECK_FIRE = [
 # Fighting (Mega Lucario): Riolu -> Mega Lucario ex (Aura Jab discard-accel),
 # with Regirock (Regi Charge accel + Giant Rock anti-Stage2), Iron Boulder, Koraidon.
 DECK_FIGHTING = [
-    # Pokémon (11)
-    ("Mega Lucario ex", 3),
-    ("Riolu", 3),
+    # Pokémon (11) — A/B tuned: maxed Lucario line (4/4) for consistency and cut
+    # Koraidon ex (its Kaiser Tackle needs Fire, dead in a mono-Fighting deck).
+    # +8pts overall vs the old build, and flips gardevoir from 33% to favorable.
+    ("Mega Lucario ex", 4),
+    ("Riolu", 4),
     ("Regirock ex", 2),
-    ("Iron Boulder ex", 2),
-    ("Koraidon ex", 1),
+    ("Iron Boulder ex", 1),
     # Supporters (10)
     ("Carmine", 3),
     ("Lacey", 2),
