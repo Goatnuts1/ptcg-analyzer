@@ -1048,6 +1048,40 @@ def _brave_slash(ctx: EffectContext) -> None:
     ctx.source.pending_locked_attacks.append("Brave Slash")
 
 
+# --- Mega Greninja ex (Water, Stage 2 MEGA) — snipe/spread board control ---
+def _mortal_shuriken(ctx: EffectContext) -> None:
+    """Ability: discard a Basic Water Energy from hand, then place 6 damage counters
+    (60) on 1 of the opponent's Pokémon. v0 targeting: snipe a KO if one is reachable
+    (prefer most prizes / lowest HP), else pile onto the Active."""
+    me = ctx.me
+    for i, c in enumerate(me.hand):                    # pay the cost: discard 1 Basic Water
+        if c.is_basic_energy and "Water" in c.types:
+            me.discard.append(me.hand.pop(i))
+            break
+    else:
+        return                                         # no Water to discard (can_use guards this)
+    target = _pick_ko_target(ctx.opp, 60) or ctx.opp.active
+    if target is not None:
+        placed = place_counters(ctx, target, 6, owner=ctx.opp)   # Battle Cage may block on bench
+        if placed:
+            ctx.state.emit(f"Mortal Shuriken: 60 to {target.card.name}")
+
+
+def _ninja_spinner(ctx: EffectContext) -> None:
+    """Mega Greninja ex: 120, and you MAY return a Water Energy attached to this
+    Pokémon to your hand for +80 (-> 200). v0: take the +80 only if we'd still keep
+    enough Energy attached to attack next turn — and the returned Water feeds Mortal
+    Shuriken's discard cost. (Variable — engine applied 0 base.)"""
+    src = ctx.source
+    dmg = 120
+    water = [e for e in src.energy if e.is_basic_energy and "Water" in e.types]
+    if water and src.energy_count() >= 3:             # keep 2 attached for next turn's WW
+        src.energy.remove(water[0])
+        ctx.me.hand.append(water[0])
+        dmg += 80
+    damage_active_with_weakness(ctx, dmg)
+
+
 # Attacks where the registered EFFECT computes/places ALL the damage, so the engine
 # must apply 0 base (otherwise the printed number would hit the Active a SECOND time
 # on top of the effect's chosen-target damage). Variable-damage ("+"/"×") attacks
@@ -1113,6 +1147,7 @@ ATTACK_EFFECTS: dict[tuple[str, str], Callable[[EffectContext], None]] = {
     ("Lapras ex", "Power Splash"): _power_splash,
     ("Mega Lucario ex", "Mega Brave"): _mega_brave,
     ("Hop's Zacian ex", "Brave Slash"): _brave_slash,
+    ("Mega Greninja ex", "Ninja Spinner"): _ninja_spinner,
 }
 
 # (card_name, ability_name) -> effect
@@ -1127,6 +1162,7 @@ ABILITY_EFFECTS: dict[tuple[str, str], Callable[[EffectContext], None]] = {
     ("Oricorio ex", "Excited Turbo"): _excited_turbo,
     ("Fan Rotom", "Fan Call"): _fan_call,
     ("Mega Kangaskhan ex", "Run Errand"): _run_errand,
+    ("Mega Greninja ex", "Mortal Shuriken"): _mortal_shuriken,
 }
 
 # Abilities usable any number of times per turn (not gated by ability_used_this_turn).
@@ -1192,6 +1228,12 @@ ABILITY_CAN_USE: dict[tuple[str, str], Callable] = {
     # Run Errand: only when this Pokémon is the Active and there are cards to draw.
     ("Mega Kangaskhan ex", "Run Errand"):
         lambda state, me, mon: mon is me.active and len(me.deck) > 0,
+    # Mortal Shuriken: only when Active, with a Basic Water Energy in hand to discard,
+    # and the opponent has a Pokémon to snipe.
+    ("Mega Greninja ex", "Mortal Shuriken"):
+        lambda state, me, mon: (mon is me.active
+            and any(c.is_basic_energy and "Water" in c.types for c in me.hand)
+            and _opp_of(state).has_pokemon_in_play()),
 }
 
 
