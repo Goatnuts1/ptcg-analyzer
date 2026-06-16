@@ -499,6 +499,35 @@ DECK_BEEDRILL = [
     ("Basic Grass Energy", 14),
 ]
 
+# Crustle (Grass control wall) — the SECOND real-meta Grass deck from a live game.
+# Crustle's Mysterious Rock Inn walls the opponent's Pokémon ex; Brambleghast
+# (Powerful Needles) is the scaling attacker. All Grass -> all weak to Fire ×2.
+# (Resilient Soul's dynamic HP is out of scope, so this Brambleghast is a touch
+# frailer than the real one.)
+DECK_CRUSTLE = [
+    # Pokémon (13)
+    ("Dwebble", 4),
+    ("Crustle", 2),
+    ("Bramblin", 4),
+    ("Brambleghast", 3),
+    # Supporters (11)
+    ("Carmine", 4),
+    ("Lacey", 2),
+    ("Cyrano", 2),
+    ("Boss's Orders", 3),
+    # Items (21)
+    ("Buddy-Buddy Poffin", 4),
+    ("Ultra Ball", 4),
+    ("Poké Pad", 3),
+    ("Pokégear 3.0", 3),
+    ("Switch", 2),
+    ("Night Stretcher", 2),
+    ("Crispin", 2),
+    ("Master Ball", 1),          # ACE SPEC
+    # Energy (15)
+    ("Basic Grass Energy", 15),
+]
+
 DECKS: dict[str, list[tuple[str, int]]] = {
     "dragapult": TOURNAMENT_DRAGAPULT,
     "charizard_xy": TOURNAMENT_CHARIZARD_XY,
@@ -512,6 +541,7 @@ DECKS: dict[str, list[tuple[str, int]]] = {
     "water": DECK_WATER,
     "greninja": DECK_GRENINJA,
     "beedrill": DECK_BEEDRILL,
+    "crustle": DECK_CRUSTLE,
 }
 
 

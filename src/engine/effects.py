@@ -381,6 +381,13 @@ def apply_attack_damage(ctx: EffectContext, target: InPlayPokemon, amount: int,
         return 0
     owner = owner if owner is not None else owner_of(ctx.state, target)
     source = source if source is not None else ctx.source
+    # Crustle's Mysterious Rock Inn: prevents all attack damage from the opponent's
+    # Pokémon ex (so an all-ex attacker must gust past it). Effect counters still land.
+    if (source is not None and any(s.lower() == "ex" for s in source.card.subtypes)
+            and any(ab.name == "Mysterious Rock Inn" for ab in target.card.abilities)
+            and not ability_suppressed(ctx.state, target)):
+        ctx.state.emit(f"Mysterious Rock Inn: {target.card.name} prevented ex damage")
+        return 0
     on_bench = owner is not None and _on_bench(owner, target)
     dmg = amount
     if not on_bench:
@@ -1098,6 +1105,32 @@ def _surprise_attack(ctx: EffectContext) -> None:
         damage_active_with_weakness(ctx, 30)
 
 
+# --- Crustle line (Grass control wall — the other real-meta Grass deck) ---
+def _ascension(ctx: EffectContext) -> None:
+    """Dwebble: search your deck for a card that evolves from this Pokémon and put it
+    on to evolve it (Dwebble -> Crustle). Then shuffle. (No damage.)"""
+    src, me = ctx.source, ctx.me
+    for i, c in enumerate(me.deck):
+        if c.is_pokemon and c.evolves_from == src.card.name:
+            src.evolved_from.append(src.card)
+            src.card = me.deck.pop(i)
+            src.evolved_this_turn = True
+            src.ability_used_this_turn = False
+            if ctx.rng:
+                ctx.rng.shuffle(me.deck)
+            ctx.state.emit(f"Ascension: evolved into {src.card.name}")
+            return
+    if ctx.rng:
+        ctx.rng.shuffle(me.deck)
+
+
+def _powerful_needles(ctx: EffectContext) -> None:
+    """Brambleghast: flip a coin for each Energy attached to this Pokémon; 80 damage
+    per heads. (Variable — engine applied 0 base.)"""
+    heads = sum(1 for _ in range(ctx.source.energy_count()) if flip(ctx))
+    damage_active_with_weakness(ctx, 80 * heads)
+
+
 # Attacks where the registered EFFECT computes/places ALL the damage, so the engine
 # must apply 0 base (otherwise the printed number would hit the Active a SECOND time
 # on top of the effect's chosen-target damage). Variable-damage ("+"/"×") attacks
@@ -1167,6 +1200,8 @@ ATTACK_EFFECTS: dict[tuple[str, str], Callable[[EffectContext], None]] = {
     ("Mega Greninja ex", "Ninja Spinner"): _ninja_spinner,
     ("Beedrill ex", "Rumbling Bees"): _rumbling_bees,
     ("Weedle", "Surprise Attack"): _surprise_attack,
+    ("Dwebble", "Ascension"): _ascension,
+    ("Brambleghast", "Powerful Needles"): _powerful_needles,
 }
 
 # (card_name, ability_name) -> effect
