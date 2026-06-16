@@ -111,8 +111,8 @@ Use `--from-file <path>` instead of pasting.
 | Engine | `src/engine/` — Card model, state, rules engine, agents, runner | ✅ full legal games |
 | Engine | Stadiums + bench chokepoints (Battle Cage / Tera), Special Conditions, Tools, Special Energy, MEGA 3-prize, self-KO prizes, ability suppression | ✅ implemented + tested |
 | Determinism | same seed = byte-identical game (in-process **and** cross-process) | ✅ `tests/test_determinism.py` |
-| Effects | `src/engine/effects.py` — primitives + registries, **~79 cards** each tested vs card text | ✅ working |
-| Decks | `dragapult`, `charizard_xy` (tournament lists) + `raging_bolt`, `gardevoir`, `colorless`, `fire`, `fighting`, `dark`, `metal`, `water`, `greninja` (11 total) | ✅ `DECKS` registry |
+| Effects | `src/engine/effects.py` — primitives + registries, **~81 cards** each tested vs card text | ✅ working |
+| Decks | `dragapult`, `charizard_xy` (tournament lists) + `raging_bolt`, `gardevoir`, `colorless`, `fire`, `fighting`, `dark`, `metal`, `water`, `greninja`, `beedrill` (12 total) | ✅ `DECKS` registry |
 | Agents | greedy (+ general fallbacks), EvalAgent (1-ply), eval-MCTS (multi-turn negamax) | ✅ working |
 | CLI | `cli.py` — matchups, `--round-robin` (matrix + Elo + CSV/HTML export), `--who-would-win`, `--import-deck`, `--save-game`, `--replay`, `--list` | ✅ working |
 | Web UI | `src/web/server.py` (stdlib only) — `--serve` opens a click-to-run local page | ✅ working |
@@ -126,9 +126,9 @@ python3 tests/test_new_cards.py
 python3 tests/test_determinism.py
 ```
 
-Full test suite: **28 suites green.**
+Full test suite: **29 suites green.**
 
-## Cards implemented (~79, each unit-tested)
+## Cards implemented (~81, each unit-tested)
 
 - **Dragapult ex** line (Stage 2 spread): Phantom Dive, Recon Directive, + the
   Dusknoir/Dusclops Cursed-Blast KO engine, Munkidori, Fezandipiti, Budew, etc.
@@ -146,6 +146,9 @@ Full test suite: **28 suites green.**
   Koraidon ex. **Dark:** Mega Absol ex. **Metal:** Mega Mawile ex, Hop's Zacian ex.
   **Water:** Dondozo ex, Lapras ex, **Mega Greninja ex** (Mortal Shuriken 60-snipe
   ability + Ninja Spinner) — anchors the `greninja` control deck.
+- **Grass:** **Beedrill ex** (Rumbling Bees — 110× per Beedrill in play, a scaling
+  swarm) + Weedle/Kakuna — anchors the `beedrill` deck, a real-meta counter that
+  exploits Fighting's weak supports.
 - **Trainer / staple suite:** Rare Candy, Buddy-Buddy Poffin, Ultra Ball, Poké
   Pad, Boss's Orders, Switch, Night Stretcher, Crushing Hammer, Lillie's
   Determination, Judge, Hilda, Dawn, Crispin, plus the core-stabilization staples

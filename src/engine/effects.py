@@ -1082,6 +1082,22 @@ def _ninja_spinner(ctx: EffectContext) -> None:
     damage_active_with_weakness(ctx, dmg)
 
 
+# --- Beedrill ex (Grass swarm) — a real-meta counter to Fighting, per a live game ---
+def _rumbling_bees(ctx: EffectContext) -> None:
+    """Beedrill ex: 110 damage for each of your Beedrill / Beedrill ex in play.
+    (Variable — engine applied 0 base.) The swarm scales hard and the deck rebuilds
+    Beedrill repeatedly, which is what beats single-attacker decks."""
+    n = sum(1 for m in ctx.me.all_in_play() if "Beedrill" in m.card.name)
+    damage_active_with_weakness(ctx, 110 * n)
+
+
+def _surprise_attack(ctx: EffectContext) -> None:
+    """Weedle: flip a coin; if heads, 30 damage (if tails, nothing). Owns its damage
+    so a tails really does 0 (the engine doesn't pre-apply the printed 30)."""
+    if flip(ctx):
+        damage_active_with_weakness(ctx, 30)
+
+
 # Attacks where the registered EFFECT computes/places ALL the damage, so the engine
 # must apply 0 base (otherwise the printed number would hit the Active a SECOND time
 # on top of the effect's chosen-target damage). Variable-damage ("+"/"×") attacks
@@ -1091,6 +1107,7 @@ ATTACK_EFFECT_OWNS_DAMAGE: set[tuple[str, str]] = {
     ("Fan Rotom", "Assault Landing"),          # conditional (nothing without a Stadium)
     ("Iron Crown ex", "Twin Shotels"),         # 50 to 2 CHOSEN Pokémon, not the Active
     ("Mega Mawile ex", "Huge Bite"),           # conditional base (30 vs 260) — owns it
+    ("Weedle", "Surprise Attack"),             # 30 on heads, 0 on tails — owns it
 }
 
 
@@ -1148,6 +1165,8 @@ ATTACK_EFFECTS: dict[tuple[str, str], Callable[[EffectContext], None]] = {
     ("Mega Lucario ex", "Mega Brave"): _mega_brave,
     ("Hop's Zacian ex", "Brave Slash"): _brave_slash,
     ("Mega Greninja ex", "Ninja Spinner"): _ninja_spinner,
+    ("Beedrill ex", "Rumbling Bees"): _rumbling_bees,
+    ("Weedle", "Surprise Attack"): _surprise_attack,
 }
 
 # (card_name, ability_name) -> effect

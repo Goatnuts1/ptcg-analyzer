@@ -469,6 +469,36 @@ DECK_GRENINJA = [
     ("Basic Water Energy", 16),
 ]
 
+# Beedrill ex (Grass swarm) — added after a live game where it hard-countered the
+# fighting deck. Weedle -> Kakuna -> Beedrill ex (Rare Candy skips Kakuna); Rumbling
+# Bees scales 110× per Beedrill in play, and the line rebuilds via Night Stretcher /
+# Sacred Ash / Poffin. A fast 2-prize swarm — the kind of deck the closed sim lacked.
+# (Grand Tree's evolve-accel and Forest of Vitality are out of scope, so this build is
+# a touch slower than the real one — a conservative estimate of the matchup.)
+DECK_BEEDRILL = [
+    # Pokémon (10)
+    ("Weedle", 4),
+    ("Kakuna", 2),
+    ("Beedrill ex", 4),
+    # Supporters (11)
+    ("Carmine", 4),
+    ("Lacey", 2),
+    ("Cyrano", 2),
+    ("Boss's Orders", 3),
+    # Items (25)
+    ("Rare Candy", 4),
+    ("Buddy-Buddy Poffin", 4),
+    ("Ultra Ball", 4),
+    ("Poké Pad", 3),
+    ("Pokégear 3.0", 3),
+    ("Night Stretcher", 2),
+    ("Sacred Ash", 2),
+    ("Switch", 2),
+    ("Master Ball", 1),          # ACE SPEC
+    # Energy (14)
+    ("Basic Grass Energy", 14),
+]
+
 DECKS: dict[str, list[tuple[str, int]]] = {
     "dragapult": TOURNAMENT_DRAGAPULT,
     "charizard_xy": TOURNAMENT_CHARIZARD_XY,
@@ -481,6 +511,7 @@ DECKS: dict[str, list[tuple[str, int]]] = {
     "metal": DECK_METAL,
     "water": DECK_WATER,
     "greninja": DECK_GRENINJA,
+    "beedrill": DECK_BEEDRILL,
 }
 
 
