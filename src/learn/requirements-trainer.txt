@@ -1,0 +1,9 @@
+# The Trainer ("Brain") — its own dependencies, kept OUT of the engine's stdlib-only
+# requirements.txt. The deterministic engine + data pipeline (encoder/actions/selfplay/
+# buffer) need none of these; only the net + training (net.py, train.py, features.py) do.
+#
+# Apple Silicon (M5): `pip install torch` pulls the arm64 wheel with MPS (Metal) support.
+# Set up an isolated venv so this never touches the system/Homebrew Python:
+#   python3.12 -m venv .venv && .venv/bin/python -m pip install -r src/learn/requirements-trainer.txt
+torch>=2.2
+numpy>=1.26
