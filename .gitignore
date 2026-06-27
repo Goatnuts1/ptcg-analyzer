@@ -26,3 +26,6 @@ optimizer_runs/
 
 # imported decks (cli.py --import-deck) — user decklists, not source
 decks/imported/
+
+# self-play replay buffer (generated; archived to the external T7) — never commit
+.selfplay/
