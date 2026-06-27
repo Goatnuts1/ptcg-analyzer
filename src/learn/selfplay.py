@@ -57,12 +57,19 @@ def _make_base(kind: str, rng: random.Random):
 
 
 def generate_game(deck_a, deck_b, seed: int, vocab: Vocab, db: CardDB,
-                  deck_a_id: str, deck_b_id: str, agent_kind: str = "greedy") -> list[dict]:
-    """Play one self-play game; return its finished training records (with value z)."""
+                  deck_a_id: str, deck_b_id: str, agent_kind: str = "greedy",
+                  agent_factory=None) -> list[dict]:
+    """Play one self-play game; return its finished training records (with value z).
+
+    agent_factory(seat, rng) -> base agent overrides agent_kind when given — this is how
+    the Phase-3 loop self-plays with the neural agent (kept out of this stdlib module).
+    """
     sink: list[dict] = []
     rng_a, rng_b = random.Random(seed), random.Random(seed + 1)
-    agent_a = RecordingAgent(_make_base(agent_kind, rng_a), 0, vocab, sink)
-    agent_b = RecordingAgent(_make_base(agent_kind, rng_b), 1, vocab, sink)
+    base_a = agent_factory(0, rng_a) if agent_factory else _make_base(agent_kind, rng_a)
+    base_b = agent_factory(1, rng_b) if agent_factory else _make_base(agent_kind, rng_b)
+    agent_a = RecordingAgent(base_a, 0, vocab, sink)
+    agent_b = RecordingAgent(base_b, 1, vocab, sink)
 
     state = play_game(deck_a, deck_b, agent_a, agent_b, seed=seed, keep_log=False, db=db)
     winner = state.winner   # 0, 1, or None (tie)
@@ -81,13 +88,14 @@ def generate_game(deck_a, deck_b, seed: int, vocab: Vocab, db: CardDB,
 
 
 def generate_batch(deck_a_id: str, deck_b_id: str, seeds: list[int], db: CardDB,
-                   vocab: Vocab, agent_kind: str = "greedy") -> list[dict]:
+                   vocab: Vocab, agent_kind: str = "greedy", agent_factory=None) -> list[dict]:
     """Generate records for a list of seeds on one (deck_a, deck_b) pairing."""
     deck_a = load_deck(db, deck_a_id)
     deck_b = load_deck(db, deck_b_id)
     out: list[dict] = []
     for s in seeds:
-        out.extend(generate_game(deck_a, deck_b, s, vocab, db, deck_a_id, deck_b_id, agent_kind))
+        out.extend(generate_game(deck_a, deck_b, s, vocab, db, deck_a_id, deck_b_id,
+                                 agent_kind, agent_factory))
     return out
 
 
