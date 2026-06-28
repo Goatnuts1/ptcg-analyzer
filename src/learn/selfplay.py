@@ -32,17 +32,25 @@ class RecordingAgent:
         self.sink = sink
 
     def choose(self, state):
-        action = self.base.choose(state)
-        # Only record decisions where there was a genuine choice (>1 legal action).
+        # If the base agent is search-based, capture its visit distribution (the
+        # AlphaZero policy target); otherwise fall back to the single chosen action.
+        dist = None
+        if hasattr(self.base, "choose_with_policy"):
+            action, dist = self.base.choose_with_policy(state)
+        else:
+            action = self.base.choose(state)
         legal = legal_actions(state)
         if len(legal) > 1:
-            self.sink.append({
+            rec = {
                 "seat": state.active_index,
                 "turn": state.turn_number,
                 "state": encode_state(state, self.vocab),
                 "legal": legal_ids(legal),
                 "action": action_to_id(action),
-            })
+            }
+            if dist:
+                rec["policy"] = [[aid, round(p, 5)] for aid, p in dist.items() if p > 0]
+            self.sink.append(rec)
         return action
 
 
@@ -78,12 +86,15 @@ def generate_game(deck_a, deck_b, seed: int, vocab: Vocab, db: CardDB,
     for r in sink:
         seat = r["seat"]
         z = 0.0 if winner is None else (1.0 if winner == seat else -1.0)
-        records.append({
+        rec = {
             "fv": config.FEATURE_VERSION, "av": config.ACTION_VERSION, "rv": config.RECORD_VERSION,
             "seed": seed, "deck_a": deck_a_id, "deck_b": deck_b_id,
             "seat": seat, "turn": r["turn"],
             "state": r["state"], "legal": r["legal"], "action": r["action"], "z": z,
-        })
+        }
+        if "policy" in r:
+            rec["policy"] = r["policy"]
+        records.append(rec)
     return records
 
 

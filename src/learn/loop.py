@@ -77,10 +77,16 @@ def train_candidate(records, vocab_size, epochs, lr=1e-3, batch=2048,
             ci = torch.from_numpy(arr["card_ids"][j]).to(device)
             nm = torch.from_numpy(arr["numeric"][j]).to(device)
             lg = torch.from_numpy(arr["legal"][j]).to(device)
-            ac = torch.from_numpy(arr["action"][j]).to(device)
+            pol = torch.from_numpy(arr["policy"][j]).to(device)
             vv = torch.from_numpy(arr["value"][j]).to(device)
             logits, value = net(ci, nm)
-            loss = F.cross_entropy(net.masked_policy_logits(logits, lg), ac) + F.mse_loss(value, vv)
+            # soft-target policy cross-entropy against the MCTS visit distribution:
+            # -sum(target * log_softmax(masked logits)). Illegal logp is -inf but its
+            # target is 0, so zero those terms (avoid 0*-inf = nan).
+            logp = torch.log_softmax(net.masked_policy_logits(logits, lg), dim=1)
+            logp = torch.nan_to_num(logp, neginf=0.0)
+            loss_p = -(pol * logp).sum(dim=1).mean()
+            loss = loss_p + F.mse_loss(value, vv)
             opt.zero_grad(); loss.backward(); opt.step()
     return net.to("cpu").eval(), device
 

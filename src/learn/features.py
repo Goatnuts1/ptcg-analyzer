@@ -78,12 +78,15 @@ def vectorize(state: dict) -> tuple[list[int], list[float]]:
 
 
 def records_to_arrays(records: list[dict]) -> dict:
-    """Vectorize a list of records into numpy arrays ready for the net."""
+    """Vectorize records into numpy arrays. `policy` is a soft target over ACTION_SPACE:
+    the MCTS visit distribution when present (AlphaZero-style), else a one-hot on the
+    chosen action (so greedy/bootstrap records still work). `action` (argmax) is kept too."""
     n = len(records)
     card_ids = np.zeros((n, CARD_SLOTS), dtype=np.int64)
     numeric = np.zeros((n, NUMERIC_DIM), dtype=np.float32)
     action = np.zeros(n, dtype=np.int64)
     legal = np.zeros((n, ACTION_SPACE), dtype=np.bool_)
+    policy = np.zeros((n, ACTION_SPACE), dtype=np.float32)
     value = np.zeros(n, dtype=np.float32)
     for i, r in enumerate(records):
         ids, num = vectorize(r["state"])
@@ -92,5 +95,13 @@ def records_to_arrays(records: list[dict]) -> dict:
         action[i] = r["action"]
         legal[i, r["legal"]] = True
         value[i] = r["z"]
-    return {"card_ids": card_ids, "numeric": numeric,
-            "action": action, "legal": legal, "value": value}
+        if r.get("policy"):
+            for aid, p in r["policy"]:
+                policy[i, aid] = p
+            s = policy[i].sum()
+            if s > 0:
+                policy[i] /= s
+        else:
+            policy[i, r["action"]] = 1.0
+    return {"card_ids": card_ids, "numeric": numeric, "action": action,
+            "legal": legal, "policy": policy, "value": value}
