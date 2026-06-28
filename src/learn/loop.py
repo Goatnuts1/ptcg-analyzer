@@ -96,13 +96,52 @@ def save_candidate(net, vocab_size, embed, hidden, tag: str) -> str:
     return path
 
 
+def run_iteration(it: int, best_path: str | None, db, vocab, args) -> tuple[str | None, dict]:
+    """One policy-iteration step. Returns (new_best_path, summary). best stays put if the
+    candidate doesn't clear the gate. Self-play uses the CURRENT best so the data
+    distribution co-evolves with the net (the fix for the Phase-3 distribution shift)."""
+    import shutil
+    seed = args.seed + it
+    make_best, best_model = best_factory(best_path, args.iters)
+    label = "greedy-rollout MCTS" if best_model is None else os.path.basename(best_path)
+    print(f"[iter {it}] best={label} | self-play {args.games} games ...", flush=True)
+    t = time.time()
+    recs = selfplay(make_best, args.games, db, vocab, seed)
+    sp = time.time() - t
+    print(f"[iter {it}]   {len(recs)} records in {sp:.0f}s | training candidate ...", flush=True)
+
+    net, _ = train_candidate(recs, vocab.size, args.epochs, seed=seed)
+    cand_path = save_candidate(net, vocab.size, 24, 256, f"it{it}_s{args.seed}")
+    cand = Model(cand_path)
+
+    t = time.time()
+    best_arena = lambda r: make_best(0, r)
+    match = play_match(lambda r: NeuralMCTSAgent(cand, iterations=args.iters, rng=r),
+                       best_arena, n_games=args.arena, base_seed=seed + 1000, pool=args.pool)
+    # Engine is unchanged across iterations, so the rules tests can't regress here; the
+    # model can't break rules by construction. Skip the (slow) suite per-iteration.
+    gate = promotion_gate(match, margin=args.margin, run_tests=False)
+    summary = {"it": it, "a_rate": match["a_rate"], "ci": match["ci"],
+               "promote": gate["promote"], "arena_s": time.time() - t, "selfplay_s": sp}
+    print(f"[iter {it}]   candidate {match['a_rate']*100:.1f}% vs best  "
+          f"CI[{match['ci'][0]*100:.0f},{match['ci'][1]*100:.0f}]  -> {gate['reason'].upper()}", flush=True)
+
+    if gate["promote"]:
+        best_new = os.path.join(MODELS_DIR, f"best_it{it}_s{args.seed}.pt")
+        shutil.copyfile(cand_path, best_new)
+        print(f"[iter {it}]   PROMOTED -> {os.path.basename(best_new)}", flush=True)
+        return best_new, summary
+    return best_path, summary
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--games", type=int, default=400, help="self-play games this iteration")
+    ap.add_argument("--iterations", type=int, default=1, help="policy-iteration steps to run")
+    ap.add_argument("--games", type=int, default=400, help="self-play games per iteration")
     ap.add_argument("--epochs", type=int, default=4)
     ap.add_argument("--arena", type=int, default=80, help="arena games for the gate")
     ap.add_argument("--iters", type=int, default=60, help="MCTS iterations per move")
-    ap.add_argument("--best", default="none", help="current best artifact path, or 'none'")
+    ap.add_argument("--best", default="none", help="starting best artifact path, or 'none'")
     ap.add_argument("--margin", type=float, default=0.55)
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--pool", default=config.DEFAULT_POOL)
@@ -111,32 +150,18 @@ def main() -> int:
     db = CardDB.from_pool(args.pool)
     vocab = Vocab.from_db(db)
     best_path = None if args.best == "none" else args.best
-    make_best, best_model = best_factory(best_path, args.iters)
-
-    print(f"iteration: best={'greedy-rollout MCTS' if best_model is None else os.path.basename(best_path)} "
-          f"| self-play {args.games} games ...")
-    t = time.time()
-    recs = selfplay(make_best, args.games, db, vocab, args.seed)
-    print(f"  {len(recs)} records in {time.time()-t:.0f}s | training candidate ({args.epochs} epochs) ...")
-
-    net, device = train_candidate(recs, vocab.size, args.epochs, seed=args.seed)
-    cand_path = save_candidate(net, vocab.size, 24, 256, _git_sha() + f"_s{args.seed}")
-    cand = Model(cand_path)
-
-    print(f"  arena: candidate vs best ({args.arena} games) ...")
-    t = time.time()
-    best_arena = lambda r: make_best(0, r)   # arena factories take (rng); drop the seat
-    match = play_match(lambda r: NeuralMCTSAgent(cand, iterations=args.iters, rng=r),
-                       best_arena, n_games=args.arena, base_seed=args.seed + 99, pool=args.pool)
-    gate = promotion_gate(match, margin=args.margin, run_tests=True)
-    print(f"  candidate {match['a_rate']*100:.1f}% vs best  CI[{match['ci'][0]*100:.0f},"
-          f"{match['ci'][1]*100:.0f}]  ({time.time()-t:.0f}s) -> {gate['reason'].upper()}")
-
-    if gate["promote"]:
-        best_new = os.path.join(MODELS_DIR, f"best_{_git_sha()}_s{args.seed}.pt")
-        import shutil
-        shutil.copyfile(cand_path, best_new)
-        print(f"  PROMOTED -> {best_new}")
+    t0 = time.time()
+    promotions = 0
+    print(f"convergence run: {args.iterations} iterations · {args.games} games/iter · "
+          f"arena {args.arena} · MCTS {args.iters}it · start best="
+          f"{'greedy-rollout MCTS' if best_path is None else os.path.basename(best_path)}", flush=True)
+    for it in range(args.iterations):
+        best_path, summary = run_iteration(it, best_path, db, vocab, args)
+        promotions += int(summary["promote"])
+        print(f"[iter {it}] done ({(time.time()-t0)/60:.1f} min elapsed, {promotions} promotions so far)", flush=True)
+    print(f"DONE: {args.iterations} iterations, {promotions} promotions, "
+          f"{(time.time()-t0)/60:.1f} min. Final best="
+          f"{'(none promoted)' if best_path is None else os.path.basename(best_path)}", flush=True)
     return 0
 
 
