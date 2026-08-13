@@ -35,6 +35,12 @@ WHY THIS IS THE HARD PART (and how we handle it):
              re-sampling per iteration. (Full mid-tree re-determinization / ISMCTS
              is a later 2c; determinized-root multi-ply is correct PIMC and is what
              the Budew/stadium-war gap actually needs — depth + a real opponent.)
+
+4. TREE REUSE (stage 1). Statistics gathered for a decision are still valid for
+   the NEXT decision in the same turn, so the chosen child's subtree is retained
+   and its visits are credited against the next decision's budget. Deliberately
+   scoped to one turn — see `_reuse_root` for why crossing the turn boundary would
+   splice our statistics onto a position that never occurred.
 """
 
 from __future__ import annotations
@@ -193,34 +199,83 @@ class MCTSAgent:
     search_plies : turn-segments the tree spans. 1 = single-turn (v1). >=2 = the
                    multi-turn negamax tree (piece 2b). Pairs naturally with
                    rollout="eval": the eval truncates each deep line cheaply.
+    reuse_tree   : retain the chosen child's subtree for the next decision in the
+                   same turn and credit its visits against the budget (stage 1).
+                   DEFAULT OFF — it changes which lines get searched, and every
+                   recorded gauntlet number in this project was measured with the
+                   old defaults. Turning it on for `MCTSAgent` would silently
+                   invalidate them, so it stays opt-in.
     """
 
     def __init__(self, iterations: int = 160, c: float = 1.4,
                  rollout: str = "greedy", rng: Optional[random.Random] = None,
-                 search_plies: int = 1):
+                 search_plies: int = 1, reuse_tree: bool = False):
         self.iterations = iterations
         self.c = c
         self.rollout = rollout
         self.rng = rng or random.Random()
         self.search_plies = max(1, search_plies)
+        self.reuse_tree = reuse_tree
+        # (state, actor, turn_number, node) retained between decisions; see _reuse_root.
+        self._tree = None
+
+    # ----------------------------------------------------------------- reuse --
+    def _reuse_root(self, state: GameState):
+        """Return the retained subtree to use as this decision's root, or None.
+
+        WHY THIS IS SCOPED TO A SINGLE TURN: two consecutive `choose` calls inside
+        one turn are separated by exactly the one action we returned, so the child
+        we kept IS the true new position. Across a turn boundary the opponent takes
+        an unknown number of actions in between, and the retained subtree is indexed
+        by OUR semantic keys — descending it would graft our statistics onto a
+        position that never occurred. We drop the tree rather than guess, so the
+        identity check below (same live GameState object, same actor, same turn
+        number) is exact and needs no state fingerprint that could go stale.
+        """
+        retained, self._tree = self._tree, None
+        if not self.reuse_tree or retained is None:
+            return None
+        prev_state, actor, turn, node = retained
+        if (prev_state is not state or actor != state.active_index
+                or turn != state.turn_number):
+            return None
+        node.parent = None          # it is the root now: backprop must stop here
+        return node
+
+    def _remember(self, state: GameState, node) -> None:
+        self._tree = ((state, state.active_index, state.turn_number, node)
+                      if self.reuse_tree else None)
+
+    def _budget(self, root) -> int:
+        """Iterations to spend now. A retained root already holds `root.visits`
+        simulations OF THIS POSITION, so they are credited against the budget —
+        that, not a faster inner loop, is where tree reuse buys wall-clock. The
+        floor keeps every decision doing fresh work on the CURRENT position, since
+        inherited statistics were gathered before the last action resolved."""
+        if not self.reuse_tree or root.visits <= 0:
+            return self.iterations
+        return max(max(1, self.iterations // 4), self.iterations - root.visits)
 
     # -- public interface: same as the other agents --
     def choose(self, state: GameState) -> Action:
         me = state.active_index
         root_legal = _deduped_legal(state)
         if len(root_legal) == 1:
+            self._tree = None       # a forced move builds no tree worth keeping
             return next(iter(root_legal.values()))
 
-        root = _Node(parent=None, key=None, chooser=None)
-        for _ in range(self.iterations):
+        root = self._reuse_root(state) or _Node(parent=None, key=None, chooser=None)
+        for _ in range(self._budget(root)):
             world = determinize(state, me, self.rng)
             node = self._select_expand(root, world, me)
             value = self._evaluate(world, me)          # value in [0,1] for `me`
             self._backprop(node, value, me)
 
         if not root.children:
+            self._tree = None
             return PASS
         best = max(root.children.values(), key=lambda n: n.visits)
+        self._remember(state, best)
         # map the chosen semantic key back to a concrete legal action
         return root_legal.get(best.key) or PASS
 
