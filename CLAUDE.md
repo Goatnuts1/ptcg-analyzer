@@ -16,28 +16,137 @@ engine (CPU only, zero tokens). The model's jobs are bounded:
 Every model output is validated against the engine before it's trusted.
 
 ## Current state
-- Data layer: done + tested. `data/standard_pool.json` = **1,276 cards** (marks
-  H/I/J; 3 in the tracked `data/manual_cards.json` supplement, merged by the fetch
-  script and deduped by name).
+- Data layer: done + tested. `data/standard_pool.json` = **1,300 cards** (marks
+  H/I/J; 24 in the tracked `data/manual_cards.json` supplement — Meowth ex, Mega
+  Charizard Y ex, Poké Pad, Mega Slowbro ex, Mega Excadrill ex, Drilbur,
+  Metagross (CRI), Rocky Fighting Energy, the Pitch Black Ghost prints
+  Shuppet (PBL) / Banette (PBL) / Dhelmise (PBL) / Poltchageist (PBL) /
+  Sinistcha (PBL) / Patrat (CRI) / Dunsparce (JTG), the Gwynn Supporter, and the
+  Pitch Black Toucannon line Pikipek / Trumbeak / Toucannon + Hoothoot (SCR),
+  Azumarill ex (ASC 84), and the Perfect Order Aegislash line Honedge / Doublade /
+  Aegislash (ME03 56/57/58) — merged by the fetch script and deduped by name).
+- PRINT COLLISIONS: when a deck needs a DIFFERENT print of an already-pooled card,
+  the new print is added as `"Name (SETCODE)"` and the pool's bare entry is left
+  alone (Metagross (CRI), Shuppet (PBL), Dunsparce (JTG), ...). Registry keys use
+  the exact suffixed name — that is the whole point, two prints, two behaviors. The
+  ONE place the suffix must be ignored is the evolution-name match, because a card's
+  `evolvesFrom` names the PRINTED card: `effects.print_base_name()` strips it and
+  `game.evolves_onto()` / Rare Candy use that, so a suffixed PRE-evolution
+  ("Dunsparce (JTG)") still evolves into its Stage 1.
 - Engine: done + tested. `src/engine/` plays full legal games, zero tokens. Core
   rules faithful incl. evolution timing, Stadiums + the two bench chokepoints
   (Battle Cage counters / Tera attack-damage), Special Conditions, Tools, Special
-  Energy, MEGA 3-prize rule, self-KO prize awards, ability suppression (TRW).
+  Energy, MEGA 3-prize rule, self-KO prize awards, ability suppression (Team
+  Rocket's Watchtower + Flutter Mane's Midnight Fluttering). Stadiums come in two
+  shapes: PASSIVE ones live at the chokepoints (Battle Cage, Gravity Mountain, Area
+  Zero Underdepths, Jamming Tower's `effects.tools_disabled` — which blanks EVERY site
+  that reads an attached Tool: retreat_cost, refresh_hp_modifiers, apply_attack_damage,
+  end_of_turn_tools), ACTIVATED ones are real engine actions with their own
+  once-per-turn budget on PlayerState (Surfing Beach's `stadium_switch`, Prism Tower's
+  `stadium_draw`, Grand Tree's `stadium_evolve` deck-search evolution chain, Mystery
+  Garden's `stadium_garden` discard-an-Energy refill, Team Rocket's Factory's
+  `stadium_factory` draw-2 — the only one with a CONDITION, tracked separately from its
+  budget as `PlayerState.team_rocket_supporter_played_this_turn`, set in
+  `apply_action`'s play_trainer branch and reset by `start_turn` — and Academy at
+  Night's `stadium_academy` put-a-hand-card-on-top-of-deck, enumerated PER hand card
+  like attach_tool so the agent picks which; it exists to feed Slowking's Seek
+  Inspiration top-deck discard). Bench damage-prevention chokepoint has a third
+  resident besides Tera and Battle Cage: Shaymin (DRI)'s Flower Curtain (opponent's
+  attack damage only, owner's benched non-Rule-Box only, no self-exception on this
+  print — added as a manual-supplement print collision, `"Shaymin (DRI)"`). A new action kind must also get
+  a `mcts._semantic_key` case or it silently vanishes from search —
+  `tests/test_mcts_keys.py` guards that.
 - **Deterministic — a tested invariant.** Same seed = byte-identical game,
   in-process (greedy + MCTS) AND cross-process (hash-seed-independent). Guarded by
   `tests/test_determinism.py`. If this breaks, every win rate is worthless.
 - Effect system: done + tested. `effects.py` = primitives + registries for attacks,
-  abilities, Trainers, Tools, Special Energy. **~81 distinct cards implemented**,
+  abilities, Trainers, Tools, Special Energy. **~176 distinct cards implemented**,
   each asserted against its card text. Includes the namesake archetype lines, a
   draw/search/recovery staple suite, and the Mega Gardevoir / Colorless / Fire /
-  Fighting / Dark / Metal / Water attacker sets.
-- Decks (`decks.py`): two faithful tournament lists (`dragapult`, `charizard_xy`)
+  Fighting / Dark / Metal / Water attacker sets, plus the Pitch Black-era Metal
+  line (`mega_excadrill`: Mega Excadrill ex / Metagross / Genesect ex + the Team
+  Rocket search Trainers) and the Mega-era Fighting line (`cynthia_garchomp`:
+  Cynthia's Garchomp ex / Gabite / Gible / Roserade / Spiritomb + Surfer, Fighting
+  Gong, Premium Power Pro, Cynthia's Power Weight, Rocky Fighting Energy,
+  Neo Upper Energy), and the Pitch Black Ghost line (`hide_n_sneak`: the Hide 'n'
+  Sneak effect-prevention Ability + its two discard-pile payoffs, Patrat's
+  Watchful Eye counter-move lock, Flutter Mane's Midnight Fluttering Ability lock,
+  Gwynn, Prism Tower, Legacy Energy), and the Pitch Black Toucannon line
+  (`toucannon`: Feather Rondo's both-Benches damage scaling, Aerial Draw,
+  Pikipek/Trumbeak's coin-flip attacks + Fly's one-turn shield, Hoothoot (SCR)'s
+  Triple Stab, Noctowl's Tera-gated on-evolve Jewel Seeker, Iron Leaves ex's
+  Rapid Vernier + Prism Edge, and Area Zero Underdepths), and the real-list Mega
+  Gardevoir support (`gardevoir_real`: Marill's Ball Roll, Azumarill ex's repeatable
+  Bubble Gathering + Energized Balloon, Zacian's prize-gated Limit Break, Mega Diancie
+  ex's Diamond Coat passive, Wally's Compassion, and the Grand Tree / Jamming Tower /
+  Mystery Garden Stadiums), and the Perfect Order Aegislash line (`doublade`: Doublade's
+  Weaponized Swords, Aegislash's + Steven's Metang's Metal Slash one-turn attack lock,
+  Steven's Metagross ex's X-Boot, and Team Rocket's Factory).
+  REVEAL IS NOT A COST — a vocabulary first for this engine. Doublade's Weaponized
+  Swords does 60 per Honedge/Doublade/Aegislash **revealed from hand**, and revealing
+  moves nothing: `_weaponized_swords` must never mutate `ctx.me.hand` (it asserts this
+  itself), so one hand of swords keeps paying full damage every turn, forever. Every
+  other scaling attack here PAYS by moving cards (Inferno X / Metallic Hammer / Garland
+  Ray discard). Don't "fix" it into a discard.
+  NOTE: Diamond Coat was a real gap on an already-pooled card — implementing it moves
+  the BUILT `gardevoir` archetype (which plays 2 Mega Diancie ex) from ~53% to ~62% vs
+  `dragapult` under greedy (n=200). That is a fidelity fix, not a tuning change.
+- MULTI-UNIT / WILDCARD Special Energy: `InPlayPokemon.provided_types()` emits one
+  token per Energy PROVIDED (not per card), and `"Any"` is a wildcard that
+  `game.can_pay_cost` spends against any single typed symbol. Prism Energy on a
+  Basic = one `"Any"`; Neo Upper Energy on a Stage 2 = two (so a lone copy pays
+  Cynthia's Garchomp ex's `[F][F]` Draconic Buster); Legacy Energy = one `"Any"`
+  unconditionally (no stage clause). Scope is ATTACK COSTS only —
+  `energy_count()` still counts CARDS, so retreat cost and "Energy attached" counts
+  do NOT see the 2-at-a-time amount. Don't claim otherwise.
+- HP-CHANGING effects: `InPlayPokemon.max_hp` = printed HP + `hp_modifier`, and
+  `hp_modifier` is DERIVED — `effects.refresh_hp_modifiers()` recomputes it from the
+  Stadium in play (`STADIUM_HP_MODIFIERS`; Gravity Mountain = −30 HP per Stage 2) PLUS
+  the attached Tool (`TOOL_HP_MODIFIERS`; Cynthia's Power Weight = +70 HP for a
+  Cynthia's Pokémon). It runs at the top of `process_knockouts` and after
+  play_stadium/attach_tool/evolve, so a Pokémon
+  whose max HP drops to its damage total is Knocked Out immediately. Never accumulate
+  into `hp_modifier` — always let the refresh own it.
+- BENCH SIZE is per-player and DYNAMIC, not the constant. `PlayerState.MAX_BENCH = 5`
+  is only the DEFAULT; the live cap is `effects.bench_limit(state, player)`, which
+  returns 8 for a player who has a Tera Pokémon in play while Area Zero Underdepths is
+  the Stadium. EVERY Bench-placement site reads it (game.legal_actions, search_deck,
+  Poffin, Precious Trolley, Call for Family, Come and Get You, ...) — never read
+  MAX_BENCH directly again. `effects.enforce_bench_limits(state, first_index)` runs the
+  card's two shrink clauses (last Tera leaves play; the Stadium leaves play, its owner
+  discarding first) and is called from process_knockouts, apply_action's play_stadium
+  branch, and Snow Sink. A Bench discard is NOT a Knock Out — no prizes are awarded.
+- Decks (`decks.py`): seven faithful tournament lists (`dragapult`, `charizard_xy`,
+  `mega_excadrill`, `cynthia_garchomp`, `hide_n_sneak`, `toucannon`,
+  `gardevoir_real` — Anar Guliyev's Regional Utrecht Mega Gardevoir list, WEAK
+  provenance at 310th place, registered alongside the built `gardevoir` archetype
+  which stays the tuned baseline), plus two LADDER-provenance lists (a fourth
+  provenance class — reconstructed from logged TCG Live games, no tournament
+  finish): `slowking_annihilape` (the Seek Inspiration toolbox that beat the
+  house `mega_excadrill` twice on ladder, 2026-08 — adds Annihilape's Destined
+  Fight both-Actives effect-KO, Smoochum's Delightful Kiss, and the REAL Academy
+  at Night top-deck -> Seek Inspiration combo, all livefire-verified) and
+  `mega_excadrill_shaymin` (the anti-Slowking counter-build: +2 Shaymin (DRI)
+  Flower Curtain bench protection, +1 Gravity Mountain for the Stadium war)
   plus ten built archetypes (`raging_bolt`, `gardevoir`, `colorless`, `fire`,
   `fighting`, `dark`, `metal`, `water`, `greninja`, `beedrill`), in the `DECKS` registry;
-  `load_deck(db, name)`.
+  `load_deck(db, name)`. `doublade` is a third provenance class — a DECK-GUIDE build for
+  the new Perfect Order Aegislash line, with no tournament finish behind it at all; its
+  deck comment says so and its win rates should be read that way.
 - Agents (`agents.py`): RandomAgent, GreedyAgent (hand-written priorities + general
   Item/Supporter fallbacks so no implemented Trainer is ever inert), EvalAgent
   (1-ply over `position_value`). MCTS in `mcts.py` (see below).
+  GreedyAgent carries four NARROW Slowking/Shaymin pilot branches (each observed
+  necessary in livefire, each scoped so no other archetype's play changes):
+  Academy at Night plants the hand's best seek-value toolbox mon only when the
+  Active is Slowking (>= 130 refuses to bury a Slowpoke); Seek Inspiration is
+  valued at the top card's seek_value ONLY when this player planted it this turn
+  (player-legal info), else its printed 0; energy routes to a Slowking short of
+  [P][C] before the default attach-to-Active; retreat promotes a benched
+  fueled Slowking; and Shaymin (DRI) outranks the random bench pick (Flower
+  Curtain only works from the Bench). `effects.SEEK_VALUE_OVERRIDES` is the
+  shared rank table (Destined Fight 400 / Trifrost 250) for attacks whose whole
+  payoff is a 0-printed-damage registered effect.
 - Validated: greedy beats random ~99%; MCTS beats greedy ~61%; effects fire in
   real games. Matchup-fidelity findings in `docs/VALIDATION_RESULT.md`.
 

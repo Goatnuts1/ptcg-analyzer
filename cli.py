@@ -155,6 +155,34 @@ def run(deck1: str, deck2: str, games: int, agent: str, seed: int,
     return {"d1_wins": d1_wins, "d2_wins": d2_wins, "ties": ties}
 
 
+def run_recipe(recipe_a: list[tuple[str, int]], deck_b: str, games: int, agent: str,
+               seed: int, mirror: bool, pool: str, iters: int = 120) -> dict:
+    """Like `run()`, but side A is a raw (name, qty) recipe instead of a name in
+    DECKS — for a freshly pasted/imported deck that isn't registered. Side A's
+    win/loss is tracked as "recipe_a" regardless of which seat it plays."""
+    from src.engine.decks import _expand
+    db = CardDB.from_pool(pool)
+    load_deck(db, deck_b)          # validate the opponent name up front
+
+    a_wins = b_wins = ties = 0
+    for i in range(games):
+        s = seed + i
+        swap = mirror and (i % 2 == 1)   # alternate who goes first
+        deck_a_cards, deck_b_cards = _expand(db, recipe_a), load_deck(db, deck_b)
+        seat0, seat1 = (deck_b_cards, deck_a_cards) if swap else (deck_a_cards, deck_b_cards)
+        seat_identity = ("b", "a") if swap else ("a", "b")   # which side sits in each seat
+        rng_a, rng_b = random.Random(s), random.Random(s + 1_000_000)
+        st = play_game(seat0, seat1, _make_agent(agent, rng_a, iters),
+                       _make_agent(agent, rng_b, iters), seed=s, db=db)
+        if st.winner is None:
+            ties += 1
+        elif seat_identity[st.winner] == "a":
+            a_wins += 1
+        else:
+            b_wins += 1
+    return {"d1_wins": a_wins, "d2_wins": b_wins, "ties": ties}
+
+
 def round_robin(decks: list[str], games: int, agent: str, seed: int, pool: str,
                 iters: int = 120) -> dict:
     """Play every deck against every other deck and return a win-rate matrix.
@@ -288,6 +316,10 @@ def main():
                     help="fun, plain-language readout of who wins between two decks")
     ap.add_argument("--serve", nargs="?", type=int, const=8000, default=None, metavar="PORT",
                     help="launch the local web UI (default port 8000), then open it in a browser")
+    ap.add_argument("--host", default="127.0.0.1", metavar="HOST",
+                    help="with --serve: bind address (default 127.0.0.1 = this machine only; "
+                         "use 0.0.0.0 to reach it from your LAN or a Tailscale peer — no auth, "
+                         "so only do this on a network you trust)")
     ap.add_argument("--import-deck", action="store_true",
                     help="import a pasted Pokémon TCG Live deck export (reads stdin)")
     ap.add_argument("--from-file", metavar="PATH",
@@ -298,7 +330,7 @@ def main():
     # --- web UI ---
     if args.serve is not None:
         from src.web.server import serve
-        serve(port=args.serve, pool=args.pool)
+        serve(port=args.serve, pool=args.pool, host=args.host)
         return
 
     # --- fun mode: who would win between two decks? ---

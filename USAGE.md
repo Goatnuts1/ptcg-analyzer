@@ -21,6 +21,13 @@ Then open **http://127.0.0.1:8000** in your browser. You'll get a page where you
 - **Run matchup** — pick two decks, see who wins (with bars).
 - **Who would win?** — a plain-English answer ("gardevoir wins about 6 out of 10!").
 - **Show meta matrix** — a color-coded heatmap of every deck vs every deck, ranked by Elo.
+- **Import a deck** — paste a Pokémon TCG Live "Copy Deck List" export. It's checked
+  against the current pool (every card matched, legality validated — rotation,
+  4-copy rule, 1 ACE SPEC, 60 cards) and flagged for any card whose effect isn't
+  scripted yet, before you're offered a "run it" form against a reference gauntlet
+  at both **greedy** (fast, ~1000 games/sec) and **MCTS** (slower, ~1-2 games/sec,
+  but pilots multi-turn plans properly) strength — the results page explains why
+  the two can disagree and which to trust for your deck's shape.
 
 Press **Ctrl-C** in the terminal to stop the server. (Use a different port with
 `python3 cli.py --serve 9000`.)

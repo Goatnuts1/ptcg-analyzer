@@ -1,0 +1,258 @@
+<!--
+  DECK PLAYBOOK TEMPLATE — structural/CSS skeleton only.
+  Copy this file, then replace every <!-- FILL: ... --> block with real,
+  deck-specific content. Do NOT reuse the No Vacancy prose for a different
+  deck — the strategy sections must be derived from THIS deck's actual card
+  texts and this deck's actual sim behavior (check saved_game logs for what
+  greedy/MCTS actually choose to do; don't guess).
+
+  Re-pick --primary/--finisher/--caution as real hex values that fit THIS
+  deck's identity (see artifact-design guidance: a templated palette reads
+  as templated). The three roles are:
+    --primary   the deck's core mechanic/identity color (used in h2, meters)
+    --finisher  the win-condition callout (the "how you actually close it out")
+    --caution   the disruption/risk callout (protect-the-combo, watch-outs)
+  Keep them visually distinct and grounded in the deck's actual theme (e.g.
+  a fire deck warrants warm reds/oranges as --primary, not green).
+-->
+<title><!-- FILL: Deck Name --> — Play-by-Play</title>
+<style>
+  :root {
+    --ink: #1B1F1C;
+    --paper: #F2F1EA;
+    --panel: #FFFFFF;
+    --muted: #666B5E;
+    --rule: #D9D6C7;
+    --primary: #3F6B45;
+    --primary-soft: #E7EDE3;
+    --finisher: #B14A22;
+    --finisher-soft: #F5E4DA;
+    --caution: #7A5B1E;
+    --caution-soft: #F1E7CF;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ink: #EDEBE1;
+      --paper: #14160F;
+      --panel: #1D2018;
+      --muted: #9A9C8B;
+      --rule: #33362A;
+      --primary: #7FBF87;
+      --primary-soft: #202B1F;
+      --finisher: #E4795A;
+      --finisher-soft: #2E1D15;
+      --caution: #D8B45D;
+      --caution-soft: #2A2313;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ink: #EDEBE1; --paper: #14160F; --panel: #1D2018; --muted: #9A9C8B; --rule: #33362A;
+    --primary: #7FBF87; --primary-soft: #202B1F; --finisher: #E4795A; --finisher-soft: #2E1D15;
+    --caution: #D8B45D; --caution-soft: #2A2313;
+  }
+  :root[data-theme="light"] {
+    --ink: #1B1F1C; --paper: #F2F1EA; --panel: #FFFFFF; --muted: #666B5E; --rule: #D9D6C7;
+    --primary: #3F6B45; --primary-soft: #E7EDE3; --finisher: #B14A22; --finisher-soft: #F5E4DA;
+    --caution: #7A5B1E; --caution-soft: #F1E7CF;
+  }
+  html { background: var(--paper); }
+  body {
+    background: var(--paper); color: var(--ink);
+    font-family: Charter, "Iowan Old Style", Georgia, serif;
+    line-height: 1.5; margin: 0; padding: 0 20px;
+  }
+  .sheet { max-width: 900px; margin: 0 auto; padding: 44px 0 64px; }
+
+  .eyebrow {
+    font-family: "Avenir Next Condensed", "Arial Narrow", Futura, sans-serif;
+    font-weight: 600; text-transform: uppercase; letter-spacing: 0.14em;
+    font-size: 12.5px; color: var(--muted);
+  }
+  h1 {
+    font-family: "Avenir Next Condensed", "Arial Narrow", Futura, sans-serif;
+    font-weight: 700; font-size: clamp(30px, 5.5vw, 46px); line-height: 1.03;
+    text-transform: uppercase; margin: 6px 0 10px; text-wrap: balance;
+  }
+  .dek { font-size: 16px; max-width: 64ch; margin: 0 0 4px; color: var(--ink); }
+  .dek strong { color: var(--primary); }
+
+  .statrow {
+    display: flex; flex-wrap: wrap; gap: 8px 26px; margin: 20px 0 0; padding: 12px 0;
+    border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule);
+    font-family: Menlo, "SF Mono", monospace; font-size: 12px; color: var(--muted);
+  }
+
+  h2.phase {
+    font-family: "Avenir Next Condensed", "Arial Narrow", Futura, sans-serif;
+    font-weight: 700; text-transform: uppercase; font-size: clamp(20px, 3.6vw, 26px);
+    letter-spacing: 0.01em; margin: 0 0 3px;
+  }
+  section.turn { padding: 30px 0; border-bottom: 1px solid var(--rule); }
+  section.turn:last-of-type { border-bottom: none; }
+  .turn .tag {
+    display: inline-block; font-family: Menlo, "SF Mono", monospace; font-size: 11px;
+    font-weight: bold; letter-spacing: 0.04em; color: var(--muted); margin-bottom: 6px;
+  }
+  .turn p { max-width: 68ch; margin: 0 0 12px; }
+  .turn p .stat { font-weight: bold; }
+
+  .callout {
+    margin: 14px 0 4px; padding: 12px 16px; max-width: 68ch;
+    border-left: 3px solid var(--primary); background: var(--primary-soft); font-size: 14.5px;
+  }
+  .callout.finisher { border-left-color: var(--finisher); background: var(--finisher-soft); }
+  .callout.caution { border-left-color: var(--caution); background: var(--caution-soft); }
+  .callout .k {
+    display: block; font-family: "Avenir Next Condensed", "Arial Narrow", Futura, sans-serif;
+    font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; font-size: 11px;
+    color: var(--muted); margin-bottom: 4px;
+  }
+
+  /* Generic data table used by the decision/matchup/sim tables below.
+     RULE (learned the hard way): NEVER put white-space:nowrap on a column
+     that can hold more than ~3-4 words. In print, a nowrap cell that's wider
+     than the page forces the whole table wider than the printable area —
+     later columns get silently clipped off-page while the ROW still reports
+     a tall height for the (invisible) wrapped content that would have been
+     there. Only use .card (nowrap+bold) on short single-phrase columns like
+     a card name; long descriptive/explanatory columns must wrap normally. -->
+  .datatable { margin: 16px 0 4px; border: 1px solid var(--rule); background: var(--panel); overflow-x: auto; }
+  table.grid { border-collapse: collapse; width: 100%; min-width: 480px; font-size: 14px; }
+  table.grid th, table.grid td {
+    text-align: left; padding: 9px 14px; border-bottom: 1px solid var(--rule); vertical-align: top;
+  }
+  table.grid th {
+    font-family: "Avenir Next Condensed", "Arial Narrow", Futura, sans-serif;
+    font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; font-size: 10.5px;
+    color: var(--muted); background: var(--primary-soft);
+  }
+  table.grid td.card { font-weight: bold; white-space: nowrap; }
+  table.grid tr:last-child td { border-bottom: none; }
+  table.grid td.grade { font-family: Menlo, "SF Mono", monospace; font-weight: bold; white-space: nowrap; }
+  table.grid td.grade.good { color: var(--primary); }
+  table.grid td.grade.even { color: var(--caution); }
+  table.grid td.grade.bad { color: var(--finisher); }
+  table.grid td.hi { color: var(--finisher); font-weight: bold; }
+  table.grid { font-variant-numeric: tabular-nums; }
+
+  .decklist { overflow-x: auto; margin: 18px 0 4px; }
+  .decklist .cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 4px 28px; }
+  .decklist ul { list-style: none; margin: 0; padding: 0; }
+  .decklist li {
+    font-family: Menlo, "SF Mono", monospace; font-size: 12.5px; line-height: 1.85; white-space: nowrap;
+  }
+  .decklist li .n { display: inline-block; width: 2ch; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .decklist li.grp {
+    font-family: "Avenir Next Condensed", "Arial Narrow", Futura, sans-serif;
+    font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.12em;
+    color: var(--muted); margin-top: 10px; background: var(--primary-soft); padding: 4px 8px; margin-left: -8px;
+  }
+  .decklist li.grp:first-child { margin-top: 0; }
+
+  footer { margin-top: 36px; font-size: 12.5px; color: var(--muted); max-width: 72ch; }
+  footer p { margin: 0 0 8px; }
+
+  @media print {
+    body { background: #fff; color: #1B1F1C; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    :root { --paper: #fff; --panel: #fff; --primary-soft: #EEF2EC; --finisher-soft: #FBEDE6; --caution-soft: #FBF3DE; }
+    .sheet { padding-top: 0; }
+    section.turn { padding: 18px 0; }
+    /* Only break-avoid SMALL atomic elements. Never put this on a whole
+       <section> — a long section that doesn't fit jumps ENTIRELY to the
+       next page, leaving a huge blank gap at the bottom of the current one. */
+    .callout, .decklist, .datatable {
+      break-inside: avoid;
+    }
+    h2.phase, .tag { break-after: avoid-page; }
+  }
+</style>
+
+<div class="sheet">
+  <header>
+    <span class="eyebrow"><!-- FILL: Deck Name · one-line identity · Standard H/I/J --></span>
+    <h1>Play-By-Play</h1>
+    <p class="dek"><!-- FILL: 1-2 sentence positioning line, grounded in real sim numbers. No hedge/caveat lines ("if you meant X instead") — state the finding directly. --></p>
+    <div class="statrow">
+      <span><!-- FILL: 60 CARDS · N PKMN / N TRAINER / N ENERGY --></span>
+      <span><!-- FILL: WIN COND: summarize the actual win line in 3-5 words --></span>
+      <span><!-- FILL: SIM: headline win rate vs the primary benchmark --></span>
+    </div>
+  </header>
+
+  <section class="turn">
+    <span class="tag">THE DECKLIST</span>
+    <h2 class="phase"><!-- FILL: Deck Name --> — full 60</h2>
+    <div class="decklist">
+      <div class="cols">
+        <ul>
+          <li class="grp">Pokémon — <!-- FILL: N --></li>
+          <!-- FILL: <li><span class="n">N</span> Card Name (SET)</li> per Pokémon, exact counts summing to N -->
+        </ul>
+        <ul>
+          <li class="grp">Trainers — <!-- FILL: N --></li>
+          <!-- FILL: trainer lines -->
+          <li class="grp">Energy — <!-- FILL: N --></li>
+          <!-- FILL: energy lines -->
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- FILL: 3-5 <section class="turn"> phase blocks, each with:
+       <span class="tag">PHASE N · WHEN · SHORT LABEL</span>
+       <h2 class="phase">Imperative headline</h2>
+       <p>...</p> (repeat)
+       optional <div class="callout[.finisher|.caution]"><span class="k">Label</span>Body</div>
+       optional <div class="datatable"><table class="grid">...</table></div>
+
+       Typical phase shape for a rigor-matched playbook (adapt to the deck,
+       don't force a mismatch — a fast aggro deck won't have a "the grind"
+       phase, it'll have a sequencing/damage-math phase instead):
+         1. Foundation (opening turns, mulligan priority, what to bench first)
+         2. Recovery (bad-draw tips: dead-card traps specific to THIS deck's
+            evolution lines/combo pieces, the dig-tool priority table, and
+            any deck-specific silver lining mechanic if one exists)
+         3. Core decision point (a table mapping "opponent does X" -> "you do Y",
+            if the deck has one — e.g. a matchup-dependent line choice)
+         4. Mid-game priority order (numbered per-turn checklist)
+         5. The kill window (how the win condition actually closes a game,
+            with a math table if the finisher has scaling numbers)
+  -->
+
+  <section class="turn" style="border-bottom:none;">
+    <span class="tag">MATCHUP NOTES</span>
+    <h2 class="phase">Where this wins big, and where it doesn't</h2>
+    <div class="datatable">
+      <table class="grid">
+        <thead><tr><th>Opponent</th><th>Grade</th><th>Notes</th></tr></thead>
+        <tbody>
+          <!-- FILL: one row per gauntlet opponent actually simulated.
+               <td class="grade good|even|bad">STRONG|EVEN|TOUGH</td>
+               Grade from the real sim numbers, not vibes. -->
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="turn" style="border-bottom:none;">
+    <span class="tag">SIMULATED, NOT GUESSED</span>
+    <h2 class="phase">Head-to-head results — ptcg-analyzer</h2>
+    <div class="datatable">
+      <table class="grid">
+        <thead><tr><th>Matchup</th><th>Greedy (n=1000)</th><th>MCTS (n=100)</th><th>Read</th></tr></thead>
+        <tbody>
+          <!-- FILL: one row per gauntlet opponent. Always report BOTH greedy
+               and MCTS — the project's own validation notes warn greedy
+               mispilots multi-turn control/combo decks and inflates aggro,
+               so a greedy-only number is a floor, not a verdict. If the two
+               diverge meaningfully, say so explicitly (that's a finding, not
+               noise). -->
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <footer>
+    <p><strong>Source:</strong> built from ptcg-analyzer simulation results (1000-game greedy + 100-game MCTS samples per matchup) and card implementations verified live in that engine, not just unit tests. <!-- FILL: name the specific abilities/attacks confirmed firing, and disclose any deliberate limitation (e.g. a condition the engine doesn't model) exactly as found, per the project's implemented≠exercised rule. --></p>
+  </footer>
+</div>

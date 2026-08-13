@@ -135,6 +135,28 @@ def _semantic_key(state: GameState, a: Action):
         return ("use_ability", a.target_index)
     if a.kind == "retreat":
         return ("retreat", a.target_index)
+    if a.kind == "stadium_switch":
+        return ("stadium_switch", a.target_index)
+    if a.kind == "stadium_academy":
+        # Same card name from different hand slots is the same choice.
+        return ("stadium_academy", p.hand[a.hand_index].name)
+    if a.kind == "stadium_draw":
+        # Prism Tower's once-per-turn discard-2-draw-1. No parameters at all — the
+        # engine picks which 2 cards go — so the kind alone is the whole decision.
+        return ("stadium_draw",)
+    if a.kind == "stadium_evolve":
+        # Grand Tree's once-per-turn deck-search evolution. The only choice the agent
+        # makes is WHICH in-play Basic to grow (the Stage 1 / Stage 2 pulled out of the
+        # deck is a search policy), so the target index is the whole decision.
+        return ("stadium_evolve", a.target_index)
+    if a.kind == "stadium_factory":
+        # Team Rocket's Factory's once-per-turn draw 2. No parameters and no choices —
+        # the kind alone is the whole decision.
+        return ("stadium_factory",)
+    if a.kind == "stadium_garden":
+        # Mystery Garden's once-per-turn discard-an-Energy-and-refill. No parameters —
+        # the engine picks which Energy goes — so the kind alone is the decision.
+        return ("stadium_garden",)
     if a.kind == "attack":
         return ("attack", a.attack_index)
     if a.kind == "pass":

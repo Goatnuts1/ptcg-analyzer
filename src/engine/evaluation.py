@@ -22,7 +22,7 @@ Dragapult-vs-Charizard regression matchup, not toward a single published number.
 from __future__ import annotations
 
 from .state import GameState, PlayerState
-from .effects import ability_suppressed, current_stadium_name
+from .effects import ability_suppressed, current_stadium_name, effective_cost
 
 # Coarse weights. Prizes are the win condition, so they dwarf everything; a terminal
 # win/loss is effectively infinite.
@@ -54,7 +54,7 @@ def _board_damage_pressure(player: PlayerState) -> float:
     (Phantom Dive, Cursed Blast) show up as real value."""
     total = 0.0
     for m in player.all_in_play():
-        hp = m.card.hp or 0
+        hp = m.max_hp or 0        # printed HP ± Stadium HP modifiers (Gravity Mountain)
         if hp > 0 and m.damage > 0:
             total += min(1.0, m.damage / hp) * m.card.gives_up_prizes
     return total
@@ -89,7 +89,8 @@ def position_value(state: GameState, idx: int) -> float:
                 v += W_STAGE[sub]
                 break
     if me.active is not None:
-        payable = [a.damage for a in me.active.card.attacks if can_pay_cost(me.active, a.cost)]
+        payable = [a.damage for a in me.active.card.attacks
+                   if can_pay_cost(me.active, effective_cost(state, me.active, a))]
         if payable:
             v += max(payable) * W_ATTACK_READY
 

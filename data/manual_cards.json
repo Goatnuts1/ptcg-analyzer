@@ -1,117 +1,1202 @@
 [
-  {
-    "id": "me3-121",
-    "name": "Meowth ex",
-    "supertype": "Pokémon",
-    "subtypes": [
-      "Basic",
-      "ex"
+ {
+  "id": "me3-121",
+  "name": "Meowth ex",
+  "supertype": "Pokémon",
+  "subtypes": [
+   "Basic",
+   "ex"
+  ],
+  "hp": 170,
+  "types": [
+   "Colorless"
+  ],
+  "evolvesFrom": null,
+  "evolvesTo": [],
+  "abilities": [
+   {
+    "name": "Last-Ditch Catch",
+    "text": "Once during your turn, when you play this Pokémon from your hand onto your Bench, you may use this Ability. Search your deck for a Supporter card, reveal it, and put it into your hand. Then, shuffle your deck. You can't use more than 1 Ability that has \"Last-Ditch\" in its name each turn.",
+    "type": "Ability"
+   }
+  ],
+  "attacks": [
+   {
+    "name": "Tuck Tail",
+    "cost": [
+     "Colorless",
+     "Colorless",
+     "Colorless"
     ],
-    "hp": 170,
-    "types": [
-      "Colorless"
+    "convertedEnergyCost": 3,
+    "damage": "60",
+    "text": "Put this Pokémon and all attached cards into your hand."
+   }
+  ],
+  "rules": [
+   "Pokémon ex rule: When your Pokémon ex is Knocked Out, your opponent takes 2 Prize cards."
+  ],
+  "weaknesses": [
+   {
+    "type": "Fighting",
+    "value": "×2"
+   }
+  ],
+  "resistances": [],
+  "retreatCost": [
+   "Colorless"
+  ],
+  "regulationMark": "J"
+ },
+ {
+  "id": "asc-22",
+  "name": "Mega Charizard Y ex",
+  "supertype": "Pokémon",
+  "subtypes": [
+   "Stage 2",
+   "MEGA",
+   "ex"
+  ],
+  "hp": 360,
+  "types": [
+   "Fire"
+  ],
+  "evolvesFrom": "Charmeleon",
+  "evolvesTo": [],
+  "abilities": [],
+  "attacks": [
+   {
+    "name": "Explosion Y",
+    "cost": [
+     "Fire",
+     "Fire",
+     "Colorless"
     ],
-    "evolvesFrom": null,
-    "evolvesTo": [],
-    "abilities": [
-      {
-        "name": "Last-Ditch Catch",
-        "text": "Once during your turn, when you play this Pokémon from your hand onto your Bench, you may use this Ability. Search your deck for a Supporter card, reveal it, and put it into your hand. Then, shuffle your deck. You can't use more than 1 Ability that has \"Last-Ditch\" in its name each turn.",
-        "type": "Ability"
-      }
+    "convertedEnergyCost": 3,
+    "damage": "280",
+    "text": "Discard 3 Energy from this Pokémon, and this attack does 280 damage to 1 of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)"
+   }
+  ],
+  "rules": [
+   "Mega Evolution ex Rule: When your Mega Evolution Pokémon ex is Knocked Out, your opponent takes 3 Prize cards."
+  ],
+  "weaknesses": [
+   {
+    "type": "Water",
+    "value": "×2"
+   }
+  ],
+  "resistances": [],
+  "retreatCost": [
+   "Colorless"
+  ],
+  "regulationMark": "I"
+ },
+ {
+  "id": "por-81",
+  "name": "Poké Pad",
+  "supertype": "Trainer",
+  "subtypes": [
+   "Item"
+  ],
+  "hp": null,
+  "types": [],
+  "evolvesFrom": null,
+  "evolvesTo": [],
+  "abilities": [],
+  "attacks": [],
+  "rules": [
+   "Search your deck for a Pokémon that doesn't have a Rule Box, reveal it, and put it into your hand. Then, shuffle your deck.",
+   "You may play any number of Item cards during your turn."
+  ],
+  "weaknesses": [],
+  "resistances": [],
+  "retreatCost": [],
+  "regulationMark": "I"
+ },
+ {
+  "id": "pbl-31",
+  "name": "Mega Slowbro ex",
+  "supertype": "Pokémon",
+  "subtypes": [
+   "Stage 1",
+   "MEGA",
+   "ex"
+  ],
+  "hp": 330,
+  "types": [
+   "Psychic"
+  ],
+  "evolvesFrom": "Slowpoke",
+  "evolvesTo": [],
+  "abilities": [],
+  "attacks": [
+   {
+    "name": "Shellnado Spin",
+    "cost": [
+     "Psychic",
+     "Psychic",
+     "Psychic"
     ],
-    "attacks": [
-      {
-        "name": "Tuck Tail",
-        "cost": [
-          "Colorless",
-          "Colorless",
-          "Colorless"
-        ],
-        "convertedEnergyCost": 3,
-        "damage": "60",
-        "text": "Put this Pokémon and all attached cards into your hand."
-      }
+    "convertedEnergyCost": 3,
+    "damage": "180",
+    "text": "During your opponent's next turn, if this Pokémon is damaged by an attack (even if this Pokémon is Knocked Out), place 12 damage counters on the Attacking Pokémon."
+   }
+  ],
+  "rules": [
+   "Mega Evolution ex Rule: When your Mega Evolution Pokémon ex is Knocked Out, your opponent takes 3 Prize cards."
+  ],
+  "weaknesses": [
+   {
+    "type": "Darkness",
+    "value": "×2"
+   }
+  ],
+  "resistances": [
+   {
+    "type": "Fighting",
+    "value": "-30"
+   }
+  ],
+  "retreatCost": [
+   "Colorless",
+   "Colorless",
+   "Colorless"
+  ],
+  "regulationMark": "J"
+ },
+ {
+  "id": "pbl-65",
+  "name": "Mega Excadrill ex",
+  "supertype": "Pokémon",
+  "subtypes": [
+   "Stage 1",
+   "MEGA",
+   "ex"
+  ],
+  "hp": 340,
+  "types": [
+   "Metal"
+  ],
+  "evolvesFrom": "Drilbur",
+  "evolvesTo": [],
+  "abilities": [],
+  "attacks": [
+   {
+    "name": "Undermine",
+    "cost": [
+     "Metal",
+     "Metal"
     ],
-    "rules": [
-      "Pokémon ex rule: When your Pokémon ex is Knocked Out, your opponent takes 2 Prize cards."
+    "convertedEnergyCost": 2,
+    "damage": "90",
+    "text": "Discard the top 2 cards of your opponent's deck."
+   },
+   {
+    "name": "Maximum Drilling",
+    "cost": [
+     "Metal",
+     "Metal",
+     "Metal"
     ],
-    "weaknesses": [
-      {
-        "type": "Fighting",
-        "value": "×2"
-      }
+    "convertedEnergyCost": 3,
+    "damage": "200+",
+    "text": "If this Pokémon has at least 2 extra Energy attached (in addition to this attack's cost), this attack does 130 more damage."
+   }
+  ],
+  "rules": [
+   "Mega Evolution ex Rule: When your Mega Evolution Pokémon ex is Knocked Out, your opponent takes 3 Prize cards."
+  ],
+  "weaknesses": [
+   {
+    "type": "Fire",
+    "value": "×2"
+   }
+  ],
+  "resistances": [
+   {
+    "type": "Grass",
+    "value": "-30"
+   }
+  ],
+  "retreatCost": [
+   "Colorless",
+   "Colorless",
+   "Colorless",
+   "Colorless"
+  ],
+  "regulationMark": "J"
+ },
+ {
+  "id": "pbl-46",
+  "name": "Drilbur",
+  "supertype": "Pokémon",
+  "subtypes": [
+   "Basic"
+  ],
+  "hp": 70,
+  "types": [
+   "Fighting"
+  ],
+  "evolvesFrom": null,
+  "evolvesTo": [
+   "Excadrill"
+  ],
+  "abilities": [],
+  "attacks": [
+   {
+    "name": "Call for Family",
+    "cost": [
+     "Colorless"
     ],
-    "resistances": [],
-    "retreatCost": [
-      "Colorless"
+    "convertedEnergyCost": 1,
+    "damage": "",
+    "text": "Search your deck for up to 2 Basic Pokémon and put them onto your Bench. Then, shuffle your deck."
+   },
+   {
+    "name": "Dig Claws",
+    "cost": [
+     "Colorless",
+     "Colorless",
+     "Colorless"
     ],
-    "regulationMark": "J"
-  },
-  {
-    "id": "asc-22",
-    "name": "Mega Charizard Y ex",
-    "supertype": "Pokémon",
-    "subtypes": [
-      "Stage 2",
-      "MEGA",
-      "ex"
+    "convertedEnergyCost": 3,
+    "damage": "50",
+    "text": ""
+   }
+  ],
+  "rules": [],
+  "weaknesses": [
+   {
+    "type": "Grass",
+    "value": "×2"
+   }
+  ],
+  "resistances": [],
+  "retreatCost": [
+   "Colorless",
+   "Colorless"
+  ],
+  "regulationMark": "J"
+ },
+ {
+  "id": "me3-87",
+  "name": "Rocky Fighting Energy",
+  "supertype": "Energy",
+  "subtypes": [
+   "Special"
+  ],
+  "hp": null,
+  "types": [
+   "Fighting"
+  ],
+  "evolvesFrom": null,
+  "evolvesTo": [],
+  "abilities": [],
+  "attacks": [],
+  "rules": [
+   "As long as this card is attached to a Pokémon, it provides Fighting Energy.",
+   "Prevent all effects of attacks used by your opponent's Pokémon done to the Fighting Pokémon this card is attached to. (Existing effects are not removed. Damage is not an effect.)"
+  ],
+  "weaknesses": [],
+  "resistances": [],
+  "retreatCost": [],
+  "regulationMark": "J"
+ },
+ {
+  "id": "cri-61",
+  "name": "Metagross (CRI)",
+  "supertype": "Pokémon",
+  "subtypes": [
+   "Stage 2"
+  ],
+  "hp": 180,
+  "types": [
+   "Metal"
+  ],
+  "evolvesFrom": "Metang",
+  "evolvesTo": [],
+  "abilities": [],
+  "attacks": [
+   {
+    "name": "M Bounce Back",
+    "cost": [
+     "Metal"
     ],
-    "hp": 360,
-    "types": [
-      "Fire"
+    "convertedEnergyCost": 1,
+    "damage": "60",
+    "text": "Switch out your opponent's Active Pokémon to the Bench. (Your opponent chooses the new Active Pokémon.)"
+   },
+   {
+    "name": "Metallic Hammer",
+    "cost": [
+     "Metal",
+     "Metal",
+     "Metal",
+     "Colorless"
     ],
-    "evolvesFrom": "Charmeleon",
-    "evolvesTo": [],
-    "abilities": [],
-    "attacks": [
-      {
-        "name": "Explosion Y",
-        "cost": [
-          "Fire",
-          "Fire",
-          "Colorless"
-        ],
-        "convertedEnergyCost": 3,
-        "damage": "280",
-        "text": "Discard 3 Energy from this Pokémon, and this attack does 280 damage to 1 of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)"
-      }
+    "convertedEnergyCost": 4,
+    "damage": "150+",
+    "text": "You may discard 3 [M] Energy from this Pokémon and have this attack do 150 more damage."
+   }
+  ],
+  "rules": [],
+  "weaknesses": [
+   {
+    "type": "Fire",
+    "value": "×2"
+   }
+  ],
+  "resistances": [
+   {
+    "type": "Grass",
+    "value": "-30"
+   }
+  ],
+  "retreatCost": [
+   "Colorless",
+   "Colorless",
+   "Colorless"
+  ],
+  "regulationMark": "J"
+ },
+ {
+  "id": "pbl-33",
+  "name": "Shuppet (PBL)",
+  "supertype": "Pokémon",
+  "subtypes": [
+   "Basic"
+  ],
+  "hp": 50,
+  "types": [
+   "Psychic"
+  ],
+  "evolvesFrom": null,
+  "evolvesTo": [
+   "Banette"
+  ],
+  "abilities": [
+   {
+    "name": "Hide 'n' Sneak",
+    "text": "Prevent all effects of your opponent's Pokémon's attacks and Abilities done to this Pokémon. (Damage is not an effect.)",
+    "type": "Ability"
+   }
+  ],
+  "attacks": [
+   {
+    "name": "Hang Down",
+    "cost": [
+     "Psychic"
     ],
-    "rules": [
-      "Mega Evolution ex Rule: When your Mega Evolution Pokémon ex is Knocked Out, your opponent takes 3 Prize cards."
+    "convertedEnergyCost": 1,
+    "damage": "10",
+    "text": ""
+   }
+  ],
+  "rules": [],
+  "weaknesses": [
+   {
+    "type": "Darkness",
+    "value": "×2"
+   }
+  ],
+  "resistances": [
+   {
+    "type": "Fighting",
+    "value": "-30"
+   }
+  ],
+  "retreatCost": [
+   "Colorless"
+  ],
+  "regulationMark": "J"
+ },
+ {
+  "id": "pbl-34",
+  "name": "Banette (PBL)",
+  "supertype": "Pokémon",
+  "subtypes": [
+   "Stage 1"
+  ],
+  "hp": 80,
+  "types": [
+   "Psychic"
+  ],
+  "evolvesFrom": "Shuppet",
+  "evolvesTo": [],
+  "abilities": [
+   {
+    "name": "Hide 'n' Sneak",
+    "text": "Prevent all effects of your opponent's Pokémon's attacks and Abilities done to this Pokémon. (Damage is not an effect.)",
+    "type": "Ability"
+   }
+  ],
+  "attacks": [
+   {
+    "name": "Puppet Pull",
+    "cost": [
+     "Psychic"
     ],
-    "weaknesses": [
-      {
-        "type": "Water",
-        "value": "×2"
-      }
+    "convertedEnergyCost": 1,
+    "damage": "80",
+    "text": "You may search your deck for a card and put it into your hand. Then, shuffle your deck."
+   }
+  ],
+  "rules": [],
+  "weaknesses": [
+   {
+    "type": "Darkness",
+    "value": "×2"
+   }
+  ],
+  "resistances": [
+   {
+    "type": "Fighting",
+    "value": "-30"
+   }
+  ],
+  "retreatCost": [
+   "Colorless"
+  ],
+  "regulationMark": "J"
+ },
+ {
+  "id": "pbl-39",
+  "name": "Dhelmise (PBL)",
+  "supertype": "Pokémon",
+  "subtypes": [
+   "Basic"
+  ],
+  "hp": 140,
+  "types": [
+   "Psychic"
+  ],
+  "evolvesFrom": null,
+  "evolvesTo": [],
+  "abilities": [],
+  "attacks": [
+   {
+    "name": "Vengeful Anchor",
+    "cost": [
+     "Psychic"
     ],
-    "resistances": [],
-    "retreatCost": [
-      "Colorless"
+    "convertedEnergyCost": 1,
+    "damage": "30+",
+    "text": "If you have 4 or more Pokémon that have the Hide 'n' Sneak Ability in your discard pile, this attack does 140 more damage."
+   }
+  ],
+  "rules": [],
+  "weaknesses": [
+   {
+    "type": "Darkness",
+    "value": "×2"
+   }
+  ],
+  "resistances": [
+   {
+    "type": "Fighting",
+    "value": "-30"
+   }
+  ],
+  "retreatCost": [
+   "Colorless",
+   "Colorless",
+   "Colorless"
+  ],
+  "regulationMark": "J"
+ },
+ {
+  "id": "pbl-5",
+  "name": "Poltchageist (PBL)",
+  "supertype": "Pokémon",
+  "subtypes": [
+   "Basic"
+  ],
+  "hp": 30,
+  "types": [
+   "Grass"
+  ],
+  "evolvesFrom": null,
+  "evolvesTo": [
+   "Sinistcha"
+  ],
+  "abilities": [
+   {
+    "name": "Hide 'n' Sneak",
+    "text": "Prevent all effects of your opponent's Pokémon's attacks and Abilities done to this Pokémon. (Damage is not an effect.)",
+    "type": "Ability"
+   }
+  ],
+  "attacks": [
+   {
+    "name": "Furtive Drop",
+    "cost": [
+     "Colorless"
     ],
-    "regulationMark": "I"
-  },
-  {
-    "id": "por-81",
-    "name": "Poké Pad",
-    "supertype": "Trainer",
-    "subtypes": [
-      "Item"
+    "convertedEnergyCost": 1,
+    "damage": "",
+    "text": "Place 1 damage counter on your opponent's Active Pokémon."
+   }
+  ],
+  "rules": [],
+  "weaknesses": [
+   {
+    "type": "Fire",
+    "value": "×2"
+   }
+  ],
+  "resistances": [],
+  "retreatCost": [],
+  "regulationMark": "J"
+ },
+ {
+  "id": "pbl-6",
+  "name": "Sinistcha (PBL)",
+  "supertype": "Pokémon",
+  "subtypes": [
+   "Stage 1"
+  ],
+  "hp": 60,
+  "types": [
+   "Grass"
+  ],
+  "evolvesFrom": "Poltchageist",
+  "evolvesTo": [],
+  "abilities": [
+   {
+    "name": "Hide 'n' Sneak",
+    "text": "Prevent all effects of your opponent's Pokémon's attacks and Abilities done to this Pokémon. (Damage is not an effect.)",
+    "type": "Ability"
+   }
+  ],
+  "attacks": [
+   {
+    "name": "Matcha Spin",
+    "cost": [
+     "Colorless"
     ],
-    "hp": null,
-    "types": [],
-    "evolvesFrom": null,
-    "evolvesTo": [],
-    "abilities": [],
-    "attacks": [],
-    "rules": [
-      "Search your deck for a Pokémon that doesn't have a Rule Box, reveal it, and put it into your hand. Then, shuffle your deck.",
-      "You may play any number of Item cards during your turn."
+    "convertedEnergyCost": 1,
+    "damage": "",
+    "text": "If you have 6 or more Pokémon that have the Hide 'n' Sneak Ability in your discard pile, place 4 damage counters on each of your opponent's Pokémon."
+   }
+  ],
+  "rules": [],
+  "weaknesses": [
+   {
+    "type": "Fire",
+    "value": "×2"
+   }
+  ],
+  "resistances": [],
+  "retreatCost": [
+   "Colorless"
+  ],
+  "regulationMark": "J"
+ },
+ {
+  "id": "cri-70",
+  "name": "Patrat (CRI)",
+  "supertype": "Pokémon",
+  "subtypes": [
+   "Basic"
+  ],
+  "hp": 70,
+  "types": [
+   "Colorless"
+  ],
+  "evolvesFrom": null,
+  "evolvesTo": [
+   "Watchog"
+  ],
+  "abilities": [
+   {
+    "name": "Watchful Eye",
+    "text": "Damage counters on each Pokémon (both yours and your opponent's) can't be moved to other Pokémon.",
+    "type": "Ability"
+   }
+  ],
+  "attacks": [
+   {
+    "name": "Bite",
+    "cost": [
+     "Colorless"
     ],
-    "weaknesses": [],
-    "resistances": [],
-    "retreatCost": [],
-    "regulationMark": "I"
-  }
+    "convertedEnergyCost": 1,
+    "damage": "10",
+    "text": ""
+   }
+  ],
+  "rules": [],
+  "weaknesses": [
+   {
+    "type": "Fighting",
+    "value": "×2"
+   }
+  ],
+  "resistances": [],
+  "retreatCost": [
+   "Colorless"
+  ],
+  "regulationMark": "J"
+ },
+ {
+  "id": "sv9-120",
+  "name": "Dunsparce (JTG)",
+  "supertype": "Pokémon",
+  "subtypes": [
+   "Basic"
+  ],
+  "hp": 70,
+  "types": [
+   "Colorless"
+  ],
+  "evolvesFrom": null,
+  "evolvesTo": [
+   "Dudunsparce"
+  ],
+  "abilities": [],
+  "attacks": [
+   {
+    "name": "Trading Places",
+    "cost": [
+     "Colorless"
+    ],
+    "convertedEnergyCost": 1,
+    "damage": "",
+    "text": "Switch this Pokémon with 1 of your Benched Pokémon."
+   },
+   {
+    "name": "Ram",
+    "cost": [
+     "Colorless",
+     "Colorless"
+    ],
+    "convertedEnergyCost": 2,
+    "damage": "20",
+    "text": ""
+   }
+  ],
+  "rules": [],
+  "weaknesses": [
+   {
+    "type": "Fighting",
+    "value": "×2"
+   }
+  ],
+  "resistances": [],
+  "retreatCost": [
+   "Colorless"
+  ],
+  "regulationMark": "I"
+ },
+ {
+  "id": "pbl-78",
+  "name": "Gwynn",
+  "supertype": "Trainer",
+  "subtypes": [
+   "Supporter"
+  ],
+  "hp": null,
+  "types": [],
+  "evolvesFrom": null,
+  "evolvesTo": [],
+  "abilities": [],
+  "attacks": [],
+  "rules": [
+   "Discard up to 2 Pokémon that don't have a Rule Box from your hand, and draw 3 cards for each card you discarded in this way. (Pokémon ex, Pokémon V, etc. have Rule Boxes.)",
+   "You may play only 1 Supporter card during your turn."
+  ],
+  "weaknesses": [],
+  "resistances": [],
+  "retreatCost": [],
+  "regulationMark": "J"
+ },
+ {
+  "id": "me5-66",
+  "name": "Pikipek",
+  "supertype": "Pokémon",
+  "subtypes": [
+   "Basic"
+  ],
+  "hp": 70,
+  "types": [
+   "Colorless"
+  ],
+  "evolvesFrom": null,
+  "evolvesTo": [
+   "Trumbeak"
+  ],
+  "abilities": [],
+  "attacks": [
+   {
+    "name": "Double Stab",
+    "cost": [
+     "Colorless"
+    ],
+    "convertedEnergyCost": 1,
+    "damage": "10×",
+    "text": "Flip 2 coins. This attack does 10 damage for each heads."
+   }
+  ],
+  "rules": [],
+  "weaknesses": [
+   {
+    "type": "Lightning",
+    "value": "×2"
+   }
+  ],
+  "resistances": [
+   {
+    "type": "Fighting",
+    "value": "-30"
+   }
+  ],
+  "retreatCost": [
+   "Colorless"
+  ],
+  "regulationMark": "J"
+ },
+ {
+  "id": "me5-67",
+  "name": "Trumbeak",
+  "supertype": "Pokémon",
+  "subtypes": [
+   "Stage 1"
+  ],
+  "hp": 90,
+  "types": [
+   "Colorless"
+  ],
+  "evolvesFrom": "Pikipek",
+  "evolvesTo": [
+   "Toucannon"
+  ],
+  "abilities": [],
+  "attacks": [
+   {
+    "name": "Fly",
+    "cost": [
+     "Colorless"
+    ],
+    "convertedEnergyCost": 1,
+    "damage": "30",
+    "text": "Flip a coin. If tails, this attack does nothing. If heads, during your opponent's next turn, prevent all damage from and effects of attacks done to this Pokémon."
+   }
+  ],
+  "rules": [],
+  "weaknesses": [
+   {
+    "type": "Lightning",
+    "value": "×2"
+   }
+  ],
+  "resistances": [
+   {
+    "type": "Fighting",
+    "value": "-30"
+   }
+  ],
+  "retreatCost": [
+   "Colorless"
+  ],
+  "regulationMark": "J"
+ },
+ {
+  "id": "me5-68",
+  "name": "Toucannon",
+  "supertype": "Pokémon",
+  "subtypes": [
+   "Stage 2"
+  ],
+  "hp": 150,
+  "types": [
+   "Colorless"
+  ],
+  "evolvesFrom": "Trumbeak",
+  "evolvesTo": [],
+  "abilities": [
+   {
+    "name": "Aerial Draw",
+    "text": "Once during your turn, you may use this Ability. Draw a card.",
+    "type": "Ability"
+   }
+  ],
+  "attacks": [
+   {
+    "name": "Feather Rondo",
+    "cost": [
+     "Colorless"
+    ],
+    "convertedEnergyCost": 1,
+    "damage": "60+",
+    "text": "This attack does 20 more damage for each Benched Pokémon (both yours and your opponent's)."
+   }
+  ],
+  "rules": [],
+  "weaknesses": [
+   {
+    "type": "Lightning",
+    "value": "×2"
+   }
+  ],
+  "resistances": [
+   {
+    "type": "Fighting",
+    "value": "-30"
+   }
+  ],
+  "retreatCost": [
+   "Colorless",
+   "Colorless"
+  ],
+  "regulationMark": "J"
+ },
+ {
+  "id": "sv7-114",
+  "name": "Hoothoot (SCR)",
+  "supertype": "Pokémon",
+  "subtypes": [
+   "Basic"
+  ],
+  "hp": 70,
+  "types": [
+   "Colorless"
+  ],
+  "evolvesFrom": null,
+  "evolvesTo": [
+   "Noctowl"
+  ],
+  "abilities": [],
+  "attacks": [
+   {
+    "name": "Triple Stab",
+    "cost": [
+     "Colorless"
+    ],
+    "convertedEnergyCost": 1,
+    "damage": "10×",
+    "text": "Flip 3 coins. This attack does 10 damage for each heads."
+   }
+  ],
+  "rules": [],
+  "weaknesses": [
+   {
+    "type": "Lightning",
+    "value": "×2"
+   }
+  ],
+  "resistances": [
+   {
+    "type": "Fighting",
+    "value": "-30"
+   }
+  ],
+  "retreatCost": [
+   "Colorless"
+  ],
+  "regulationMark": "H"
+ },
+ {
+  "id": "asc-84",
+  "name": "Azumarill ex",
+  "supertype": "Pokémon",
+  "subtypes": [
+   "Stage 1",
+   "ex"
+  ],
+  "hp": 270,
+  "types": [
+   "Psychic"
+  ],
+  "evolvesFrom": "Marill",
+  "evolvesTo": [],
+  "abilities": [
+   {
+    "name": "Bubble Gathering",
+    "text": "As often as you like during your turn, you may use this Ability. Move an Energy from 1 of your other Pokémon to this Pokémon.",
+    "type": "Ability"
+   }
+  ],
+  "attacks": [
+   {
+    "name": "Energized Balloon",
+    "cost": [
+     "Colorless",
+     "Colorless",
+     "Colorless"
+    ],
+    "convertedEnergyCost": 3,
+    "damage": "60+",
+    "text": "This attack does 40 more damage for each Psychic Energy attached to this Pokémon."
+   }
+  ],
+  "rules": [
+   "Pokémon ex rule: When your Pokémon ex is Knocked Out, your opponent takes 2 Prize cards."
+  ],
+  "weaknesses": [
+   {
+    "type": "Metal",
+    "value": "×2"
+   }
+  ],
+  "resistances": [],
+  "retreatCost": [
+   "Colorless",
+   "Colorless"
+  ],
+  "regulationMark": "J"
+ },
+ {
+  "id": "me3-56",
+  "name": "Honedge",
+  "supertype": "Pokémon",
+  "subtypes": [
+   "Basic"
+  ],
+  "hp": 70,
+  "types": [
+   "Metal"
+  ],
+  "evolvesFrom": null,
+  "evolvesTo": [
+   "Doublade"
+  ],
+  "abilities": [],
+  "attacks": [
+   {
+    "name": "Cut",
+    "cost": [
+     "Colorless"
+    ],
+    "convertedEnergyCost": 1,
+    "damage": "10",
+    "text": ""
+   }
+  ],
+  "rules": [],
+  "weaknesses": [
+   {
+    "type": "Fire",
+    "value": "×2"
+   }
+  ],
+  "resistances": [
+   {
+    "type": "Grass",
+    "value": "-30"
+   }
+  ],
+  "retreatCost": [
+   "Colorless",
+   "Colorless"
+  ],
+  "regulationMark": "J"
+ },
+ {
+  "id": "me3-57",
+  "name": "Doublade",
+  "supertype": "Pokémon",
+  "subtypes": [
+   "Stage 1"
+  ],
+  "hp": 100,
+  "types": [
+   "Metal"
+  ],
+  "evolvesFrom": "Honedge",
+  "evolvesTo": [
+   "Aegislash"
+  ],
+  "abilities": [],
+  "attacks": [
+   {
+    "name": "Weaponized Swords",
+    "cost": [
+     "Colorless",
+     "Colorless"
+    ],
+    "convertedEnergyCost": 2,
+    "damage": "60×",
+    "text": "Reveal any number of Honedge, Doublade, and Aegislash from your hand, and this attack does 60 damage for each card you revealed in this way."
+   }
+  ],
+  "rules": [],
+  "weaknesses": [
+   {
+    "type": "Fire",
+    "value": "×2"
+   }
+  ],
+  "resistances": [
+   {
+    "type": "Grass",
+    "value": "-30"
+   }
+  ],
+  "retreatCost": [
+   "Colorless",
+   "Colorless"
+  ],
+  "regulationMark": "J"
+ },
+ {
+  "id": "me3-58",
+  "name": "Aegislash",
+  "supertype": "Pokémon",
+  "subtypes": [
+   "Stage 2"
+  ],
+  "hp": 150,
+  "types": [
+   "Metal"
+  ],
+  "evolvesFrom": "Doublade",
+  "evolvesTo": [],
+  "abilities": [],
+  "attacks": [
+   {
+    "name": "Slash",
+    "cost": [
+     "Colorless",
+     "Colorless",
+     "Colorless"
+    ],
+    "convertedEnergyCost": 3,
+    "damage": "80",
+    "text": ""
+   },
+   {
+    "name": "Metal Slash",
+    "cost": [
+     "Metal",
+     "Colorless",
+     "Colorless",
+     "Colorless"
+    ],
+    "convertedEnergyCost": 4,
+    "damage": "230",
+    "text": "During your next turn, this Pokémon can't use attacks."
+   }
+  ],
+  "rules": [],
+  "weaknesses": [
+   {
+    "type": "Fire",
+    "value": "×2"
+   }
+  ],
+  "resistances": [
+   {
+    "type": "Grass",
+    "value": "-30"
+   }
+  ],
+  "retreatCost": [
+   "Colorless",
+   "Colorless",
+   "Colorless"
+  ],
+  "regulationMark": "J"
+ },
+ {
+  "id": "sv10-10",
+  "name": "Shaymin (DRI)",
+  "supertype": "Pokémon",
+  "subtypes": [
+   "Basic"
+  ],
+  "hp": 80,
+  "types": [
+   "Grass"
+  ],
+  "evolvesFrom": null,
+  "evolvesTo": [],
+  "abilities": [
+   {
+    "name": "Flower Curtain",
+    "text": "Prevent all damage done to your Benched Pokémon that don't have a Rule Box by attacks from your opponent's Pokémon.",
+    "type": "Ability"
+   }
+  ],
+  "attacks": [
+   {
+    "name": "Smash Kick",
+    "cost": [
+     "Colorless",
+     "Colorless"
+    ],
+    "convertedEnergyCost": 2,
+    "damage": "30",
+    "text": ""
+   }
+  ],
+  "rules": [],
+  "weaknesses": [
+   {
+    "type": "Fire",
+    "value": "×2"
+   }
+  ],
+  "resistances": [],
+  "retreatCost": [
+   "Colorless"
+  ],
+  "regulationMark": "I"
+ },
+ {
+  "id": "asc-121",
+  "name": "Koraidon ex (ASC)",
+  "supertype": "Pokémon",
+  "subtypes": [
+   "Basic",
+   "Tera",
+   "ex"
+  ],
+  "hp": 230,
+  "types": [
+   "Fighting"
+  ],
+  "evolvesFrom": null,
+  "evolvesTo": [],
+  "abilities": [],
+  "attacks": [
+   {
+    "name": "Orichalcum Fang",
+    "cost": [
+     "Fighting",
+     "Colorless"
+    ],
+    "convertedEnergyCost": 2,
+    "damage": "50+",
+    "text": "If any of your Pokémon were Knocked Out by damage from an attack during your opponent's last turn, this attack does 120 more damage."
+   },
+   {
+    "name": "Impact Blow",
+    "cost": [
+     "Fighting",
+     "Fighting",
+     "Colorless"
+    ],
+    "convertedEnergyCost": 3,
+    "damage": "200",
+    "text": "During your next turn, this Pokémon can't use Impact Blow."
+   }
+  ],
+  "rules": [
+   "As long as this Pokémon is on your Bench, prevent all damage done to this Pokémon by attacks (both yours and your opponent's).",
+   "Pokémon ex rule: When your Pokémon ex is Knocked Out, your opponent takes 2 Prize cards."
+  ],
+  "weaknesses": [
+   {
+    "type": "Psychic",
+    "value": "×2"
+   }
+  ],
+  "resistances": [],
+  "retreatCost": [
+   "Colorless",
+   "Colorless"
+  ],
+  "regulationMark": "J"
+ }
 ]

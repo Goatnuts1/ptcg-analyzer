@@ -60,12 +60,33 @@ def _has_basic(hand: list[Card]) -> bool:
     return any(c.is_pokemon and c.is_basic for c in hand)
 
 
+def evolves_onto(in_play_card: Card, evolution_card: Card) -> bool:
+    """Does `evolution_card` (a card in hand) evolve onto `in_play_card`?
+
+    The comparison is against the in-play card's PRINTED name, which is
+    `fx.print_base_name(...)` — i.e. the disambiguating "(SETCODE)" suffix this project
+    adds when a deck needs a different print of an already-pooled card is stripped first.
+
+    WHY: the suffix is a pool-bookkeeping device, not part of the card. Without stripping
+    it, a suffixed PRE-evolution silently breaks its own line — "Dunsparce (JTG)" could
+    never become Dudunsparce (whose printed `evolvesFrom` is "Dunsparce"), so a deck
+    running the JTG print would have a dead Stage 1. It also matches the real rule: ANY
+    print of Dunsparce evolves into ANY print of Dudunsparce.
+    """
+    if not (evolution_card.is_pokemon and evolution_card.evolves_from):
+        return False
+    return fx.print_base_name(in_play_card.name) == evolution_card.evolves_from
+
+
 def setup_game(deck_a: list[Card], deck_b: list[Card], seed: Optional[int] = None,
-               db: Optional[object] = None) -> GameState:
+               db: Optional[object] = None, first_player: Optional[int] = None) -> GameState:
     """Shuffle, deal 7, mulligan until both have a Basic, place active + prizes.
 
-    Coin flip decides who goes first. (The starting player skips their first
-    attack — a real and measurable first/second-turn asymmetry.)
+    Coin flip decides who goes first, UNLESS `first_player` (0 or 1) is given, in
+    which case the flip is skipped and that player index goes first — for
+    deliberately testing the first/second-turn asymmetry rather than sampling
+    over it. (The starting player skips their first attack — a real and
+    measurable asymmetry.) Default (None) is unchanged: a real coin flip.
     """
     rng = random.Random(seed)
     pa = PlayerState(name="A", deck=list(deck_a))
@@ -84,7 +105,7 @@ def setup_game(deck_a: list[Card], deck_b: list[Card], seed: Optional[int] = Non
 
     state = GameState(players=(pa, pb), rng=rng)
     state.db = db
-    state.active_index = rng.randint(0, 1)   # coin flip
+    state.active_index = rng.randint(0, 1) if first_player is None else first_player
 
     # each player puts one Basic active, then sets 6 prizes off the top
     for p in (pa, pb):
@@ -106,32 +127,56 @@ def can_pay_cost(mon: InPlayPokemon, cost: tuple[str, ...]) -> bool:
     """Can this Pokemon's attached energy pay an attack cost?
 
     Colorless can be paid by anything. Typed symbols need a matching type (or a
-    Colorless-providing energy as a fallback is NOT allowed for typed symbols).
-    Simplified: we don't yet model special energy that provide 2+ units.
+    Colorless-providing energy as a fallback is NOT allowed for typed symbols) —
+    EXCEPT the "Any" wildcard token (Prism Energy on a Basic, Neo Upper Energy on a
+    Stage 2), which matches any single typed requirement, consumed once like a real
+    energy unit.
+
+    Counted in UNITS, not cards: `provided_types()` emits one entry per Energy the
+    attachment provides, so a card that "provides 2 Energy at a time" (Neo Upper
+    Energy on a Stage 2) really pays a two-symbol cost on its own. For every
+    single-unit energy this is identical to counting cards.
+
+    "Free" is the pool's sentinel for a genuinely 0-cost attack (e.g. Budew's
+    Itchy Pollen, Tyrogue's Pow-Pow Punching) — it isn't an energy type, so it
+    must never consume/require an attached energy.
     """
-    if len(mon.energy) < len(cost):
-        return False
+    cost = tuple(sym for sym in cost if sym != "Free")
     provided = list(mon.provided_types())
+    if len(provided) < len(cost):
+        return False
     # satisfy typed requirements first
     for sym in cost:
         if sym == "Colorless":
             continue
         if sym in provided:
             provided.remove(sym)
+        elif "Any" in provided:
+            provided.remove("Any")
         else:
             return False
-    # remaining colorless requirements: any leftover energy counts
+    # remaining colorless requirements: any leftover energy counts (including
+    # unused "Any" wildcards, which count as 1 unit same as any other energy)
     colorless_needed = sum(1 for s in cost if s == "Colorless")
     return len(provided) >= colorless_needed
 
 
-def retreat_cost(mon: InPlayPokemon) -> int:
+def retreat_cost(mon: InPlayPokemon, state: "GameState" = None,
+                 owner: "PlayerState" = None) -> int:
     """Effective retreat cost, accounting for Tools (Air Balloon −2) and passive
-    abilities (Agile: 0 if no Energy attached)."""
+    abilities (Agile: 0 if no Energy attached; Latias ex's Skyliner: your Basic
+    Pokémon retreat for free). `state`/`owner` are optional so callers without board
+    context still get the Tool/Agile answer."""
+    if (state is not None and owner is not None
+            and fx.skyliner_free_retreat(state, owner, mon)):
+        return 0
     if not mon.energy and any(ab.name == "Agile" for ab in mon.card.abilities):
         return 0
     base = mon.card.retreat_cost
-    if mon.tool is not None and mon.tool.name == "Air Balloon":
+    # Jamming Tower: "Pokémon Tools attached to each Pokémon (both yours and your
+    # opponent's) have no effect" — so Air Balloon's −2 is off while it's the Stadium.
+    if (mon.tool is not None and mon.tool.name == "Air Balloon"
+            and not fx.tools_disabled(state)):
         base = max(0, base - 2)
     return base
 
@@ -146,7 +191,10 @@ def legal_actions(state: GameState) -> list[Action]:
         return actions   # must promote first (handled in apply when active KO'd)
 
     # play a Basic Pokemon to the bench
-    if len(p.bench) < PlayerState.MAX_BENCH:
+    # Bench cap is PER-PLAYER and DYNAMIC (Area Zero Underdepths raises it to 8 for a
+    # player who has a Tera Pokémon in play), so ask fx.bench_limit — never the
+    # PlayerState.MAX_BENCH constant, which is only the default.
+    if len(p.bench) < fx.bench_limit(state, p):
         for i, c in enumerate(p.hand):
             if c.is_pokemon and c.is_basic:
                 actions.append(Action("play_basic", hand_index=i))
@@ -167,7 +215,7 @@ def legal_actions(state: GameState) -> list[Action]:
         for i, c in enumerate(p.hand):
             if c.is_pokemon and c.evolves_from:
                 for t, mon in in_play:
-                    if (mon and mon.card.name == c.evolves_from
+                    if (mon and evolves_onto(mon.card, c)
                             and not mon.played_this_turn
                             and not mon.evolved_this_turn):
                         actions.append(Action("evolve", hand_index=i, target_index=t))
@@ -214,16 +262,85 @@ def legal_actions(state: GameState) -> list[Action]:
 
     # retreat (if enough energy, a bench Pokemon to promote, and not retreat-locked)
     if (p.bench and not p.cant_retreat
-            and p.active.energy_count() >= retreat_cost(p.active)):
+            and p.active.energy_count() >= retreat_cost(p.active, state, p)):
         for t in range(len(p.bench)):
             actions.append(Action("retreat", target_index=t))
+
+    # Surfing Beach (Stadium): once per turn, switch your Active [Water] Pokémon with
+    # a Benched [Water] Pokémon (free, no energy cost, doesn't end the turn). Offered
+    # as a legal action whenever a valid Water bench target exists — an agent picks.
+    if (fx.current_stadium_name(state) == "Surfing Beach"
+            and not p.stadium_switch_used_this_turn
+            and "Water" in p.active.card.types):
+        for t, mon in enumerate(p.bench):
+            if "Water" in mon.card.types:
+                actions.append(Action("stadium_switch", target_index=t))
+
+    # Prism Tower (Stadium): "Once during each player's turn, that player may discard 2
+    # cards from their hand in order to draw a card." A free action for EITHER player
+    # (whoever's turn it is) that doesn't end the turn. Offered only when the cost can
+    # actually be paid (2 cards in hand) and the payoff exists (a card left to draw) —
+    # the engine never offers a Trainer/ability that would do nothing, and this is the
+    # same standard.
+    if (fx.current_stadium_name(state) == "Prism Tower"
+            and not p.stadium_draw_used_this_turn
+            and len(p.hand) >= 2 and p.deck):
+        actions.append(Action("stadium_draw"))
+
+    # Grand Tree (Stadium, ACE SPEC): "Once during each player's turn, that player may
+    # search their deck for a Stage 1 Pokémon that evolves from 1 of their Basic Pokémon
+    # and put it onto that Pokémon to evolve it. If that Pokémon was evolved in this way,
+    # that player may search their deck for a Stage 2 Pokémon that evolves from that
+    # Pokémon and put it onto that Pokémon to evolve it." A free action for EITHER player,
+    # enumerated PER Basic target (the Surfing Beach shape) so an agent picks which line
+    # to build; the Stage 1 / Stage 2 picked out of the deck is a search policy.
+    if (fx.current_stadium_name(state) == "Grand Tree"
+            and not p.stadium_evolve_used_this_turn):
+        for t, mon in in_play:
+            if fx.grand_tree_can_evolve(state, p, mon):
+                actions.append(Action("stadium_evolve", target_index=t))
+
+    # Mystery Garden (Stadium): "Once during each player's turn, that player may discard
+    # an Energy card from their hand in order to draw cards until they have as many cards
+    # in their hand as they have Psychic Pokémon in play." Offered only when it actually
+    # draws (see fx.mystery_garden_playable).
+    if (fx.current_stadium_name(state) == "Mystery Garden"
+            and not p.stadium_garden_used_this_turn
+            and fx.mystery_garden_playable(state, p)):
+        actions.append(Action("stadium_garden"))
+
+    # Team Rocket's Factory (Stadium): "Once during each player's turn, if they played a
+    # Supporter card that has 'Team Rocket' in its name from their hand this turn, they
+    # may draw 2 cards." A free action for EITHER player (whoever's turn it is) that
+    # doesn't end the turn. Three gates, all real: the Factory must be the Stadium in
+    # play, this player must not have used it yet this turn, and the CONDITION — a Team
+    # Rocket Supporter played from hand THIS turn — must be satisfied. The `p.deck` check
+    # is the usual "never offer an action that does nothing".
+    if (fx.team_rocket_factory_active(state)
+            and not p.stadium_factory_used_this_turn
+            and p.team_rocket_supporter_played_this_turn
+            and p.deck):
+        actions.append(Action("stadium_factory"))
+
+    # Academy at Night (Stadium): "Once during each player's turn, that player may put a
+    # card from their hand on top of their deck." A free action for EITHER player that
+    # doesn't end the turn, enumerated PER hand card (the attach_tool shape) so an agent
+    # picks WHICH card goes on top — that choice is the whole card (it feeds Slowking's
+    # Seek Inspiration, which discards the top card of the deck). Always "does something"
+    # as long as a hand exists.
+    if (fx.current_stadium_name(state) == "Academy at Night"
+            and not p.stadium_academy_used_this_turn
+            and p.hand):
+        for i in range(len(p.hand)):
+            actions.append(Action("stadium_academy", hand_index=i))
 
     # attack: starting player cannot attack on the very first turn, and a Pokémon
     # under a "can't attack this turn" lock (Eon Blade, etc.) can't attack either.
     first_turn_no_attack = (state.turn_number == 1)
     if not first_turn_no_attack and not p.active.cannot_attack:
         for ai, atk in enumerate(p.active.card.attacks):
-            if can_pay_cost(p.active, atk.cost) and atk.name not in p.active.locked_attacks:
+            cost = fx.effective_cost(state, p.active, atk)   # Colorless discounts (Blood Moon)
+            if can_pay_cost(p.active, cost) and atk.name not in p.active.locked_attacks:
                 actions.append(Action("attack", attack_index=ai))
 
     return actions
@@ -238,7 +355,8 @@ def _resolve_attack(state: GameState, atk_index: int) -> None:
     atk = attacker.card.attacks[atk_index]
     effect = fx.get_attack_effect(attacker.card.name, atk.name)
     ctx = fx.EffectContext(state=state, me=state.current, opp=state.opponent,
-                           source=attacker, db=state.db, rng=state.rng)
+                           source=attacker, db=state.db, rng=state.rng,
+                           effect_kind="attack")
 
     # Confusion: flip a coin; tails -> 30 to itself and the attack does nothing.
     if attacker.confused and not fx.flip(ctx):
@@ -292,7 +410,8 @@ def apply_action(state: GameState, action: Action) -> None:
         trigger = fx.get_on_bench_trigger(card.name)
         if trigger and not fx.ability_suppressed(state, newmon):
             ctx = fx.EffectContext(state=state, me=p, opp=state.opponent,
-                                   source=newmon, db=state.db, rng=state.rng)
+                                   source=newmon, db=state.db, rng=state.rng,
+                                   effect_kind="ability")
             trigger(ctx)
         return
 
@@ -306,7 +425,8 @@ def apply_action(state: GameState, action: Action) -> None:
         on_attach = fx.get_special_energy_on_attach(card.name)
         if on_attach:
             ctx = fx.EffectContext(state=state, me=p, opp=state.opponent,
-                                   source=mon, db=state.db, rng=state.rng)
+                                   source=mon, db=state.db, rng=state.rng,
+                                   effect_kind="energy")
             on_attach(ctx)
         return
 
@@ -315,6 +435,11 @@ def apply_action(state: GameState, action: Action) -> None:
         mon = p.active if action.target_index == -1 else p.bench[action.target_index]
         mon.tool = card
         state.emit(f"attached Tool {card.name} to {mon.card.name}")
+        # A Tool can change maximum HP (Cynthia's Power Weight: +70 to a Cynthia's
+        # Pokémon), and hp_modifier is DERIVED — refresh so remaining_hp/max_hp are right
+        # immediately (agents and evaluation read them before the next KO sweep). Attaching
+        # can only raise HP, so no knockout sweep is needed here.
+        fx.refresh_hp_modifiers(state)
         return
 
     if action.kind == "evolve":
@@ -327,16 +452,27 @@ def apply_action(state: GameState, action: Action) -> None:
         mon.ability_used_this_turn = False  # the new stage's ability is fresh
         mon.confused = False               # evolving removes Special Conditions
         state.emit(f"evolved into {card.name}")
+        # on-evolve-from-hand trigger (Alakazam: Psychic Draw), unless suppressed
+        trigger = fx.get_on_evolve_trigger(card.name)
+        if trigger and not fx.ability_suppressed(state, mon):
+            ctx = fx.EffectContext(state=state, me=p, opp=state.opponent,
+                                   source=mon, db=state.db, rng=state.rng,
+                                   effect_kind="ability")
+            trigger(ctx)
         # NOTE: current "Mega Evolution Pokémon ex" (lowercase ex; e.g. Mega Charizard
         # X/Y ex) have NO turn-ending rule — per the official 2026 rulebook (Appendix 1,
         # p23): "there are no special rules when it comes to playing Mega Evolution
         # Pokémon ex." The turn-end belonged to the rotated XY-era "Mega Evolution
         # Pokémon-EX" (uppercase). Their only drawback is the 3-prize KO (gives_up_prizes).
+        # Evolving can change maximum HP (evolving INTO a Stage 2 under Gravity Mountain),
+        # and damage carries over — so refresh + sweep. (Rare Candy's evolve goes through
+        # play_trainer, which already calls process_knockouts after the effect.)
+        fx.process_knockouts(state)
         return
 
     if action.kind == "retreat":
         # pay retreat cost: discard that many energy from the active
-        cost = retreat_cost(p.active)
+        cost = retreat_cost(p.active, state, p)
         for _ in range(cost):
             if p.active.energy:
                 p.discard.append(p.active.energy.pop())
@@ -347,15 +483,135 @@ def apply_action(state: GameState, action: Action) -> None:
         state.emit(f"retreated to {new_active.card.name}")
         return
 
+    if action.kind == "stadium_switch":
+        # Surfing Beach's free once-per-turn Water switch. Mirrors retreat minus the
+        # energy cost and minus ending the turn; Special Conditions clear off the
+        # Active Spot (same as retreat / Switch).
+        newcomer = p.bench.pop(action.target_index)
+        p.active.confused = False
+        p.bench.append(p.active)
+        p.active = newcomer
+        p.stadium_switch_used_this_turn = True
+        state.emit(f"Surfing Beach: switched in {newcomer.card.name}")
+        return
+
+    if action.kind == "stadium_draw":
+        # Prism Tower: discard 2 cards from hand, then draw 1. Free action, once per
+        # turn per player, doesn't end the turn.
+        #
+        # WHICH 2 to discard is a policy hook, exactly like place_counters_on_bench's
+        # targeting. v0 uses the engine's existing `_search_value` desirability, lowest
+        # first, so the least useful cards go — a neutral, deck-agnostic default. It is
+        # deliberately NOT tuned toward decks that WANT specific cards in the discard
+        # (this list's Hide 'n' Sneak Pokémon fuel Vengeful Anchor / Matcha Spin); a
+        # searching agent can own the real choice later.
+        for _ in range(2):
+            if not p.hand:
+                break
+            i = min(range(len(p.hand)), key=lambda j: fx._search_value(p.hand[j]))
+            p.discard.append(p.hand.pop(i))
+        p.draw(1)
+        p.stadium_draw_used_this_turn = True
+        state.emit("Prism Tower: discarded 2 cards from hand, drew 1")
+        return
+
+    if action.kind == "stadium_evolve":
+        # Grand Tree: evolve the chosen Basic with a Stage 1 FROM THE DECK, then (if that
+        # worked) a Stage 2 from the deck on top of it, then shuffle. Free action, once
+        # per turn per player, doesn't end the turn.
+        #
+        # These cards come from the DECK, not the hand, so the "when you play this Pokémon
+        # from your hand to evolve" triggers (ON_EVOLVE_TRIGGERS: Alakazam's Psychic Draw,
+        # Noctowl's Jewel Seeker) deliberately do NOT fire — that clause is what Rare Candy
+        # satisfies and Grand Tree does not.
+        p.stadium_evolve_used_this_turn = True
+        mon = p.active if action.target_index == -1 else p.bench[action.target_index]
+        stage1 = fx.grand_tree_stage1_for(state, p, mon)
+        if stage1 is None:
+            return
+        p.deck.remove(stage1)
+        mon.evolved_from.append(mon.card)
+        mon.card = stage1
+        mon.evolved_this_turn = True
+        mon.ability_used_this_turn = False
+        mon.confused = False               # evolving removes Special Conditions
+        state.emit(f"Grand Tree: evolved into {stage1.name}")
+        stage2 = fx.grand_tree_stage2_for(state, p, stage1)
+        if stage2 is not None:
+            p.deck.remove(stage2)
+            mon.evolved_from.append(mon.card)
+            mon.card = stage2
+            mon.ability_used_this_turn = False
+            state.emit(f"Grand Tree: evolved into {stage2.name}")
+        if state.rng:
+            state.rng.shuffle(p.deck)      # "Then, that player shuffles their deck."
+        # Evolving can change maximum HP (into a Stage 2 under Gravity Mountain) and
+        # damage carries over, so sweep — process_knockouts refreshes the modifiers.
+        fx.process_knockouts(state)
+        return
+
+    if action.kind == "stadium_garden":
+        # Mystery Garden: discard an Energy card from hand, then draw until your hand
+        # holds as many cards as you have Psychic Pokémon in play. Free action, once per
+        # turn per player, doesn't end the turn.
+        #
+        # WHICH Energy is discarded is a policy hook (the Prism Tower precedent): the
+        # least desirable by the engine's existing `_search_value`, so a Special Energy
+        # is kept over a Basic one where they differ.
+        energy_idx = [i for i, c in enumerate(p.hand) if c.is_energy]
+        if not energy_idx:
+            return
+        i = min(energy_idx, key=lambda j: fx._search_value(p.hand[j]))
+        p.discard.append(p.hand.pop(i))
+        target = fx.mystery_garden_target(state, p)
+        drew = p.draw(max(0, target - len(p.hand)))
+        p.stadium_garden_used_this_turn = True
+        state.emit(f"Mystery Garden: discarded an Energy, drew {drew} "
+                   f"(hand target {target})")
+        return
+
+    if action.kind == "stadium_factory":
+        # Team Rocket's Factory: draw 2. Free action, once per turn per player, doesn't
+        # end the turn. No cost and no choices — the whole card is its condition, which
+        # legal_actions has already checked.
+        drew = p.draw(2)
+        p.stadium_factory_used_this_turn = True
+        state.emit(f"Team Rocket's Factory: drew {drew}")
+        return
+
+    if action.kind == "stadium_academy":
+        # Academy at Night: put a card from your hand on top of your deck. Free action,
+        # once per turn per player, doesn't end the turn. The hand card is chosen by the
+        # agent via hand_index (see legal_actions).
+        card = p.hand.pop(action.hand_index)
+        p.deck.insert(0, card)
+        p.stadium_academy_used_this_turn = True
+        state.emit(f"Academy at Night: put {card.name} on top of the deck")
+        return
+
     if action.kind == "play_stadium":
         card = p.hand.pop(action.hand_index)
         # discard the outgoing Stadium to whoever played it, then install the new one
+        outgoing_owner = state.stadium_owner
         if state.stadium is not None and state.stadium_owner is not None:
             state.players[state.stadium_owner].discard.append(state.stadium)
         state.stadium = card
         state.stadium_owner = state.active_index
         p.stadium_played_this_turn = True
         state.emit(f"played Stadium {card.name}")
+        # A Stadium can change the BENCH CAP (Area Zero Underdepths: 8 for a player with
+        # a Tera Pokémon in play). Replacing Area Zero is exactly its "when this card
+        # leaves play, both players discard Pokémon from their Bench until they have 5,
+        # and the player who played this card discards first" clause — hence
+        # `outgoing_owner`, captured BEFORE state.stadium_owner was overwritten.
+        # This runs BEFORE the knockout sweep because process_knockouts ends with its own
+        # enforce_bench_limits(state) in DEFAULT order; letting that one go first would
+        # silently discard in the wrong order.
+        fx.enforce_bench_limits(state, first_index=outgoing_owner)
+        # A Stadium can also change maximum HP (Gravity Mountain: −30 HP per Stage 2).
+        # Sweep so a Pokémon whose HP just dropped to at-or-below its damage is Knocked
+        # Out immediately — process_knockouts refreshes the modifiers itself.
+        fx.process_knockouts(state)
         return
 
     if action.kind == "play_trainer":
@@ -364,12 +620,20 @@ def apply_action(state: GameState, action: Action) -> None:
         card = p.hand.pop(action.hand_index)
         effect = fx.get_trainer_effect(card.name)
         ctx = fx.EffectContext(state=state, me=p, opp=state.opponent,
-                               db=state.db, rng=state.rng)
+                               db=state.db, rng=state.rng, effect_kind="trainer")
         did = effect(ctx)
         if did:
             p.discard.append(card)
             if card.is_supporter:
                 p.supporter_played_this_turn = True
+                # Team Rocket's Factory's condition: "if they played a Supporter card
+                # that has 'Team Rocket' in its name from their hand this turn". Recorded
+                # here — the one point where a Supporter has actually RESOLVED (a
+                # Supporter whose effect did nothing is put back in hand below and was
+                # never played). Independent of whether the Factory is in play right now,
+                # because the Stadium can arrive later in the same turn.
+                if fx.p_team_rocket_supporter(card):
+                    p.team_rocket_supporter_played_this_turn = True
             state.emit(f"played {card.name}")
             fx.process_knockouts(state)   # a Trainer could cause KOs
         else:
@@ -383,7 +647,8 @@ def apply_action(state: GameState, action: Action) -> None:
             effect = fx.get_ability_effect(mon.card.name, ab.name)
             if effect:
                 ctx = fx.EffectContext(state=state, me=p, opp=state.opponent,
-                                       source=mon, db=state.db, rng=state.rng)
+                                       source=mon, db=state.db, rng=state.rng,
+                                       effect_kind="ability")
                 effect(ctx)
                 if not fx.is_repeatable_ability(mon.card.name, ab.name):
                     mon.ability_used_this_turn = True
@@ -434,6 +699,14 @@ def start_turn(state: GameState) -> bool:
     p.energy_attached_this_turn = False
     p.supporter_played_this_turn = False
     p.stadium_played_this_turn = False
+    p.stadium_switch_used_this_turn = False   # Surfing Beach: once per turn
+    p.stadium_draw_used_this_turn = False     # Prism Tower: once per turn
+    p.stadium_evolve_used_this_turn = False   # Grand Tree: once per turn
+    p.stadium_garden_used_this_turn = False   # Mystery Garden: once per turn
+    p.stadium_factory_used_this_turn = False  # Team Rocket's Factory: once per turn
+    p.stadium_academy_used_this_turn = False  # Academy at Night: once per turn
+    # ...and its CONDITION resets too — "played ... this turn" means THIS turn only.
+    p.team_rocket_supporter_played_this_turn = False
     # snapshot "KO'd during the opponent's last turn" for Flip the Script, then
     # reset the accumulator for the cycle that starts now.
     p.koed_last_turn = p.koed_during_opp_turn
@@ -444,17 +717,28 @@ def start_turn(state: GameState) -> bool:
     p.cant_play_items = p.pending_cant_play_items
     p.pending_cant_retreat = False
     p.pending_cant_play_items = False
+    # Kieran's / Premium Power Pro's "during this turn" damage bonuses expire with the
+    # turn that set them.
+    p.bonus_damage_vs_ex_v = 0
+    p.bonus_damage_fighting_vs_active = 0
     for mon in p.all_in_play():
         mon.ability_used_this_turn = False
         mon.played_this_turn = False
         mon.evolved_this_turn = False
         mon.shielded = False           # Dig's protection lasted through the opponent's turn
+        mon.retaliate = False          # Shellnado Spin's retaliation lasted through the opponent's turn
+        mon.retaliate_counters = 12    # reset to the default amount alongside the flag
+        mon.damage_reduction = 0       # Protect Charge's −30 lasted through the opponent's turn
         # promote a pending "can't attack next turn" lock to active for THIS turn,
         # then clear pending; a turn later this clears the active flag too.
         mon.cannot_attack = mon.pending_cannot_attack
         mon.pending_cannot_attack = False
         mon.locked_attacks = list(mon.pending_locked_attacks)   # per-attack cooldowns
         mon.pending_locked_attacks = []
+        # same promote-then-clear hop for "during your next turn this attack does more
+        # damage" self-buffs (Meteor Mash), so the buff is live on THIS turn only.
+        mon.boosted_attacks = dict(mon.pending_boosted_attacks)
+        mon.pending_boosted_attacks = {}
     # the starting player's first turn does NOT draw in some rule sets; modern
     # rules: player going first DOES draw. We follow modern: always draw.
     drawn = p.draw(1)

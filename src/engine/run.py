@@ -78,8 +78,9 @@ def finish_game(state, agent_a, agent_b):
     return _resolve_tie(state)
 
 
-def play_game(deck_a, deck_b, agent_a, agent_b, seed=None, keep_log=False, db=None):
-    state = setup_game(deck_a, deck_b, seed=seed, db=db)
+def play_game(deck_a, deck_b, agent_a, agent_b, seed=None, keep_log=False, db=None,
+             first_player=None):
+    state = setup_game(deck_a, deck_b, seed=seed, db=db, first_player=first_player)
     # first turn must be started before finish_game's loop (which expects MAIN)
     if not start_turn(state):
         _resolve_tie(state)

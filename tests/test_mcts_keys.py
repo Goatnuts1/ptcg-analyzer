@@ -18,7 +18,7 @@ import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from src.engine.cards import CardDB
-from src.engine.decks import load_tournament_deck, load_test_decks
+from src.engine.decks import load_tournament_deck, load_test_decks, load_deck
 from src.engine.agents import GreedyAgent
 from src.engine.game import setup_game, start_turn, legal_actions, apply_action, Phase
 from src.engine.mcts import _semantic_key, _deduped_legal
@@ -32,11 +32,19 @@ def main():
     # Drive several diverse games; at every decision, check the key invariant for
     # all legal actions (these tournament decks exercise stadium/tool/ability/attack/
     # retreat/evolve/etc., the full action vocabulary).
-    pairings = [("dragapult", "charizard_xy"), ("charizard_xy", "dragapult")]
-    for gi in range(12):
-        which = pairings[gi % 2]
-        da = load_tournament_deck(db, which[0])
-        dbk = load_tournament_deck(db, which[1])
+    # hide_n_sneak is in here on purpose: it is the only registered list that puts
+    # Prism Tower's ACTIVATED Stadium ability ("stadium_draw") on the board, and that is
+    # exactly the shape of action that used to collapse into ("pass",). gardevoir_real is
+    # here for the same reason: it is the only list carrying the other two activated
+    # Stadiums, Grand Tree ("stadium_evolve") and Mystery Garden ("stadium_garden").
+    # doublade is here for the newest one: Team Rocket's Factory ("stadium_factory").
+    pairings = [("dragapult", "charizard_xy"), ("charizard_xy", "dragapult"),
+                ("hide_n_sneak", "dragapult"), ("gardevoir_real", "dragapult"),
+                ("doublade", "dragapult")]
+    for gi in range(24):
+        which = pairings[gi % len(pairings)]
+        da = load_deck(db, which[0])
+        dbk = load_deck(db, which[1])
         st = setup_game(da, dbk, seed=gi, db=db)
         start_turn(st)
         agent = GreedyAgent(random.Random(gi))
@@ -72,7 +80,8 @@ def main():
                     break
 
     # sanity: the sweep actually exercised the kinds that used to vanish
-    for needed in ("play_stadium", "attach_tool"):
+    for needed in ("play_stadium", "attach_tool", "stadium_draw", "stadium_evolve",
+                   "stadium_garden", "stadium_factory"):
         if needed not in seen_kinds:
             fails.append(f"sweep never exercised {needed!r} — can't claim it's guarded")
 
