@@ -158,21 +158,69 @@ play_trainer branch. KO logic shared in `process_knockouts` (scans bench).
 IMPORTANT: in play_trainer the card is popped from hand BEFORE the effect runs,
 because effects mutate the hand (learned bug — index shift).
 
-- MCTS agent: done + tested. `src/engine/mcts.py` = GameState.clone() +
-  determinize() (PIMC, handles hidden info) + UCT. Now supports a `position_value`
-  leaf evaluation (`rollout="eval"`, far cheaper than terminal rollouts) and a
-  multi-turn negamax tree across the turn boundary (`search_plies=N`). Beats greedy
-  ~61% (single-turn, greedy rollout). `tests/test_mcts*.py` check clone/determinize
-  correctness, negamax sign handling, and strength.
+- MCTS agents: done + tested. `src/engine/mcts.py` holds TWO, and they are
+  independent on purpose.
+  `MCTSAgent` (`--agent mcts`) = GameState.clone() + determinize() (PIMC, hidden
+  info) + UCT, with a `position_value` leaf (`rollout="eval"`) and a multi-turn
+  negamax tree across the turn boundary (`search_plies=N`). Beats greedy ~61%
+  (single-turn, greedy rollout). **Its defaults are frozen** — every recorded
+  gauntlet number was measured with them.
+  `ISMCTSAgent` (`--agent mcts2`) = cross-turn Single-Observer Information Set
+  MCTS (see the MCTS notes below).
+  `tests/test_mcts*.py` + `tests/test_ismcts.py` check clone/determinize
+  correctness, negamax sign handling, information-set bookkeeping, and strength.
 
 ## MCTS notes (`src/engine/mcts.py`)
 - clone() shares immutable Card refs, copies mutable wrappers — keep it that way.
 - determinize() conserves the exact card multiset and preserves the acting
   player's known info (own hand, public board/discard); reshuffles hidden zones.
-- Tree is SINGLE-TURN (acting player's sequencing); rest is rolled out. Full
-  multi-turn ISMCTS is a later upgrade.
+- `MCTSAgent`'s tree spans `search_plies` turn-segments (default 1 = single turn,
+  the CLI uses 2); the rest is rolled out or evaluated. Re-determinizing per
+  iteration into ONE shared tree is PIMC-with-a-shared-tree, not ISMCTS.
+- `ISMCTSAgent` is the information-set version. A node is an INFORMATION SET of
+  the player acting there, so successive iterations arrive under determinizations
+  with DIFFERENT LEGAL ACTION SETS. Only actions legal in the current
+  determinization are considered, and each child carries an AVAILABILITY count —
+  UCB normalises by `log(avail)`, not `log(parent.visits)`. Without that, an
+  action legal in 1 world out of 10 looks permanently under-explored and gets
+  chased as if always available: strategy fusion, i.e. the search learning lines
+  that presuppose knowledge of the opponent's hidden hand.
+  `max_turn_hops` = turn-segments of tree (default 3), `position_value` at the
+  leaf, `leaf_finish_turn` (default on) finishes the current turn greedily first —
+  QUIESCENCE, not a rollout, because a leaf taken mid-turn scores a board whose
+  attack has not landed yet. HONEST LIMIT: single-observer. Opponent nodes are
+  indexed by the ROOT player's determinization, so the opponent is modelled as
+  seeing that world, not its own information set. MO-ISMCTS is not built.
+- Tree reuse (`reuse_tree`) retains the chosen child's subtree for the next
+  decision and credits its visits against the budget. Scoped to ONE TURN: across a
+  turn boundary the opponent moves an unknown number of times, so descending our
+  key-indexed subtree would graft statistics onto a position that never occurred.
+  Default OFF for `MCTSAgent` (it would move the recorded numbers), ON for
+  `ISMCTSAgent`. Measured on `MCTSAgent`: ~7% faster per decision (104 vs 117
+  iters/decision) — but NOT faster in games/sec, because better play makes games
+  longer.
 - Actions are de-duplicated by semantic key (same card from different hand slots,
-  same energy type to same target) so the iteration budget isn't wasted.
+  same energy type to same target) so the iteration budget isn't wasted. Both
+  agents use it; UCB and final-move ties break on key order, so nothing depends on
+  dict/set iteration luck (`tests/test_determinism.py` covers mcts2 cross-process).
+- MEASURED, n=60/cell, seed 2026, mirrored seats, deck under test piloted by each
+  agent against the SAME greedy-piloted opponent (this is the strength read; a
+  both-sides matchup % is not one). mcts2 is at 45–60 iters so its wall clock is
+  at or below mcts@120's:
+  ```
+  deck under test (greedy opponent)   greedy    mcts@120       mcts2
+  cornerstone_box  (crustle_modern)    31.7%   26.7% 13.1s   31.7% 10.7s
+  crustle_modern   (cornerstone_box)   75.0%   31.7% 26.2s   73.3% 13.2s
+  clefairy_stock   (mega_excadrill)    15.0%   18.3% 31.6s   33.3% 21.5s
+  mega_excadrill   (clefairy_stock)    76.7%   66.7% 16.8s   70.0% 16.8s
+  raging_bolt      (dragapult)         16.7%   31.7% 18.7s   35.0% 15.1s
+  cornerstone_box  (clefairy_stock)    86.7%   70.0% 20.9s   91.7% 15.0s
+  mean                                 50.3%   40.9% 127.3s  55.8% 92.3s
+  ```
+  mcts2 beat mcts in all six contexts using 27% less total wall clock. Note the
+  uncomfortable half of the same table: `mcts` averages BELOW greedy here, and
+  mcts2 only clears greedy by ~5pt. Search is not yet a free upgrade over the
+  hand-written pilot on aggro decks.
 
 ## Using it — the CLI (`cli.py`) or the web UI
 The "crunch all day" entry point. Decks are referenced by name from `DECKS`. There's
@@ -195,9 +243,12 @@ parses qty+name (stripping set codes like `MEG 50`), matches against the pool
 (accent/case-insensitive, energy normalised), reports matched/missing + legality, and
 writes the engine-format recipe to `decks/imported/<name>.json`.
 Matchups mirror seats (cancels the going-first edge) and are deterministic by
-`--seed`. `--agent` is `greedy` (default, ~900–1000 games/sec), `random`, or `mcts`
-(far slower). Save files store the reproducible recipe + full step log; replay
+`--seed`. `--agent` is `greedy` (default, ~900–1000 games/sec), `random`, `mcts`
+(far slower), or `mcts2` (cross-turn ISMCTS; ~mcts speed at `--iters 60`). Save files store the reproducible recipe + full step log; replay
 re-simulates from the seed and verifies the log matches byte-for-byte.
+`--agent2` (+ `--iters2`) pilots deck2 with a DIFFERENT agent at its own iteration
+count — the way to compare two pilots on one deck at equal wall clock. Omit it and
+`run()` behaves exactly as before, single-pilot.
 `src/engine/run.py` is the lower-level batch loop; `src/engine/matchup.py` is the
 instrumented validation runner (win% + right-lines evidence).
 
@@ -224,7 +275,21 @@ favor of a solid, usable, trustworthy core.
   `gardevoir` flips to a 43% loss when both sides are piloted well. Treat the matrix
   as a fast first read, not a power ranking; confirm standouts with
   `cli.py --round-robin --agent mcts` (uses 50 iters / 24 games per pair by default).
-- Full multi-turn ISMCTS / hidden-hand-aware eval are not built (see VALIDATION_RESULT).
+- Cross-turn ISMCTS IS now built (`--agent mcts2`, see MCTS notes) — but it is
+  SINGLE-observer, and hidden-hand-aware *evaluation* is still not built.
+  `docs/VALIDATION_RESULT.md` predates mcts2; its "not built" wording is stale,
+  its verdict is not.
+- **The two documented divergence matchups do NOT converge under mcts2.** Both
+  sides piloted by the same agent, n=60, seed 2026:
+  ```
+                                     greedy    mcts@120      mcts2@60
+  cornerstone_box vs crustle_modern   31.7%   55.0% 47.6s   35.0% 27.6s
+  clefairy_stock  vs mega_excadrill   15.0%   50.0% 53.6s   40.0% 56.0s
+  ```
+  mcts2 lands BETWEEN greedy and mcts, closer to greedy. A deeper, better-founded
+  search moving the number back toward greedy's read is a real finding, not a
+  regression to explain away: it says `mcts`'s 55%/50% were not simply "what a
+  strong pilot sees". Do not quote any of the three as the true matchup number.
 
 ## Card legality
 The Mega ex mechanic is current (mark I). Old SV-base ex (Charizard ex, Gardevoir
