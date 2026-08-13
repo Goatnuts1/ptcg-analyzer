@@ -82,5 +82,9 @@ python3 cli.py --replay saved_games/mygame.json
 
 - **Same `--seed` = same result, every time** — reproducible.
 - `--agent greedy` (default) is fast; `--agent mcts` plays smarter but much slower and
-  is fairer to combo decks (see "Reading the matrix" in the README).
+  is fairer to combo decks (see "Reading the matrix" in the README); `--agent mcts2`
+  is the cross-turn Information Set MCTS pilot (same ballpark speed as `mcts` at
+  `--iters 90`).
+- `--agent2` (with `--iters2`) pilots deck2 with a different agent — that is how you
+  compare two pilots head to head on the same deck.
 - More games = a more accurate number (`--games 5000`); fewer = faster.

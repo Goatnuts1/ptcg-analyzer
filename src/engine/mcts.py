@@ -36,7 +36,20 @@ WHY THIS IS THE HARD PART (and how we handle it):
              is a later 2c; determinized-root multi-ply is correct PIMC and is what
              the Budew/stadium-war gap actually needs — depth + a real opponent.)
 
-4. TREE REUSE (stage 1). Statistics gathered for a decision are still valid for
+4. INFORMATION SETS (`ISMCTSAgent`, below). `MCTSAgent` re-determinizes per
+   iteration and shares one tree, which is PIMC with a shared tree — it does NOT
+   account for the fact that a tree node is reached under many different worlds,
+   in which DIFFERENT ACTIONS ARE LEGAL. That asymmetry is the strategy-fusion
+   trap: an action legal in 1 world out of 10 gets compared against one legal in
+   10 out of 10 as though both had been offered equally often, so the search
+   quietly learns lines that presuppose knowledge of the opponent's hidden hand.
+   `ISMCTSAgent` is the corrected version (Cowling/Powley/Whitehouse 2012,
+   SO-ISMCTS): every node is an INFORMATION SET of the player acting there, each
+   iteration walks the tree consistently with ONE sampled determinization,
+   considers only the actions legal in THAT determinization, and normalises UCB by
+   an AVAILABILITY count per child instead of the parent's visit count.
+
+5. TREE REUSE (stage 1). Statistics gathered for a decision are still valid for
    the NEXT decision in the same turn, so the chosen child's subtree is retained
    and its visits are credited against the next decision's budget. Deliberately
    scoped to one turn — see `_reuse_root` for why crossing the turn boundary would
@@ -391,3 +404,158 @@ class MCTSAgent:
             else:
                 node.wins += (1.0 - value)
             node = node.parent
+
+
+# --------------------------------------------------------------------------- #
+# Cross-turn Information Set MCTS (piece 2c)
+# --------------------------------------------------------------------------- #
+class _ISNode(_Node):
+    """A node of the INFORMATION SET tree, carrying an availability count.
+
+    THE INVARIANT THIS FIELD PROTECTS: a node is an information set, not a state,
+    so successive iterations arrive here under different determinizations in which
+    DIFFERENT ACTIONS ARE LEGAL. A child's mean is only comparable to its siblings'
+    if exploration is normalised by how often that child was actually OFFERED —
+    hence `avail`, incremented once per selection in which its action was legal in
+    the current determinization. UCB divides log(avail), NOT log(parent.visits):
+    with the parent's count an action legal in one world out of ten looks
+    permanently under-explored and gets chased as though it were always available,
+    which is exactly how a shared tree starts believing lines that depend on
+    knowing the opponent's hidden hand (strategy fusion).
+    """
+    __slots__ = ("avail",)
+
+    def __init__(self, parent, key, chooser=None):
+        super().__init__(parent, key, chooser)
+        self.avail = 0
+
+
+class ISMCTSAgent(MCTSAgent):
+    """Cross-turn Single-Observer Information Set MCTS.
+
+    Differences from `MCTSAgent` (which stays byte-identical to its old self):
+      * nodes are information sets with availability-normalised UCB (see _ISNode);
+      * only actions legal in the CURRENT determinization are considered at a node,
+        so a determinization never gets credit for a line it could not play;
+      * the tree spans `max_turn_hops` turn-segments and the opponent's segments are
+        real decision nodes optimized FOR THE OPPONENT (inherited negamax backprop);
+      * leaf value is always `position_value` — no full rollouts, by design;
+      * tie-breaks (child ordering, final move choice) are by semantic key, so the
+        answer cannot depend on dict/set iteration luck. Determinism is a tested
+        invariant here: same seed = byte-identical game, in-process AND across
+        processes with different PYTHONHASHSEED.
+
+    HONEST SCOPE LIMIT: this is SINGLE-observer ISMCTS. The opponent's decision
+    nodes are indexed by the ROOT player's determinization, so the opponent is
+    modelled as seeing that world rather than its own information set. Fixing that
+    needs a second tree (MO-ISMCTS) and is not built here — do not describe this as
+    covering opponent-side information sets, because it does not.
+
+    iterations    : simulations per decision.
+    max_turn_hops : turn-segments the tree spans (1 = own turn only, 2 = + the
+                    opponent's reply, 3 = + our follow-up). Beyond it, eval leaf.
+    leaf_finish_turn : finish the acting player's current turn with the greedy
+                    policy before evaluating — QUIESCENCE, not a rollout: it stops
+                    at the end of the current turn, never plays the game out. It is
+                    on by default because a leaf taken mid-turn scores a board whose
+                    attack has not landed yet, which systematically undervalues
+                    attacking; measured at equal wall clock it was worth far more
+                    than the extra iterations the saved time would have bought.
+    """
+
+    def __init__(self, iterations: int = 120, c: float = 1.4,
+                 rng: Optional[random.Random] = None, max_turn_hops: int = 3,
+                 reuse_tree: bool = True, leaf_finish_turn: bool = True):
+        super().__init__(iterations=iterations, c=c, rollout="eval", rng=rng,
+                         search_plies=max_turn_hops, reuse_tree=reuse_tree)
+        self.max_turn_hops = max(1, max_turn_hops)
+        self.leaf_finish_turn = leaf_finish_turn
+
+    # -- public interface: same as the other agents --
+    def choose(self, state: GameState) -> Action:
+        me = state.active_index
+        root_legal = _deduped_legal(state)
+        if len(root_legal) == 1:
+            self._tree = None
+            return next(iter(root_legal.values()))
+
+        root = self._reuse_root(state) or _ISNode(parent=None, key=None, chooser=None)
+        for _ in range(self._budget(root)):
+            world = determinize(state, me, self.rng)
+            node = self._select_expand(root, world, me)
+            self._backprop(node, self._evaluate(world, me), me)
+
+        if not root.children:
+            self._tree = None
+            return PASS
+        # Most-visited is the robust choice; ties break on semantic key order (max()
+        # keeps the first maximum of an already key-sorted list) so two processes
+        # with different hash seeds cannot disagree.
+        ranked = sorted(root.children.values(), key=lambda n: n.key)
+        best = max(ranked, key=lambda n: n.visits)
+        # An action the root determinizations rarely offered has a visit count that
+        # is not comparable to the rest; only actions legal in the REAL state can be
+        # returned anyway, and `root_legal` is that filter.
+        if best.key not in root_legal:
+            playable = [n for n in ranked if n.key in root_legal]
+            if not playable:
+                self._tree = None
+                return PASS
+            best = max(playable, key=lambda n: n.visits)
+        self._remember(state, best)
+        return root_legal[best.key]
+
+    # -- selection + expansion over information sets, one determinization deep --
+    def _select_expand(self, root: _ISNode, world: GameState, me: int) -> _ISNode:
+        node = root
+        segment = 1                       # turn-segments of tree walked so far
+        while world.phase == Phase.MAIN and segment <= self.max_turn_hops:
+            actor_here = world.active_index
+            by_key = _deduped_legal(world)
+            if not by_key:
+                break
+            keys = sorted(by_key)         # stable order: no dict/hash dependence
+            untried = []
+            for k in keys:
+                child = node.children.get(k)
+                if child is None:
+                    untried.append(k)
+                else:
+                    child.avail += 1      # offered this iteration — see _ISNode
+            if untried:
+                k = self.rng.choice(untried)
+                self._apply(world, by_key[k], me)
+                child = _ISNode(parent=node, key=k, chooser=actor_here)
+                child.avail = 1
+                node.children[k] = child
+                return child
+            node = self._ucb_select_is([node.children[k] for k in keys])
+            before = world.active_index
+            self._apply(world, by_key[node.key], me)
+            if world.active_index != before:      # crossed a turn boundary
+                segment += 1
+        return node
+
+    def _ucb_select_is(self, children: list[_ISNode]) -> _ISNode:
+        """UCB1 over a SUBSET-ARMED bandit: the exploration term is normalised by
+        each child's own availability count, not by the parent's visits. `children`
+        arrives in semantic-key order and max() keeps the first maximum, so ties
+        resolve identically in every process."""
+        def ucb(n: _ISNode):
+            if n.visits == 0:
+                return float("inf")
+            # n.wins/n.visits is already from n.chooser's perspective (negamax),
+            # which is the actor at this node — maximizing is correct for them.
+            return (n.wins / n.visits
+                    + self.c * math.sqrt(math.log(max(1, n.avail)) / n.visits))
+        return max(children, key=ucb)
+
+    # -- leaf value: position_value, optionally after a 1-turn quiescence --
+    def _evaluate(self, world: GameState, me: int) -> float:
+        if (self.leaf_finish_turn and world.phase == Phase.MAIN
+                and not check_win(world)):
+            # A leaf taken mid-turn scores a board whose attack has not landed yet;
+            # letting the greedy policy finish THIS turn removes that bias.
+            self._play_turn(world, GreedyAgent(self.rng))
+            check_win(world)
+        return super()._evaluate(world, me)

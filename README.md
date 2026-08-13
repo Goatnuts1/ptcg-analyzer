@@ -98,8 +98,11 @@ Use `--from-file <path>` instead of pasting.
 
 - Matchups mirror seats (so neither deck gets the going-first advantage).
 - Everything is **deterministic**: the same `--seed` always gives the same result.
-- `--agent` chooses the player: `greedy` (default, fast), `random`, or `mcts`
-  (stronger but much slower).
+- `--agent` chooses the player: `greedy` (default, fast), `random`, `mcts`
+  (stronger but much slower), or `mcts2` (cross-turn Information Set MCTS).
+- `--agent2` pilots deck2 with a DIFFERENT agent (and `--iters2` gives it its own
+  iteration count), so you can compare two pilots on the same deck against the
+  same opponent at equal wall clock.
 - A saved game records the full battle; replaying it re-runs from the seed and
   confirms it reproduces exactly.
 

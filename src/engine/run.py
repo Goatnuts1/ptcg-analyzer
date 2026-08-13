@@ -93,8 +93,8 @@ def play_game(deck_a, deck_b, agent_a, agent_b, seed=None, keep_log=False, db=No
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--games", type=int, default=1000)
-    ap.add_argument("--agent-a", choices=["random", "greedy", "mcts"], default="greedy")
-    ap.add_argument("--agent-b", choices=["random", "greedy", "mcts"], default="greedy")
+    ap.add_argument("--agent-a", choices=["random", "greedy", "mcts", "mcts2"], default="greedy")
+    ap.add_argument("--agent-b", choices=["random", "greedy", "mcts", "mcts2"], default="greedy")
     ap.add_argument("--pool", default="data/standard_pool.json")
     ap.add_argument("--log", action="store_true", help="print move log of one game and exit")
     ap.add_argument("--seed", type=int, default=None)
@@ -109,6 +109,9 @@ def main():
         if kind == "mcts":
             from .mcts import MCTSAgent
             return MCTSAgent(iterations=120, rollout="greedy", rng=rng)
+        if kind == "mcts2":
+            from .mcts import ISMCTSAgent
+            return ISMCTSAgent(iterations=120, rng=rng, max_turn_hops=3)
         return GreedyAgent(rng)
 
     if args.log:

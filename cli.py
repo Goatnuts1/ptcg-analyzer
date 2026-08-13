@@ -40,6 +40,12 @@ def _make_agent(kind: str, rng: random.Random, iters: int = 120):
     if kind == "mcts":
         from src.engine.mcts import MCTSAgent
         return MCTSAgent(iterations=iters, rollout="eval", rng=rng, search_plies=2)
+    if kind == "mcts2":
+        # Cross-turn ISMCTS. Constructed with its OWN defaults on purpose: `mcts`
+        # above must keep producing the exact numbers every recorded gauntlet was
+        # measured with, so the new agent never reaches into that constructor.
+        from src.engine.mcts import ISMCTSAgent
+        return ISMCTSAgent(iterations=iters, rng=rng, max_turn_hops=3)
     return GreedyAgent(rng)
 
 
@@ -128,10 +134,17 @@ def replay_game(path, pool):
 
 
 def run(deck1: str, deck2: str, games: int, agent: str, seed: int,
-        mirror: bool, pool: str, iters: int = 120) -> dict:
+        mirror: bool, pool: str, iters: int = 120,
+        agent2: str | None = None, iters2: int | None = None) -> dict:
+    """Play `games` games between two decks. `agent` pilots deck1 and, unless
+    `agent2` is given, deck2 as well — so every existing call site keeps the
+    single-pilot behaviour (and the numbers) it always had. When they differ, the
+    pilot follows the DECK across the seat mirror, not the seat."""
     db = CardDB.from_pool(pool)
     load_deck(db, deck1)            # validate names up front (raises with a helpful msg)
     load_deck(db, deck2)
+    agent2 = agent if agent2 is None else agent2
+    iters2 = iters if iters2 is None else iters2
 
     d1_wins = d2_wins = ties = 0
     for i in range(games):
@@ -141,9 +154,12 @@ def run(deck1: str, deck2: str, games: int, agent: str, seed: int,
         swap = mirror and (i % 2 == 1)
         name_a, name_b = (deck2, deck1) if swap else (deck1, deck2)
         deck_a, deck_b = load_deck(db, name_a), load_deck(db, name_b)
+        # pilots swap with the decks, so deck1 is always piloted by `agent`
+        (kind_a, it_a), (kind_b, it_b) = (((agent2, iters2), (agent, iters)) if swap
+                                          else ((agent, iters), (agent2, iters2)))
         rng_a, rng_b = random.Random(s), random.Random(s + 1_000_000)
-        st = play_game(deck_a, deck_b, _make_agent(agent, rng_a, iters),
-                       _make_agent(agent, rng_b, iters), seed=s, db=db)
+        st = play_game(deck_a, deck_b, _make_agent(kind_a, rng_a, it_a),
+                       _make_agent(kind_b, rng_b, it_b), seed=s, db=db)
         if st.winner is None:
             ties += 1
         else:
@@ -292,12 +308,20 @@ def main():
     ap.add_argument("--deck1", help="first deck name (see --list)")
     ap.add_argument("--deck2", help="second deck name (see --list)")
     ap.add_argument("--games", type=int, default=1000, help="number of games (default 1000)")
-    ap.add_argument("--agent", choices=["greedy", "random", "mcts"], default="greedy",
+    ap.add_argument("--agent", choices=["greedy", "random", "mcts", "mcts2"], default="greedy",
                     help="agent piloting both decks (default greedy; mcts is far slower "
-                         "but pilots combo/setup decks much more fairly)")
+                         "but pilots combo/setup decks much more fairly; mcts2 is the "
+                         "cross-turn ISMCTS variant)")
+    ap.add_argument("--agent2", choices=["greedy", "random", "mcts", "mcts2"], default=None,
+                    help="pilot deck2 with a DIFFERENT agent (default: same as --agent). "
+                         "Use it to compare two agents on the same deck against the same "
+                         "opponent pilot.")
     ap.add_argument("--iters", type=int, default=0,
                     help="MCTS iterations (default 120 for single matchups, 50 for "
                          "--round-robin); higher = stronger + slower")
+    ap.add_argument("--iters2", type=int, default=0,
+                    help="with --agent2: its iteration count (default: same as --iters). "
+                         "This is how you equalise WALL CLOCK between two search agents.")
     ap.add_argument("--seed", type=int, default=0, help="base RNG seed (deterministic)")
     ap.add_argument("--no-mirror", action="store_true",
                     help="don't mirror seats (deck1 always goes first)")
@@ -352,7 +376,7 @@ def main():
     if args.round_robin:
         decks = sorted(DECKS)
         pairs = len(decks) * (len(decks) - 1) // 2
-        if args.agent == "mcts":
+        if args.agent in ("mcts", "mcts2"):
             # MCTS is the fairer pilot for combo/setup decks (greedy over-rates simple
             # aggro by ~14pt — see README "Reading the matrix"). It's much slower, so
             # use a lighter default game/iter count for the full sweep.
@@ -392,11 +416,13 @@ def main():
     t0 = time.time()
     r = run(args.deck1, args.deck2, args.games, args.agent, args.seed,
             mirror=not args.no_mirror, pool=args.pool,
-            iters=args.iters if args.iters else 120)
+            iters=args.iters if args.iters else 120,
+            agent2=args.agent2, iters2=args.iters2 if args.iters2 else None)
     dt = time.time() - t0
     n = args.games
     seats = "deck1 first" if args.no_mirror else "mirrored seats"
-    print(f"\n{args.deck1} vs {args.deck2} — {n} games ({args.agent}, {seats}, seed {args.seed})")
+    pilots = args.agent if not args.agent2 else f"{args.agent} vs {args.agent2}"
+    print(f"\n{args.deck1} vs {args.deck2} — {n} games ({pilots}, {seats}, seed {args.seed})")
     print(f"  {args.deck1:<16} {r['d1_wins']:>6}  {r['d1_wins'] / n:6.1%}")
     print(f"  {args.deck2:<16} {r['d2_wins']:>6}  {r['d2_wins'] / n:6.1%}")
     print(f"  {'ties':<16} {r['ties']:>6}  {r['ties'] / n:6.1%}")
