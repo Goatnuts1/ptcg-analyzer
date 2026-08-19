@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import random
 from . import effects as fx
-from .game import Action, legal_actions, apply_action
+from .game import Action, legal_actions, apply_action, can_pay_cost
 from .state import GameState
 from .evaluation import position_value
 
@@ -106,6 +106,15 @@ class GreedyAgent:
         if stadium_factory:
             return stadium_factory[0]
 
+        # Spikemuth Gym: pure card-positive search, take it. Prefer the highest-stage
+        # Marnie's Pokémon still fetchable (target_index indexes the SORTED name list;
+        # "Marnie's Grimmsnarl ex" < "Marnie's Impidimp" < "Marnie's Morgrem"
+        # alphabetically, so index 0 is the ex whenever it's in the deck — the pick
+        # greedy wants anyway).
+        spikemuth = [a for a in acts if a.kind == "stadium_spikemuth"]
+        if spikemuth:
+            return spikemuth[0]
+
         # 0c'''. Academy at Night's free once-per-turn "put a card from your hand on top
         # of your deck". Card-NEGATIVE in a vacuum (you bury a card you could have used),
         # so greedy only takes it for the one line the Stadium is actually played for:
@@ -128,11 +137,25 @@ class GreedyAgent:
 
         attacks = [a for a in acts if a.kind == "attack"]
 
+        # Do the Wave's REAL value (Dipplin): 20 x own bench (+ the turn's Gladion
+        # flag, + Brave Bangle vs an ex), DOUBLED under Festival Grounds via the
+        # attack-twice mechanic. Printed damage says 20, which made greedy blind to
+        # every Dipplin lethal and every reason to grow its own bench. Same
+        # known-information exception shape as Seek Inspiration below.
+        def _wave_value(atk):
+            if not (atk.name == "Do the Wave" and p.active.card.name == "Dipplin"):
+                return None
+            v = 20 * len(p.bench) + p.bonus_damage_nonrulebox
+            if (p.active.tool is not None and p.active.tool.name == "Brave Bangle"
+                    and defender is not None and fx._is_ex_or_v(defender.card)):
+                v += 30
+            return v * (2 if fx.current_stadium_name(state) == "Festival Grounds" else 1)
+
         # 1. lethal attack?
         if defender is not None:
             for a in attacks:
                 atk = p.active.card.attacks[a.attack_index]
-                dmg = atk.damage
+                dmg = _wave_value(atk) or atk.damage
                 for wtype, _ in defender.card.weaknesses:
                     if p.active.card.types and wtype == p.active.card.types[0]:
                         dmg *= 2
@@ -148,7 +171,17 @@ class GreedyAgent:
         # whole Stadium war) would be silently inert in every game.
         stadiums = [a for a in acts if a.kind == "play_stadium"]
         if stadiums:
-            return stadiums[0]
+            # Festival Lead boards live and die by Festival Grounds: never overwrite
+            # one already in play (regardless of owner — an opponent's copy serves the
+            # attacker equally), and when establishing, play FG over any other Stadium.
+            # Scoped to boards that actually field a Festival Lead Pokémon.
+            fl = any(fx.has_festival_lead(m.card) for m in p.all_in_play())
+            if not (fl and fx.current_stadium_name(state) == "Festival Grounds"):
+                if fl:
+                    for a in stadiums:
+                        if p.hand[a.hand_index].name == "Festival Grounds":
+                            return a
+                return stadiums[0]
 
         # 1b'. Prism Tower's free once-per-turn discard-2-draw-1. It is card-NEGATIVE
         # (−2 +1), so greedy only takes it with a hand big enough to spare the cards —
@@ -190,11 +223,27 @@ class GreedyAgent:
             if c.is_item and not c.is_supporter:
                 return a
 
+        # 1d0. Gladion's Final Battle sequencing. Playable only at hand==1, so if it
+        # is OFFERED, play it now (+80/hit this turn). Otherwise, holding it with a
+        # small hand and a Festival Lead Active, DON'T burn the Supporter slot on a
+        # draw-to-6 (which makes hand==1 structurally unreachable) — skip 1d and 1d-gen
+        # this turn and keep dumping toward empty. Scoped to the one card.
+        gladion_hold = False
+        if any(c.name == "Gladion's Final Battle" for c in p.hand):
+            for a in trainers:
+                if p.hand[a.hand_index].name == "Gladion's Final Battle":
+                    return a
+            if (len(p.hand) <= 4 and p.active is not None
+                    and fx.has_festival_lead(p.active.card)):
+                gladion_hold = True
+
         # 1d. one Supporter per turn: refill the hand when low, else set up. (Legal
         # actions already hides Supporters once one is played this turn.)
         supporter_order = (_DRAW_SUPPORTERS + _SEARCH_SUPPORTERS + _OTHER_SUPPORTERS
                            if len(p.hand) <= 4 else
                            _SEARCH_SUPPORTERS + _DRAW_SUPPORTERS + _OTHER_SUPPORTERS)
+        if gladion_hold:
+            supporter_order = ()
         for want in supporter_order:
             for a in trainers:
                 c = p.hand[a.hand_index]
@@ -205,20 +254,35 @@ class GreedyAgent:
         # 1/turn; legal_actions hides them after one is played). Future-proofs new
         # Supporters against the inertness bug. Held BELOW the named draw/search ones
         # so the well-understood lines take priority.
-        for a in trainers:
-            c = p.hand[a.hand_index]
-            if c.is_supporter:
-                return a
+        if not gladion_hold:
+            for a in trainers:
+                c = p.hand[a.hand_index]
+                if c.is_supporter:
+                    return a
 
         # 1e. attach a Pokémon Tool when one is available (free setup; otherwise
         # Air Balloon / Powerglass would sit in hand, never played).
         tools = [a for a in acts if a.kind == "attach_tool"]
         if tools:
+            # Brave Bangle belongs on the Festival Lead attacker (the non-Rule-Box mon
+            # actually swinging into the opponent's ex), not on whatever enumerates
+            # first. Scoped: FL boards only — doublade's recorded Bangle play unchanged.
+            for a in tools:
+                mon = p.active if a.target_index == -1 else p.bench[a.target_index]
+                if (p.hand[a.hand_index].name == "Brave Bangle" and mon is not None
+                        and fx.has_festival_lead(mon.card)):
+                    return a
             return tools[0]
 
         # 2. develop board early: bench, then attach energy
         benches = [a for a in acts if a.kind == "play_basic"]
-        if benches and len(p.bench) < 3:
+        # Do the Wave pays 20 per bencher — a Festival Lead board wants the bench FULL,
+        # not the default development cap of 3. Scoped to boards/hands with an FL card.
+        bench_cap = 3
+        if (any(fx.has_festival_lead(m.card) for m in p.all_in_play())
+                or any(c.is_pokemon and fx.has_festival_lead(c) for c in p.hand)):
+            bench_cap = fx.bench_limit(state, p)
+        if benches and len(p.bench) < bench_cap:
             # Shaymin (DRI) first: its Flower Curtain only works FROM the Bench, so a
             # pilot holding it always benches it before random engine pieces. Scoped to
             # the one card — every other Basic keeps the existing random pick.
@@ -238,6 +302,36 @@ class GreedyAgent:
                 if (mon is not None and mon.card.name == "Slowking"
                         and mon.energy_count() < 2):
                     return a
+            # 2a-fl. Festival fuel: while the Active is NOT a Festival Lead mon, a
+            # dry FL mon on the Bench outranks attach-to-Active (its attacks all cost
+            # 1, and the promotion branch below needs it payable). FL cards only.
+            if p.active is None or not fx.has_festival_lead(p.active.card):
+                for a in attaches:
+                    mon = p.active if a.target_index == -1 else p.bench[a.target_index]
+                    if (mon is not None and fx.has_festival_lead(mon.card)
+                            and mon.energy_count() == 0):
+                        return a
+            # 2a-sig. Signature routing for the two new archetypes (scoped on their
+            # signature cards so no measured deck's play changes): Darkness onto a dry
+            # Munkidori unlocks Adrena-Brain (requires Darkness attached); Psychic onto
+            # a Dragapult ex missing its [P] completes Phantom Dive. Scanning your own
+            # deck list is player-legal information.
+            sig = (any(m.card.name in ("Marnie's Grimmsnarl ex", "Blaziken ex")
+                       for m in p.all_in_play())
+                   or any(c.name in ("Marnie's Grimmsnarl ex", "Blaziken ex")
+                          for c in p.hand + p.deck))
+            if sig:
+                for a in attaches:
+                    card = p.hand[a.hand_index]
+                    mon = p.active if a.target_index == -1 else p.bench[a.target_index]
+                    if mon is None:
+                        continue
+                    if ("Darkness" in card.types and mon.card.name == "Munkidori"
+                            and mon.energy_count() == 0):
+                        return a
+                    if (mon.card.name == "Dragapult ex" and "Psychic" in card.types
+                            and not any("Psychic" in e.types for e in mon.energy)):
+                        return a
             # prefer attaching to the active
             active_attaches = [a for a in attaches if a.target_index == -1]
             return (active_attaches or attaches)[0]
@@ -259,6 +353,47 @@ class GreedyAgent:
                                     for t in e.types)):
                         return a
 
+        # 2b-fl. Festival Lead promotion: the whole deck runs from an FL Active
+        # (the double attack AND Thwackey's tutor are both gated on it). Retreat only
+        # into a payable FL mon; can't thrash (condition false once one is Active).
+        if p.active is not None and not fx.has_festival_lead(p.active.card):
+            cands = [a for a in acts if a.kind == "retreat"
+                     and fx.has_festival_lead(p.bench[a.target_index].card)
+                     and any(can_pay_cost(p.bench[a.target_index],
+                                          fx.effective_cost(state, p.bench[a.target_index], atk))
+                             for atk in p.bench[a.target_index].card.attacks)]
+            if cands:   # Dipplin first (the scaler), then Seaking (PRE), then Goldeen
+                return max(cands, key=lambda a: {"Dipplin": 2, "Seaking (PRE)": 1}.get(
+                    p.bench[a.target_index].card.name, 0))
+
+        # 2b-gs. Grimmsnarl promotion: Punk Up fueled it on evolve; Shadow Bullet
+        # only fires from the Active Spot. Same shape and thrash-guard as above.
+        if p.active is not None and p.active.card.name != "Marnie's Grimmsnarl ex":
+            for a in acts:
+                if a.kind == "retreat":
+                    mon = p.bench[a.target_index]
+                    if (mon.card.name == "Marnie's Grimmsnarl ex"
+                            and can_pay_cost(mon, fx.effective_cost(state, mon,
+                                                                    mon.card.attacks[0]))):
+                        return a
+
+        # 2b-bz. Blaziken lock pivot: Smolder-sault locks the NEXT turn; the human
+        # play is to retreat into a payable attacker instead of passing the dead turn
+        # (the retreat's Energy discard is exactly what Seething Spirit recovers).
+        # Scoped to Blaziken ex by name.
+        if (p.active is not None and p.active.cannot_attack
+                and p.active.card.name == "Blaziken ex"):
+            cands = [a for a in acts if a.kind == "retreat"]
+            def _power(a):
+                mon = p.bench[a.target_index]
+                return max((atk.damage for atk in mon.card.attacks
+                            if can_pay_cost(mon, fx.effective_cost(state, mon, atk))),
+                           default=0)
+            if cands:
+                best = max(cands, key=_power)
+                if _power(best) >= 60:
+                    return best
+
         # 3. best available attack. Value = printed damage, with ONE exception:
         # Slowking's Seek Inspiration (printed 0) is valued at the seek_value of the
         # top card of the deck when that card is KNOWN GOOD — i.e. this player planted
@@ -268,6 +403,9 @@ class GreedyAgent:
         # know what you just put on top of your own deck.
         def _attack_value(a):
             atk = p.active.card.attacks[a.attack_index]
+            wv = _wave_value(atk)
+            if wv is not None:
+                return wv
             if (atk.name == "Seek Inspiration" and p.active.card.name == "Slowking"
                     and p.stadium_academy_used_this_turn and p.deck):
                 top = p.deck[0]

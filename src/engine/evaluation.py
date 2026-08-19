@@ -89,8 +89,19 @@ def position_value(state: GameState, idx: int) -> float:
                 v += W_STAGE[sub]
                 break
     if me.active is not None:
-        payable = [a.damage for a in me.active.card.attacks
-                   if can_pay_cost(me.active, effective_cost(state, me.active, a))]
+        payable = []
+        for a in me.active.card.attacks:
+            if not can_pay_cost(me.active, effective_cost(state, me.active, a)):
+                continue
+            d = a.damage
+            # Do the Wave's printed 20 hides its real value (20 × own bench, doubled
+            # under Festival Grounds by the attack-twice mechanic). Without this the
+            # search leaf scores a full Festival board like an empty one — the exact
+            # greedy blind spot mcts2 otherwise inherits through its leaf policy.
+            if a.name == "Do the Wave" and me.active.card.name == "Dipplin":
+                d = 20 * len(me.bench) * (
+                    2 if current_stadium_name(state) == "Festival Grounds" else 1)
+            payable.append(d)
         if payable:
             v += max(payable) * W_ATTACK_READY
 
