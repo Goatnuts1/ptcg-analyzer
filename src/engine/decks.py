@@ -1407,6 +1407,122 @@ DECK_DOUBLADE = [
 ]
 
 
+
+# --------------------------------------------------------------------------- #
+# Dragapult Blaziken — Jon Webb, 6th place, NAIC 2026 New Orleans (Limitless
+# list 28253). TOURNAMENT provenance. The 4th most-played archetype in the live
+# PBL metagame (5.99% share, 52.79% real WR) and the build that beat the house
+# mega_excadrill on ladder 2026-08-16 (docs/LADDER_LOG.md): Phantom Dive spread
+# + Blaziken ex's Seething Spirit discard-Energy acceleration, with every KO
+# against an all-Fire-weak Metal board doubled by Weakness.
+DECK_DRAGAPULT_BLAZIKEN: list[tuple[str, int]] = [
+    ("Dreepy", 4),
+    ("Drakloak", 4),
+    ("Dragapult ex", 2),
+    ("Torchic", 2),
+    ("Combusken", 1),
+    ("Blaziken ex", 2),
+    ("Munkidori", 2),
+    ("Lillie's Clefairy ex", 1),
+    ("Fezandipiti ex", 1),
+    ("Meowth ex", 1),
+    ("Budew", 1),
+    ("Chi-Yu", 1),
+    ("Shaymin (DRI)", 1),
+
+    ("Lillie's Determination", 4),
+    ("Boss's Orders", 3),
+    ("Crispin", 2),
+    ("Dawn", 1),
+    ("Buddy-Buddy Poffin", 4),
+    ("Ultra Ball", 4),
+    ("Poké Pad", 3),
+    ("Night Stretcher", 2),
+    ("Rare Candy", 2),
+    ("Special Red Card", 1),
+    ("Unfair Stamp", 1),      # ACE SPEC
+    ("Area Zero Underdepths", 1),
+    ("Team Rocket's Watchtower", 1),
+
+    ("Basic Fire Energy", 3),
+    ("Basic Psychic Energy", 3),
+    ("Basic Darkness Energy", 2),
+]
+
+# --------------------------------------------------------------------------- #
+# Festival Lead — "Dreamjew", 1st place 12-0-1, online (Limitless play
+# tournament 6a5a5085…). ONLINE-EVENT provenance (weaker than a Regional; the
+# archetype itself is the 3rd most-played in the live meta at 6.75%). Engine:
+# Dipplin's Do the Wave (20× bench) used TWICE per turn via Festival Lead +
+# Festival Grounds, pumped by Gladion's Final Battle (+80 non-Rule-Box) and
+# Brave Bangle (+30 vs ex) — a 1-prize attacker printing 200–400 a turn.
+# Thwackey's Boom Boom Groove is the universal tutor; Rabsca walls the bench.
+DECK_FESTIVAL_LEAD: list[tuple[str, int]] = [
+    ("Grookey", 4),
+    ("Thwackey", 4),
+    ("Applin (SCR)", 3),      # print collision: vanilla SCR print, not TWM
+    ("Dipplin", 3),
+    ("Goldeen", 2),
+    ("Seaking (PRE)", 2),     # print collision: the Festival Lead print
+    ("Rellor", 1),
+    ("Rabsca", 1),
+
+    ("Lillie's Determination", 4),
+    ("Gladion's Final Battle", 3),
+    ("Boss's Orders", 2),
+    ("Kieran", 1),
+    ("Lana's Aid", 1),
+    ("Buddy-Buddy Poffin", 4),
+    ("Poké Pad", 4),
+    ("Night Stretcher", 2),
+    ("Ultra Ball", 2),
+    ("Bug Catching Set", 2),
+    ("Switch", 1),
+    ("Secret Box", 1),        # ACE SPEC
+    ("Air Balloon", 2),
+    ("Brave Bangle", 2),
+    ("Festival Grounds", 3),
+    ("Forest of Vitality", 1),
+
+    ("Basic Grass Energy", 5),
+]
+
+# --------------------------------------------------------------------------- #
+# Grimmsnarl Froslass — Andrew Choi, 128th place, NAIC 2026 New Orleans
+# (Limitless list 28345). WEAK tournament provenance (the archetype is 4.66% of
+# the live meta; read win rates accordingly). Engine: Punk Up floods Basic
+# Darkness onto Marnie's Pokémon the turn Grimmsnarl ex evolves (usually via
+# Rare Candy), Shadow Bullet snipes 180+30, and Froslass ×2 chips every
+# Ability-holder at every Pokémon Checkup while Munkidori relocates the
+# self-damage. Spikemuth Gym is the archetype's own consistency Stadium.
+DECK_GRIMMSNARL_FROSLASS: list[tuple[str, int]] = [
+    ("Munkidori", 4),
+    ("Marnie's Impidimp", 3),
+    ("Marnie's Morgrem", 2),
+    ("Marnie's Grimmsnarl ex", 3),
+    ("Snorunt", 2),
+    ("Froslass", 2),
+    ("Budew", 1),
+    ("Tatsugiri", 1),
+    ("Yveltal", 1),
+
+    ("Lillie's Determination", 4),
+    ("Team Rocket's Petrel", 4),
+    ("Boss's Orders", 3),
+    ("Iris's Fighting Spirit", 1),
+    ("Poké Pad", 4),
+    ("Buddy-Buddy Poffin", 3),
+    ("Night Stretcher", 3),
+    ("Rare Candy", 2),
+    ("Energy Switch", 1),
+    ("Special Red Card", 1),
+    ("Secret Box", 1),        # ACE SPEC
+    ("Air Balloon", 1),
+    ("Spikemuth Gym", 4),
+
+    ("Basic Darkness Energy", 9),
+]
+
 DECKS: dict[str, list[tuple[str, int]]] = {
     "dragapult": TOURNAMENT_DRAGAPULT,
     "charizard_xy": TOURNAMENT_CHARIZARD_XY,
@@ -1441,6 +1557,9 @@ DECKS: dict[str, list[tuple[str, int]]] = {
     "doublade": DECK_DOUBLADE,
     "slowking_annihilape": DECK_SLOWKING_ANNIHILAPE,
     "mega_excadrill_shaymin": DECK_MEGA_EXCADRILL_SHAYMIN,
+    "dragapult_blaziken": DECK_DRAGAPULT_BLAZIKEN,
+    "festival_lead": DECK_FESTIVAL_LEAD,
+    "grimmsnarl_froslass": DECK_GRIMMSNARL_FROSLASS,
 }
 
 

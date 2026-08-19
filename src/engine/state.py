@@ -217,6 +217,16 @@ class PlayerState:
     # card from their hand on top of their deck." Own once-per-turn budget, same
     # one-flag-per-Stadium-ability rule as the five above. Reset each turn.
     stadium_academy_used_this_turn: bool = False
+    # Spikemuth Gym (Stadium): "Once during each player's turn, that player may search
+    # their deck for a Marnie's Pokémon, reveal it, and put it into their hand. Then,
+    # that player shuffles their deck." Own once-per-turn budget, same
+    # one-flag-per-Stadium-ability rule as the six above. Reset each turn.
+    stadium_spikemuth_used_this_turn: bool = False
+    # Gladion's Final Battle (Supporter): "During this turn, attacks used by your Pokémon
+    # that don't have a Rule Box do 80 more damage to your opponent's Active Pokémon
+    # (before applying Weakness and Resistance)." Turn-scoped like bonus_damage_vs_ex_v
+    # (Kieran); reset by start_turn.
+    bonus_damage_nonrulebox: int = 0
     # The Factory's CONDITION, tracked separately from its budget: did this player play a
     # Supporter whose name contains "Team Rocket" from hand THIS turn? Set by
     # game.apply_action when such a Supporter actually resolves (a Supporter that did
@@ -290,6 +300,8 @@ class PlayerState:
             stadium_garden_used_this_turn=self.stadium_garden_used_this_turn,
             stadium_factory_used_this_turn=self.stadium_factory_used_this_turn,
             stadium_academy_used_this_turn=self.stadium_academy_used_this_turn,
+            stadium_spikemuth_used_this_turn=self.stadium_spikemuth_used_this_turn,
+            bonus_damage_nonrulebox=self.bonus_damage_nonrulebox,
             team_rocket_supporter_played_this_turn=self.team_rocket_supporter_played_this_turn,
             legacy_energy_prize_reduction_used=self.legacy_energy_prize_reduction_used,
             turns_taken=self.turns_taken,

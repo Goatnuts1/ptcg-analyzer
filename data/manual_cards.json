@@ -1198,5 +1198,111 @@
    "Colorless"
   ],
   "regulationMark": "J"
+ },
+ {
+  "id": "pre-21",
+  "name": "Seaking (PRE)",
+  "supertype": "Pokémon",
+  "subtypes": [
+   "Stage 1"
+  ],
+  "hp": 110,
+  "types": [
+   "Water"
+  ],
+  "evolvesFrom": "Goldeen",
+  "evolvesTo": [],
+  "abilities": [
+   {
+    "name": "Festival Lead",
+    "text": "If Festival Grounds is in play, this Pokémon may use an attack it has twice. If the first attack Knocks Out your opponent's Active Pokémon, you may attack again after your opponent chooses a new Active Pokémon.",
+    "type": "Ability"
+   }
+  ],
+  "attacks": [
+   {
+    "name": "Rapid Draw",
+    "cost": [
+     "Colorless"
+    ],
+    "convertedEnergyCost": 1,
+    "damage": "60",
+    "text": "Draw 2 cards."
+   }
+  ],
+  "weaknesses": [
+   {
+    "type": "Lightning",
+    "value": "×2"
+   }
+  ],
+  "resistances": [],
+  "retreatCost": [
+   "Colorless"
+  ],
+  "regulationMark": "H",
+  "rules": []
+ },
+ {
+  "id": "sv7-12",
+  "name": "Applin (SCR)",
+  "supertype": "Pokémon",
+  "subtypes": [
+   "Basic"
+  ],
+  "hp": 40,
+  "types": [
+   "Grass"
+  ],
+  "evolvesFrom": null,
+  "evolvesTo": [
+   "Dipplin"
+  ],
+  "abilities": [],
+  "attacks": [
+   {
+    "name": "Spray Fluid",
+    "cost": [
+     "Grass"
+    ],
+    "convertedEnergyCost": 1,
+    "damage": "20",
+    "text": ""
+   }
+  ],
+  "weaknesses": [
+   {
+    "type": "Fire",
+    "value": "×2"
+   }
+  ],
+  "resistances": [],
+  "retreatCost": [
+   "Colorless"
+  ],
+  "regulationMark": "H",
+  "rules": []
+ },
+ {
+  "id": "pbl-77",
+  "name": "Gladion's Final Battle",
+  "supertype": "Trainer",
+  "subtypes": [
+   "Supporter"
+  ],
+  "hp": null,
+  "types": [],
+  "evolvesFrom": null,
+  "evolvesTo": [],
+  "abilities": [],
+  "attacks": [],
+  "weaknesses": [],
+  "resistances": [],
+  "retreatCost": [],
+  "regulationMark": "J",
+  "rules": [
+   "You can use this card only when it is the last card in your hand. During this turn, attacks used by your Pokémon that don't have a Rule Box do 80 more damage to your opponent's Active Pokémon (before applying Weakness and Resistance).",
+   "You may play only 1 Supporter card during your turn."
+  ]
  }
 ]

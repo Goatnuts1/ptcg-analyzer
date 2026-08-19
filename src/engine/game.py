@@ -212,11 +212,18 @@ def legal_actions(state: GameState) -> list[Action]:
     # and not a target that already evolved this turn.
     in_play = [(-1, p.active)] + list(enumerate(p.bench))
     if p.turns_taken >= 2:
+        # Forest of Vitality (Stadium): "Each player's [G] Pokémon can evolve into [G]
+        # Pokémon during the turn they play those Pokémon, except during their first
+        # turn." Waives ONLY the played-this-turn clause, only for Grass-into-Grass,
+        # and turns_taken >= 2 already encodes the first-turn exception.
+        vitality = fx.current_stadium_name(state) == "Forest of Vitality"
         for i, c in enumerate(p.hand):
             if c.is_pokemon and c.evolves_from:
                 for t, mon in in_play:
                     if (mon and evolves_onto(mon.card, c)
-                            and not mon.played_this_turn
+                            and (not mon.played_this_turn
+                                 or (vitality and "Grass" in mon.card.types
+                                     and "Grass" in c.types))
                             and not mon.evolved_this_turn):
                         actions.append(Action("evolve", hand_index=i, target_index=t))
 
@@ -334,6 +341,21 @@ def legal_actions(state: GameState) -> list[Action]:
         for i in range(len(p.hand)):
             actions.append(Action("stadium_academy", hand_index=i))
 
+    # Spikemuth Gym (Stadium): "Once during each player's turn, that player may search
+    # their deck for a Marnie's Pokémon, reveal it, and put it into their hand. Then,
+    # that player shuffles their deck." Only offered when the deck actually holds one —
+    # a whiffing search is a legal no-op in paper, but enumerating it would waste
+    # search-budget on a do-nothing action.
+    if (fx.current_stadium_name(state) == "Spikemuth Gym"
+            and not p.stadium_spikemuth_used_this_turn):
+        # Enumerated per distinct NAME (sorted, so target_index is stable across
+        # determinizations — deck ORDER is hidden info and must not leak into the
+        # action encoding), letting the agent pick WHICH Marnie's Pokémon to fetch.
+        marnies = sorted({c.name for c in p.deck
+                          if c.is_pokemon and c.name.startswith("Marnie's")})
+        for j in range(len(marnies)):
+            actions.append(Action("stadium_spikemuth", target_index=j))
+
     # attack: starting player cannot attack on the very first turn, and a Pokémon
     # under a "can't attack this turn" lock (Eon Blade, etc.) can't attack either.
     first_turn_no_attack = (state.turn_number == 1)
@@ -393,6 +415,32 @@ def _resolve_attack(state: GameState, atk_index: int) -> None:
 
     # process ALL knockouts (active + bench, since effects can KO the bench)
     fx.process_knockouts(state)
+
+    # Festival Lead (Dipplin / Goldeen / Seaking (PRE), passive Ability): "If Festival
+    # Grounds is in play, this Pokémon may use an attack it has twice. If the first
+    # attack Knocks Out your opponent's Active Pokémon, you may attack again after your
+    # opponent chooses a new Active Pokémon." One repeat, no extra cost. The second use
+    # targets whatever is Active NOW (process_knockouts already promoted a replacement),
+    # exactly the card's clause. "May" is modeled as ALWAYS — the repeat is never worse
+    # for the attacker in this engine (no recoil attacks carry the Ability). The
+    # attacker must still be the un-KO'd Active, and the second use is skipped if the
+    # game already ended on prizes. Confusion is checked once, on the declaration —
+    # both uses are the same declared attack.
+    if (fx.has_festival_lead(attacker.card)
+            and fx.current_stadium_name(state) == "Festival Grounds"
+            and not fx.ability_suppressed(state, attacker)
+            and state.winner is None
+            and state.current.active is attacker
+            and not attacker.is_knocked_out):
+        defender2 = state.opponent.active
+        if base > 0 and defender2 is not None:
+            dealt = fx.apply_attack_damage(ctx, defender2, base, owner=state.opponent,
+                                           source=attacker)
+            state.emit(f"Festival Lead: {atk.name} again for {dealt}")
+        if effect:
+            effect(ctx)
+            state.emit(f"  effect (Festival Lead repeat): {atk.name}")
+        fx.process_knockouts(state)
 
 
 def apply_action(state: GameState, action: Action) -> None:
@@ -589,6 +637,22 @@ def apply_action(state: GameState, action: Action) -> None:
         state.emit(f"Academy at Night: put {card.name} on top of the deck")
         return
 
+    if action.kind == "stadium_spikemuth":
+        # Spikemuth Gym: search the deck for the CHOSEN Marnie's Pokémon (target_index
+        # into the sorted distinct-name list — the same encoding legal_actions used),
+        # put it into hand, shuffle. Free action, once per turn, doesn't end the turn.
+        marnies = sorted({c.name for c in p.deck
+                          if c.is_pokemon and c.name.startswith("Marnie's")})
+        p.stadium_spikemuth_used_this_turn = True
+        if marnies:
+            name = marnies[min(action.target_index, len(marnies) - 1)]
+            idx = next(i for i, c in enumerate(p.deck) if c.name == name)
+            card = p.deck.pop(idx)
+            p.hand.append(card)
+            state.rng.shuffle(p.deck)
+            state.emit(f"Spikemuth Gym: searched {card.name}")
+        return
+
     if action.kind == "play_stadium":
         card = p.hand.pop(action.hand_index)
         # discard the outgoing Stadium to whoever played it, then install the new one
@@ -705,6 +769,7 @@ def start_turn(state: GameState) -> bool:
     p.stadium_garden_used_this_turn = False   # Mystery Garden: once per turn
     p.stadium_factory_used_this_turn = False  # Team Rocket's Factory: once per turn
     p.stadium_academy_used_this_turn = False  # Academy at Night: once per turn
+    p.stadium_spikemuth_used_this_turn = False  # Spikemuth Gym: once per turn
     # ...and its CONDITION resets too — "played ... this turn" means THIS turn only.
     p.team_rocket_supporter_played_this_turn = False
     # snapshot "KO'd during the opponent's last turn" for Flip the Script, then
@@ -721,6 +786,7 @@ def start_turn(state: GameState) -> bool:
     # turn that set them.
     p.bonus_damage_vs_ex_v = 0
     p.bonus_damage_fighting_vs_active = 0
+    p.bonus_damage_nonrulebox = 0     # Gladion's Final Battle expires with its turn
     for mon in p.all_in_play():
         mon.ability_used_this_turn = False
         mon.played_this_turn = False
@@ -755,5 +821,9 @@ def start_turn(state: GameState) -> bool:
 def end_turn(state: GameState) -> None:
     # end-of-turn Pokémon Tool triggers (Powerglass) for the player whose turn ends
     fx.end_of_turn_tools(state, state.current)
+    # Pokémon Checkup (the between-turns window). The engine has no separate phase; the
+    # checkup after player A's turn is processed here, before the hand-off. Currently
+    # hosts one resident: Froslass's Freezing Shroud (see fx.pokemon_checkup).
+    fx.pokemon_checkup(state)
     state.active_index = state.opponent_index()
     state.turn_number += 1

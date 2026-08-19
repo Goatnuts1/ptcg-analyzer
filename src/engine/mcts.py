@@ -172,6 +172,11 @@ def _semantic_key(state: GameState, a: Action):
         # Team Rocket's Factory's once-per-turn draw 2. No parameters and no choices —
         # the kind alone is the whole decision.
         return ("stadium_factory",)
+    if a.kind == "stadium_spikemuth":
+        # Spikemuth Gym's once-per-turn Marnie's-Pokémon search. target_index indexes
+        # the SORTED distinct-name list (stable across determinizations), and IS the
+        # decision — which Marnie's Pokémon to fetch.
+        return ("stadium_spikemuth", a.target_index)
     if a.kind == "stadium_garden":
         # Mystery Garden's once-per-turn discard-an-Energy-and-refill. No parameters —
         # the engine picks which Energy goes — so the kind alone is the decision.

@@ -1053,6 +1053,11 @@ def apply_attack_damage(ctx: EffectContext, target: InPlayPokemon, amount: int,
         if s_owner is not None and t_owner is not None and s_owner is not t_owner:
             if s_owner.bonus_damage_vs_ex_v and _is_ex_or_v(target.card):
                 dmg += s_owner.bonus_damage_vs_ex_v
+            # Gladion's Final Battle: "+80 more damage to your opponent's Active
+            # Pokémon (before W/R)" for attackers WITHOUT a Rule Box, this turn.
+            if (s_owner.bonus_damage_nonrulebox and target is t_owner.active
+                    and not _has_rule_box(source.card)):
+                dmg += s_owner.bonus_damage_nonrulebox
             if target is t_owner.active:
                 if (s_owner.bonus_damage_fighting_vs_active
                         and "Fighting" in source.card.types):
@@ -1113,6 +1118,19 @@ def apply_attack_damage(ctx: EffectContext, target: InPlayPokemon, amount: int,
                     and not ability_suppressed(ctx.state, m)
                     for m in owner.all_in_play())):
         ctx.state.emit(f"Flower Curtain: prevented {dmg} attack damage to benched "
+                       f"{target.card.name}")
+        return 0
+    # Rabsca "Spherical Shield" (passive Ability): "Prevent all damage from and effects
+    # of attacks from your opponent's Pokémon done to your Benched Pokémon." Broader
+    # than Flower Curtain on one axis (no Rule-Box clause — an ex on the Bench IS
+    # protected) and identical on the others: BENCHED targets of the Rabsca's owner,
+    # opponent's attacks only. The effects half lives in place_counters.
+    if (on_bench and source is not None and owner is not None
+            and owner_of(ctx.state, source) is not owner
+            and any(m.card.name == "Rabsca"
+                    and not ability_suppressed(ctx.state, m)
+                    for m in owner.all_in_play())):
+        ctx.state.emit(f"Spherical Shield: prevented {dmg} attack damage to benched "
                        f"{target.card.name}")
         return 0
     if dmg > 0:
@@ -1196,6 +1214,16 @@ def place_counters(ctx: EffectContext, target: InPlayPokemon, counters: int,
         return 0
     owner = owner if owner is not None else owner_of(ctx.state, target)
     on_bench = owner is not None and _on_bench(owner, target)
+    # Rabsca "Spherical Shield": the "effects of attacks" half — an opposing ATTACK's
+    # counters on the owner's Bench are prevented (an ABILITY's counters are not,
+    # matching the card's "effects of attacks" wording).
+    if (on_bench and owner is not ctx.me and ctx.effect_kind == "attack"
+            and any(m.card.name == "Rabsca"
+                    and not ability_suppressed(ctx.state, m)
+                    for m in owner.all_in_play())):
+        ctx.state.emit(f"Spherical Shield: prevented {counters} counter(s) on benched "
+                       f"{target.card.name}")
+        return 0
     if (on_bench and owner is not ctx.me
             and current_stadium_name(ctx.state) == "Battle Cage"):
         ctx.state.emit(f"Battle Cage: prevented {counters} counter(s) on benched "
@@ -1502,7 +1530,8 @@ def _mind_bend(ctx: EffectContext) -> None:
     """Munkidori: 60, and the opponent's Active is now Confused. Confusion is an EFFECT
     of the attack done to that Pokémon, so it goes through effect_prevented_on (Sparkling
     Scales / Rocky Fighting Energy can block it)."""
-    if ctx.opp.active and not effect_prevented_on(ctx, ctx.opp.active):
+    if (ctx.opp.active and not effect_prevented_on(ctx, ctx.opp.active)
+            and can_be_conditioned(ctx.state, ctx.opp.active)):
         ctx.opp.active.confused = True
         ctx.state.emit(f"Mind Bend: {ctx.opp.active.card.name} is Confused")
 
@@ -2218,7 +2247,7 @@ def _luster_blast(ctx: EffectContext) -> None:
 def _tantrum(ctx: EffectContext) -> None:
     """Annihilape: 130 (engine), then "This Pokémon is now Confused" — SELF-confuse
     (the attacker, not the Defending Pokémon), so a copied Tantrum confuses Slowking."""
-    if ctx.source is not None:
+    if ctx.source is not None and can_be_conditioned(ctx.state, ctx.source):
         ctx.source.confused = True
         ctx.state.emit(f"Tantrum: {ctx.source.card.name} is now Confused")
 
@@ -4662,3 +4691,332 @@ def get_trainer_effect(card_name: str):
 def can_play_trainer(state, me, card_name: str) -> bool:
     pred = _TRAINER_CAN_PLAY.get(card_name)
     return pred(state, me) if pred else (card_name in TRAINER_EFFECTS)
+
+
+# ============================================================================ #
+# §META-2026-08 — the three live-metagame archetypes the gauntlet couldn't see:
+# Dragapult Blaziken (5.99% share), Festival Lead (6.75%), Grimmsnarl Froslass
+# (4.66%). Card text sources: the live pool JSON + limitlesstcg card pages for
+# the three manual-supplement additions (Seaking (PRE), Applin (SCR), Gladion's
+# Final Battle). Every effect below is asserted against its real text in
+# tests/test_blaziken_line.py / test_festival_lead.py / test_grimmsnarl_line.py.
+# ============================================================================ #
+
+def has_festival_lead(card) -> bool:
+    """Does this card carry the Festival Lead Ability (Dipplin / Goldeen /
+    Seaking (PRE))? Read off the card's own ability list, never a name table —
+    a future print with the Ability works unchanged."""
+    return any(a.name == "Festival Lead" for a in (card.abilities or []))
+
+
+def pokemon_checkup(state: GameState) -> None:
+    """The between-turns Pokémon Checkup window, called from game.end_turn.
+
+    Resident: Froslass "Freezing Shroud" — "During Pokémon Checkup, put 1 damage
+    counter on each Pokémon that has an Ability (both yours and your opponent's),
+    except any Froslass." EACH un-suppressed Froslass in play triggers separately
+    (two Froslass = 2 counters per ability-haver per Checkup); a suppressed one
+    (Watchtower / Midnight Fluttering) does not. Checkup counters are not an
+    attack, so attack-scoped walls (Battle Cage, Rocky Fighting Energy, Dig's
+    shield) do NOT prevent them — damage is applied directly, then knockouts are
+    processed with normal prize awards."""
+    shrouds = sum(
+        1 for pl in state.players for m in pl.all_in_play()
+        if m.card.name == "Froslass"
+        and any(a.name == "Freezing Shroud" for a in (m.card.abilities or []))
+        and not ability_suppressed(state, m))
+    if not shrouds:
+        return
+    hit = 0
+    for pl in state.players:
+        for m in pl.all_in_play():
+            if m.card.name == "Froslass":
+                continue
+            if m.card.abilities:
+                m.damage += 10 * shrouds
+                hit += 1
+    if hit:
+        state.emit(f"Freezing Shroud ×{shrouds}: 1 counter on {hit} Pokémon with Abilities")
+        process_knockouts(state)
+
+
+def can_be_conditioned(state: GameState, mon: InPlayPokemon) -> bool:
+    """Festival Grounds (Stadium): "Each Pokémon that has any Energy attached (both
+    yours and your opponent's) recovers from all Special Conditions and can't be
+    affected by any Special Conditions." Confusion is the engine's one modeled
+    Condition, so this is the whole gate."""
+    return not (current_stadium_name(state) == "Festival Grounds" and mon.energy)
+
+
+# --- Dragapult Blaziken ------------------------------------------------------ #
+
+def _seething_spirit(ctx: EffectContext) -> None:
+    """Blaziken ex Ability: "Once during your turn, you may attach a Basic Energy card
+    from your discard pile to 1 of your Pokémon." Policy (the '1 of your Pokémon'
+    choice, a hook MCTS can own): the Active if it still needs Energy for any printed
+    attack cost, else the least-loaded Benched attacker (an ex first)."""
+    me = ctx.me
+    pool = [c for c in me.discard if c.is_basic_energy]
+    if not pool:
+        return
+    def needs(mon):
+        if mon is None:
+            return False
+        need = max((len(a.cost) for a in mon.card.attacks or []), default=0)
+        return len(mon.energy) < need
+    target = me.active if needs(me.active) else None
+    if target is None:
+        cands = [m for m in me.bench if needs(m)] or list(me.bench) or ([me.active] if me.active else [])
+        if not cands:
+            return
+        cands.sort(key=lambda m: (0 if "ex" in m.card.subtypes else 1, len(m.energy)))
+        target = cands[0]
+    card = pool[0]
+    me.discard.remove(card)
+    target.energy.append(card)
+    ctx.state.emit(f"Seething Spirit: attached {card.name} from discard to {target.card.name}")
+
+
+def _smolder_sault(ctx: EffectContext) -> None:
+    """Blaziken ex: 200 (engine-applied). "During your next turn, this Pokémon can't
+    attack." Same pending-lock hop as Metal Slash / Eon Blade."""
+    ctx.source.pending_cannot_attack = True
+    ctx.state.emit("Smolder-sault: Blaziken ex can't attack next turn")
+
+
+# --- Grimmsnarl Froslass ----------------------------------------------------- #
+
+def _filch(ctx: EffectContext) -> None:
+    """Marnie's Impidimp: (0) Draw a card."""
+    draw(ctx, 1)
+
+
+def _punk_up(ctx: EffectContext) -> None:
+    """Marnie's Grimmsnarl ex on-evolve Ability: "When you play this Pokémon from your
+    hand to evolve 1 of your Pokémon during your turn, you may search your deck for up
+    to 5 Basic Darkness Energy cards and attach them to your Marnie's Pokémon in any
+    way you like. Then, shuffle your deck." Distribution policy: fill the evolving
+    Grimmsnarl to Shadow Bullet's [D][D] plus retreat slack (3), then round-robin the
+    rest across other Marnie's Pokémon."""
+    me = ctx.me
+    found = [c for c in me.deck if c.is_basic_energy and "Darkness" in c.types][:5]
+    if not found:
+        return
+    for c in found:
+        me.deck.remove(c)
+    ctx.state.rng.shuffle(me.deck)
+    targets = [m for m in me.all_in_play() if m.card.name.startswith("Marnie's")]
+    if not targets:
+        targets = [ctx.source]
+    for c in found:
+        # the evolved mon first, up to 3; then the least-loaded other Marnie's
+        if ctx.source in targets and len(ctx.source.energy) < 3:
+            tgt = ctx.source
+        else:
+            tgt = min(targets, key=lambda m: len(m.energy))
+        tgt.energy.append(c)
+    ctx.state.emit(f"Punk Up: attached {len(found)} Basic Darkness Energy from the deck")
+
+
+def _shadow_bullet(ctx: EffectContext) -> None:
+    """Marnie's Grimmsnarl ex: 180 (engine-applied). "This attack also does 30 damage
+    to 1 of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for
+    Benched Pokémon.)" Bench DAMAGE, not counters — so Tera / Flower Curtain / bench
+    walls get their say at the chokepoint. Target policy: a KO if one exists, else the
+    most-damaged bencher."""
+    bench = [m for m in ctx.opp.bench if not m.is_knocked_out]
+    if not bench:
+        return
+    ko = [m for m in bench if m.remaining_hp <= 30]
+    target = min(ko, key=lambda m: m.remaining_hp) if ko else max(bench, key=lambda m: m.damage)
+    apply_attack_damage(ctx, target, 30, owner=ctx.opp, source=ctx.source)
+
+
+def _astonish(ctx: EffectContext) -> None:
+    """Snorunt: 20 (engine-applied). "Choose a random card from your opponent's hand.
+    Your opponent reveals that card and shuffles it into their deck." Random via the
+    game RNG — deterministic per seed."""
+    if not ctx.opp.hand:
+        return
+    i = ctx.rng.randrange(len(ctx.opp.hand))
+    card = ctx.opp.hand.pop(i)
+    ctx.opp.deck.append(card)
+    ctx.rng.shuffle(ctx.opp.deck)
+    ctx.state.emit(f"Astonish: {card.name} shuffled from the opponent's hand into their deck")
+
+
+def _corrosive_winds(ctx: EffectContext) -> None:
+    """Yveltal: (0) "Put 2 damage counters on each of your opponent's Pokémon that has
+    any damage counters on it." Counters (an attack effect), so the counter walls
+    apply per target."""
+    for m in [ctx.opp.active] + list(ctx.opp.bench):
+        if m is not None and m.damage > 0 and not m.is_knocked_out:
+            place_counters(ctx, m, 2, owner=ctx.opp)
+
+
+def _destructive_beam(ctx: EffectContext) -> None:
+    """Yveltal: 100 (engine-applied). "Flip a coin. If heads, discard an Energy from
+    your opponent's Active Pokémon."""
+    if flip(ctx) and ctx.opp.active is not None and ctx.opp.active.energy:
+        card = ctx.opp.active.energy.pop()
+        ctx.opp.discard.append(card)
+        ctx.state.emit(f"Destructive Beam: discarded {card.name}")
+
+
+def _attract_customers(ctx: EffectContext) -> None:
+    """Tatsugiri Ability (Active only — gated in ABILITY_CAN_USE): "look at the top 6
+    cards of your deck, reveal a Supporter card you find there, and put it into your
+    hand. Shuffle the other cards back into your deck."""
+    me = ctx.me
+    window = [me.deck.pop(0) for _ in range(min(6, len(me.deck)))]
+    supporters = [c for c in window if p_supporter(c)]
+    if supporters:
+        pick = max(supporters, key=_search_value)
+        window.remove(pick)
+        me.hand.append(pick)
+        ctx.state.emit(f"Attract Customers: took {pick.name}")
+    me.deck.extend(window)
+    ctx.rng.shuffle(me.deck)
+
+
+def _iris_fighting_spirit(ctx: EffectContext) -> bool:
+    """Supporter: "You can use this card only if you discard another card from your
+    hand. Draw cards until you have 6 cards in your hand." Discard policy: the
+    lowest-search-value hand card (Energy before spare Trainers before Pokémon)."""
+    me = ctx.me
+    if not me.hand:
+        return False
+    toss = min(me.hand, key=_search_value)
+    me.hand.remove(toss)
+    me.discard.append(toss)
+    need = 6 - len(me.hand)
+    drew = me.draw(need) if need > 0 else 0
+    ctx.state.emit(f"Iris's Fighting Spirit: discarded {toss.name}, drew {drew}")
+    return True
+
+
+# --- Festival Lead ----------------------------------------------------------- #
+
+def _do_the_wave(ctx: EffectContext) -> None:
+    """Dipplin: 20× — "This attack does 20 damage for each of your Benched Pokémon."
+    (Variable '×': owns its damage so Weakness multiplies the total once.)"""
+    damage_active_with_weakness(ctx, 20 * len(ctx.me.bench))
+
+
+def _whirlpool(ctx: EffectContext) -> None:
+    """Goldeen: 10 (engine-applied). "Flip a coin. If heads, discard an Energy from
+    your opponent's Active Pokémon."""
+    if flip(ctx) and ctx.opp.active is not None and ctx.opp.active.energy:
+        card = ctx.opp.active.energy.pop()
+        ctx.opp.discard.append(card)
+        ctx.state.emit(f"Whirlpool: discarded {card.name}")
+
+
+def _peck_off(ctx: EffectContext) -> None:
+    """Seaking (TWM): 50 (engine-applied). "Before doing damage, discard all Pokémon
+    Tools from your opponent's Active Pokémon." The engine applies base damage before
+    the effect hook, so 'before' ordering only matters for damage-modifying Tools —
+    none of which are defender-side today; the discard itself is exact."""
+    mon = ctx.opp.active
+    if mon is not None and mon.tool is not None:
+        ctx.opp.discard.append(mon.tool)
+        ctx.state.emit(f"Peck Off: discarded {mon.tool.name}")
+        mon.tool = None
+
+
+def _rapid_draw(ctx: EffectContext) -> None:
+    """Seaking (PRE): 60 (engine-applied). "Draw 2 cards."""
+    draw(ctx, 2)
+
+
+def _tumbling_attack(ctx: EffectContext) -> None:
+    """Applin (TWM): 10+ — "Flip a coin. If heads, this attack does 20 more damage."""
+    damage_active_with_weakness(ctx, 30 if flip(ctx) else 10)
+
+
+def _slight_intrusion(ctx: EffectContext) -> None:
+    """Rellor: 30 (engine-applied). "This Pokémon also does 10 damage to itself."""
+    ctx.source.damage += 10
+
+
+def _rabsca_psychic(ctx: EffectContext) -> None:
+    """Rabsca: 10+ — "This attack does 30 more damage for each Energy attached to your
+    opponent's Active Pokémon." Energy CARDS attached (energy_count counts cards)."""
+    n = ctx.opp.active.energy_count() if ctx.opp.active is not None else 0
+    damage_active_with_weakness(ctx, 10 + 30 * n)
+
+
+def _boom_boom_groove(ctx: EffectContext) -> None:
+    """Thwackey Ability: "Once during your turn, if your Active Pokémon has the
+    Festival Lead Ability, you may search your deck for a card and put it into your
+    hand. Then, shuffle your deck." ANY card — the deck's universal tutor."""
+    if search_deck(ctx, [lambda c: True], dest="hand"):
+        ctx.state.emit("Boom Boom Groove: searched a card")
+
+
+def _gladions_final_battle(ctx: EffectContext) -> bool:
+    """Supporter: "You can use this card only when it is the last card in your hand.
+    During this turn, attacks used by your Pokémon that don't have a Rule Box do 80
+    more damage to your opponent's Active Pokémon (before applying Weakness and
+    Resistance)." The last-card condition lives in _TRAINER_CAN_PLAY (checked while
+    the card is still in hand); by the time this effect runs the hand is empty."""
+    ctx.me.bonus_damage_nonrulebox = 80
+    ctx.state.emit("Gladion's Final Battle: +80 for non-Rule-Box attackers this turn")
+    return True
+
+
+ATTACK_EFFECTS.update({
+    ("Blaziken ex", "Smolder-sault"): _smolder_sault,
+    ("Marnie's Impidimp", "Filch"): _filch,
+    ("Marnie's Grimmsnarl ex", "Shadow Bullet"): _shadow_bullet,
+    ("Snorunt", "Astonish"): _astonish,
+    ("Yveltal", "Corrosive Winds"): _corrosive_winds,
+    ("Yveltal", "Destructive Beam"): _destructive_beam,
+    ("Dipplin", "Do the Wave"): _do_the_wave,
+    ("Goldeen", "Whirlpool"): _whirlpool,
+    ("Seaking", "Peck Off"): _peck_off,
+    ("Seaking (PRE)", "Rapid Draw"): _rapid_draw,
+    ("Applin", "Tumbling Attack"): _tumbling_attack,
+    ("Rellor", "Slight Intrusion"): _slight_intrusion,
+    ("Rabsca", "Psychic"): _rabsca_psychic,
+})
+
+ATTACK_EFFECT_OWNS_DAMAGE.update({
+    ("Dipplin", "Do the Wave"),
+    ("Applin", "Tumbling Attack"),
+    ("Rabsca", "Psychic"),
+})
+
+ABILITY_EFFECTS.update({
+    ("Blaziken ex", "Seething Spirit"): _seething_spirit,
+    ("Tatsugiri", "Attract Customers"): _attract_customers,
+    ("Thwackey", "Boom Boom Groove"): _boom_boom_groove,
+})
+
+ABILITY_CAN_USE.update({
+    ("Blaziken ex", "Seething Spirit"):
+        lambda state, me, mon: any(c.is_basic_energy for c in me.discard),
+    ("Tatsugiri", "Attract Customers"):
+        lambda state, me, mon: mon is me.active and len(me.deck) > 0,
+    ("Thwackey", "Boom Boom Groove"):
+        lambda state, me, mon: (me.active is not None
+                                and has_festival_lead(me.active.card)
+                                and len(me.deck) > 0),
+})
+
+ON_EVOLVE_TRIGGERS.update({
+    "Marnie's Grimmsnarl ex": _punk_up,
+})
+
+TRAINER_EFFECTS.update({
+    "Iris's Fighting Spirit": _iris_fighting_spirit,
+    "Gladion's Final Battle": _gladions_final_battle,
+})
+
+_TRAINER_CAN_PLAY.update({
+    # needs another card to discard, and a deck to draw from
+    "Iris's Fighting Spirit": lambda state, me: len(me.hand) >= 2 and len(me.deck) > 0,
+    # "only when it is the last card in your hand" — evaluated pre-pop, so the hand
+    # holds exactly this card
+    "Gladion's Final Battle": lambda state, me: len(me.hand) == 1,
+})
