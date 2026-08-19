@@ -238,6 +238,20 @@ python3 cli.py --deck1 dragapult --deck2 raging_bolt --seed 42 --save-game myrun
 python3 cli.py --replay saved_games/myrun.json                  # step-by-step replay
 python3 cli.py --import-deck --name mydeck                      # paste a TCG Live export (stdin)
 ```
+Battle-log import (`src/importers/tcglive_log.py`): the sibling that imports a GAME, not
+a deck — the in-app battle log as pasted text -> an event tree (`parse_log`) plus a
+fidelity report (`analyse` / `format_coverage`). Measured on 53 real ladder games:
+**99.9% of lines parse**, the residue being human chat pasted alongside. It PARSES ONLY —
+it does not drive `GameState`; a replay harness is the next piece. Two things it must keep
+doing: anchoring possessive splits on a discovered player handle (card names contain "'s"
+— "N's Zoroark ex"), and keeping `draw_named` vs `draw_hidden` distinct, because a log is
+SINGLE-OBSERVER (`GameLog.observer` = the seat it was copied from). What the corpus found
+is in `docs/TCGLIVE_LOG_FIDELITY.md`: the automated pool fetch has ZERO coverage of
+PBL / ASC / ME05 / CRI — every card the project owns from those sets is one of the 26
+hand-added `data/manual_cards.json` entries — and bare log names can't identify a print
+(the log writes "Metagross", never "Metagross (CRI)"), so the import path needs a
+print-resolution step keyed on the move actually used.
+
 Deck import (`src/importers/tcglive.py`): paste a Pokémon TCG Live deck export and it
 parses qty+name (stripping set codes like `MEG 50`), matches against the pool
 (accent/case-insensitive, energy normalised), reports matched/missing + legality, and
@@ -251,6 +265,73 @@ count — the way to compare two pilots on one deck at equal wall clock. Omit it
 `run()` behaves exactly as before, single-pilot.
 `src/engine/run.py` is the lower-level batch loop; `src/engine/matchup.py` is the
 instrumented validation runner (win% + right-lines evidence).
+
+## Meta-2026-08 build (the three missing top-10 archetypes — now IN)
+`dragapult_blaziken` (Jon Webb NAIC 6th — TOURNAMENT provenance), `festival_lead`
+(online-event 12-0-1 list, "Dreamjew"), `grimmsnarl_froslass` (Andrew Choi NAIC 128th —
+WEAK provenance) are registered, effects in the §META-2026-08 section of effects.py,
+tested in `tests/test_meta_2026_08_lines.py`. Engine mechanics this build added — each
+lives at a chokepoint, know they exist:
+- **Festival Lead attack-twice** (`game._resolve_attack` tail): Dipplin / Goldeen /
+  Seaking (PRE) repeat their attack when Festival Grounds is the Stadium; the repeat
+  targets whatever is Active AFTER process_knockouts (that's the card's clause), costs
+  nothing, and is gated on `fx.has_festival_lead` (reads the card's ability list, not a
+  name table). Confusion is checked once per declaration.
+- **Pokémon Checkup window** (`fx.pokemon_checkup`, called from `game.end_turn`):
+  currently hosts Froslass's Freezing Shroud (1 counter per un-suppressed Froslass on
+  every Ability-holder except Froslass, both sides — checkup counters are NOT attack
+  effects, so Battle Cage/Rocky walls don't apply). New between-turns residents go here.
+- **Spikemuth Gym** = seventh ACTIVATED Stadium (`stadium_spikemuth`, own budget field,
+  reset in start_turn, cloned in state.py, `mcts._semantic_key` case). Its action is
+  enumerated per distinct Marnie's NAME (sorted) — deck ORDER is hidden info and must
+  not leak into the action encoding.
+- **Gladion's Final Battle** = `PlayerState.bonus_damage_nonrulebox` (turn-scoped, like
+  Kieran's flag) applied in `apply_attack_damage`'s bonus block; can_play is hand==1
+  (evaluated PRE-pop, so the hand holds exactly the card itself).
+- **Rabsca "Spherical Shield"** joined the bench-prevention chokepoints (damage half in
+  apply_attack_damage — NO Rule-Box clause, unlike Flower Curtain — and the
+  effects-of-attacks half in place_counters, effect_kind=="attack" only).
+- **Forest of Vitality** waives only the played-this-turn clause for Grass-into-Grass
+  in legal_actions' evolve block. **Festival Grounds** condition-immunity =
+  `fx.can_be_conditioned`, guarded at both confused=True sites.
+- Manual-supplement additions (real text from limitlesstcg): `Seaking (PRE)` (Festival
+  Lead + Rapid Draw — print collision, TWM print differs), `Applin (SCR)`,
+  `Gladion's Final Battle`. Pool is now 1,305.
+- HONEST LIMIT: `festival_lead` under pure greedy reads ~7% vs mega_excadrill — that is
+  PILOTING, not the deck (real WR 51.18%). Greedy has no Gladion hand-management and no
+  bench-width preference; treat greedy numbers for this archetype as a floor.
+
+
+## The overnight matrix (2026-08-17) — the current strength read
+`docs/BEST_DECK_2026-08.md` + raw cells in `docs/matrix_2026-08_mcts2.json`: 159
+pairings, both sides mcts2@60, n=60, seed 2026 — 20 candidates vs the 14-archetype live
+field (63.1% of the Limitless meta representable). Headline: `fighting` tops the mean
+(80.8%, aggro-bias caveat applies in full) but **`crustle_modern` is the only deck with
+no losing matchup** (floor 53.3%) — the maximin best. `mega_excadrill` is 6th (64.8%)
+with exactly two bad cells: fighting 15%, grimmsnarl_froslass 46.7%. festival_lead
+(32.8%) and slowking_annihilape (32.0%) are PILOT FLOORS, not ratings — both
+contradict external evidence (51.18% real WR; two direct ladder wins). Greedy pilot
+corrections from the Fable review live in agents.py (nine scoped branches: Festival
+promotion/fuel/bench-to-5/Gladion-hold/Bangle-targeting/Wave-valuation, Grimmsnarl
+promotion, Blaziken lock-pivot, Munkidori/Dragapult signature energy routing) and one
+evaluation.py term (Do the Wave leaf value). All scoped so previously-recorded numbers
+do not move; verified by spot-check.
+
+## Real-world calibration (2026-08-17) — READ BEFORE QUOTING ANY WIN RATE
+`docs/META_GAUNTLET_2026-08.md` measures the house `mega_excadrill` against the LIVE
+Limitless PBL-Standard metagame. The result is a calibration failure, and it is the most
+important number we have: **the sim rates the deck at ~63% share-weighted vs the field;
+its real win rate is 49.51%** on thousands of recorded games, where it is the format's
+MOST-PLAYED deck (7.79%). Search helps but doesn't close it — greedy 73.6% -> mcts2 65.7%
+over the same 9 matchups. Treat the gauntlet as a tool for FINDING BAD MATCHUPS
+(`fighting` 33.3%, `alakazam_deck` 45.0% — both run against the aggro bias, so both are
+credible), never as a power ranking. Three sim numbers are known-bogus and flagged there
+(N's Zoroark 93.3% = combo mispiloting; Dhelmise 91.7% = wrong proxy deck; Slowking 75.0%
+is contradicted by our own ladder record). 17.4% of the live field has NO deck in the
+registry — Festival Lead (6.75%), Dragapult Blaziken (5.99%, the deck that beat us), and
+Grimmsnarl Froslass (4.66%); the cards are almost all in the pool already, but none of the
+archetype-defining effects are implemented. Real ladder matches are recorded in
+`docs/LADDER_LOG.md`.
 
 ## Validation status (see `docs/VALIDATION_RESULT.md`)
 Card-implementation milestone is COMPLETE (both tournament lists fully faithful).

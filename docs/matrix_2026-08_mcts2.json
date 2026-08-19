@@ -1,0 +1,1402 @@
+{
+ "dragapult|mega_excadrill": {
+  "d1": "dragapult",
+  "d2": "mega_excadrill",
+  "d1_wins": 17,
+  "d2_wins": 43,
+  "ties": 0,
+  "secs": 33.5
+ },
+ "mega_excadrill|slowking": {
+  "d1": "mega_excadrill",
+  "d2": "slowking",
+  "d1_wins": 45,
+  "d2_wins": 15,
+  "ties": 0,
+  "secs": 52.5
+ },
+ "alakazam_deck|mega_excadrill": {
+  "d1": "alakazam_deck",
+  "d2": "mega_excadrill",
+  "d1_wins": 24,
+  "d2_wins": 36,
+  "ties": 0,
+  "secs": 38.5
+ },
+ "hide_n_sneak|mega_excadrill": {
+  "d1": "hide_n_sneak",
+  "d2": "mega_excadrill",
+  "d1_wins": 12,
+  "d2_wins": 48,
+  "ties": 0,
+  "secs": 34.8
+ },
+ "mega_excadrill|toucannon": {
+  "d1": "mega_excadrill",
+  "d2": "toucannon",
+  "d1_wins": 39,
+  "d2_wins": 21,
+  "ties": 0,
+  "secs": 39.3
+ },
+ "mega_excadrill|raging_bolt": {
+  "d1": "mega_excadrill",
+  "d2": "raging_bolt",
+  "d1_wins": 43,
+  "d2_wins": 17,
+  "ties": 0,
+  "secs": 26.8
+ },
+ "fighting|mega_excadrill": {
+  "d1": "fighting",
+  "d2": "mega_excadrill",
+  "d1_wins": 51,
+  "d2_wins": 9,
+  "ties": 0,
+  "secs": 18.6
+ },
+ "greninja|mega_excadrill": {
+  "d1": "greninja",
+  "d2": "mega_excadrill",
+  "d1_wins": 25,
+  "d2_wins": 35,
+  "ties": 0,
+  "secs": 17.5
+ },
+ "beedrill|mega_excadrill": {
+  "d1": "beedrill",
+  "d2": "mega_excadrill",
+  "d1_wins": 23,
+  "d2_wins": 37,
+  "ties": 0,
+  "secs": 18.3
+ },
+ "cynthia_garchomp|mega_excadrill": {
+  "d1": "cynthia_garchomp",
+  "d2": "mega_excadrill",
+  "d1_wins": 28,
+  "d2_wins": 32,
+  "ties": 0,
+  "secs": 42.2
+ },
+ "dragapult|slowking": {
+  "d1": "dragapult",
+  "d2": "slowking",
+  "d1_wins": 34,
+  "d2_wins": 26,
+  "ties": 0,
+  "secs": 71.1
+ },
+ "alakazam_deck|dragapult": {
+  "d1": "alakazam_deck",
+  "d2": "dragapult",
+  "d1_wins": 32,
+  "d2_wins": 28,
+  "ties": 0,
+  "secs": 45.9
+ },
+ "dragapult|hide_n_sneak": {
+  "d1": "dragapult",
+  "d2": "hide_n_sneak",
+  "d1_wins": 32,
+  "d2_wins": 28,
+  "ties": 0,
+  "secs": 44.7
+ },
+ "dragapult|toucannon": {
+  "d1": "dragapult",
+  "d2": "toucannon",
+  "d1_wins": 41,
+  "d2_wins": 19,
+  "ties": 0,
+  "secs": 54.8
+ },
+ "dragapult|raging_bolt": {
+  "d1": "dragapult",
+  "d2": "raging_bolt",
+  "d1_wins": 39,
+  "d2_wins": 21,
+  "ties": 0,
+  "secs": 41.7
+ },
+ "dragapult|fighting": {
+  "d1": "dragapult",
+  "d2": "fighting",
+  "d1_wins": 11,
+  "d2_wins": 49,
+  "ties": 0,
+  "secs": 29.4
+ },
+ "festival_lead|mega_excadrill": {
+  "d1": "festival_lead",
+  "d2": "mega_excadrill",
+  "d1_wins": 9,
+  "d2_wins": 51,
+  "ties": 0,
+  "secs": 30.9
+ },
+ "dragapult_blaziken|mega_excadrill": {
+  "d1": "dragapult_blaziken",
+  "d2": "mega_excadrill",
+  "d1_wins": 22,
+  "d2_wins": 38,
+  "ties": 0,
+  "secs": 40.2
+ },
+ "grimmsnarl_froslass|mega_excadrill": {
+  "d1": "grimmsnarl_froslass",
+  "d2": "mega_excadrill",
+  "d1_wins": 32,
+  "d2_wins": 28,
+  "ties": 0,
+  "secs": 32.7
+ },
+ "dragapult|festival_lead": {
+  "d1": "dragapult",
+  "d2": "festival_lead",
+  "d1_wins": 41,
+  "d2_wins": 19,
+  "ties": 0,
+  "secs": 51.2
+ },
+ "dragapult|dragapult_blaziken": {
+  "d1": "dragapult",
+  "d2": "dragapult_blaziken",
+  "d1_wins": 29,
+  "d2_wins": 31,
+  "ties": 0,
+  "secs": 50.3
+ },
+ "dragapult|grimmsnarl_froslass": {
+  "d1": "dragapult",
+  "d2": "grimmsnarl_froslass",
+  "d1_wins": 23,
+  "d2_wins": 37,
+  "ties": 0,
+  "secs": 38.5
+ },
+ "dragapult|greninja": {
+  "d1": "dragapult",
+  "d2": "greninja",
+  "d1_wins": 22,
+  "d2_wins": 38,
+  "ties": 0,
+  "secs": 33.9
+ },
+ "beedrill|dragapult": {
+  "d1": "beedrill",
+  "d2": "dragapult",
+  "d1_wins": 35,
+  "d2_wins": 25,
+  "ties": 0,
+  "secs": 24.5
+ },
+ "cynthia_garchomp|dragapult": {
+  "d1": "cynthia_garchomp",
+  "d2": "dragapult",
+  "d1_wins": 39,
+  "d2_wins": 21,
+  "ties": 0,
+  "secs": 46.9
+ },
+ "dragapult_blaziken|festival_lead": {
+  "d1": "dragapult_blaziken",
+  "d2": "festival_lead",
+  "d1_wins": 40,
+  "d2_wins": 20,
+  "ties": 0,
+  "secs": 36.5
+ },
+ "festival_lead|slowking": {
+  "d1": "festival_lead",
+  "d2": "slowking",
+  "d1_wins": 26,
+  "d2_wins": 34,
+  "ties": 0,
+  "secs": 63.8
+ },
+ "alakazam_deck|festival_lead": {
+  "d1": "alakazam_deck",
+  "d2": "festival_lead",
+  "d1_wins": 43,
+  "d2_wins": 17,
+  "ties": 0,
+  "secs": 45.7
+ },
+ "festival_lead|grimmsnarl_froslass": {
+  "d1": "festival_lead",
+  "d2": "grimmsnarl_froslass",
+  "d1_wins": 16,
+  "d2_wins": 44,
+  "ties": 0,
+  "secs": 33.3
+ },
+ "festival_lead|hide_n_sneak": {
+  "d1": "festival_lead",
+  "d2": "hide_n_sneak",
+  "d1_wins": 24,
+  "d2_wins": 36,
+  "ties": 0,
+  "secs": 50.4
+ },
+ "festival_lead|toucannon": {
+  "d1": "festival_lead",
+  "d2": "toucannon",
+  "d1_wins": 23,
+  "d2_wins": 37,
+  "ties": 0,
+  "secs": 44.3
+ },
+ "festival_lead|raging_bolt": {
+  "d1": "festival_lead",
+  "d2": "raging_bolt",
+  "d1_wins": 25,
+  "d2_wins": 35,
+  "ties": 0,
+  "secs": 27.8
+ },
+ "festival_lead|fighting": {
+  "d1": "festival_lead",
+  "d2": "fighting",
+  "d1_wins": 9,
+  "d2_wins": 51,
+  "ties": 0,
+  "secs": 18.9
+ },
+ "festival_lead|greninja": {
+  "d1": "festival_lead",
+  "d2": "greninja",
+  "d1_wins": 24,
+  "d2_wins": 36,
+  "ties": 0,
+  "secs": 21.5
+ },
+ "beedrill|festival_lead": {
+  "d1": "beedrill",
+  "d2": "festival_lead",
+  "d1_wins": 43,
+  "d2_wins": 17,
+  "ties": 0,
+  "secs": 17.6
+ },
+ "cynthia_garchomp|festival_lead": {
+  "d1": "cynthia_garchomp",
+  "d2": "festival_lead",
+  "d1_wins": 44,
+  "d2_wins": 16,
+  "ties": 0,
+  "secs": 32.9
+ },
+ "dragapult_blaziken|slowking": {
+  "d1": "dragapult_blaziken",
+  "d2": "slowking",
+  "d1_wins": 35,
+  "d2_wins": 25,
+  "ties": 0,
+  "secs": 73.1
+ },
+ "alakazam_deck|dragapult_blaziken": {
+  "d1": "alakazam_deck",
+  "d2": "dragapult_blaziken",
+  "d1_wins": 39,
+  "d2_wins": 21,
+  "ties": 0,
+  "secs": 54.9
+ },
+ "dragapult_blaziken|grimmsnarl_froslass": {
+  "d1": "dragapult_blaziken",
+  "d2": "grimmsnarl_froslass",
+  "d1_wins": 19,
+  "d2_wins": 41,
+  "ties": 0,
+  "secs": 37.7
+ },
+ "dragapult_blaziken|hide_n_sneak": {
+  "d1": "dragapult_blaziken",
+  "d2": "hide_n_sneak",
+  "d1_wins": 38,
+  "d2_wins": 22,
+  "ties": 0,
+  "secs": 54.3
+ },
+ "dragapult_blaziken|toucannon": {
+  "d1": "dragapult_blaziken",
+  "d2": "toucannon",
+  "d1_wins": 28,
+  "d2_wins": 32,
+  "ties": 0,
+  "secs": 49.8
+ },
+ "dragapult_blaziken|raging_bolt": {
+  "d1": "dragapult_blaziken",
+  "d2": "raging_bolt",
+  "d1_wins": 42,
+  "d2_wins": 18,
+  "ties": 0,
+  "secs": 39.0
+ },
+ "dragapult_blaziken|fighting": {
+  "d1": "dragapult_blaziken",
+  "d2": "fighting",
+  "d1_wins": 9,
+  "d2_wins": 51,
+  "ties": 0,
+  "secs": 28.6
+ },
+ "dragapult_blaziken|greninja": {
+  "d1": "dragapult_blaziken",
+  "d2": "greninja",
+  "d1_wins": 19,
+  "d2_wins": 41,
+  "ties": 0,
+  "secs": 28.8
+ },
+ "beedrill|dragapult_blaziken": {
+  "d1": "beedrill",
+  "d2": "dragapult_blaziken",
+  "d1_wins": 29,
+  "d2_wins": 31,
+  "ties": 0,
+  "secs": 28.2
+ },
+ "cynthia_garchomp|dragapult_blaziken": {
+  "d1": "cynthia_garchomp",
+  "d2": "dragapult_blaziken",
+  "d1_wins": 46,
+  "d2_wins": 14,
+  "ties": 0,
+  "secs": 54.8
+ },
+ "alakazam_deck|slowking": {
+  "d1": "alakazam_deck",
+  "d2": "slowking",
+  "d1_wins": 40,
+  "d2_wins": 20,
+  "ties": 0,
+  "secs": 62.6
+ },
+ "grimmsnarl_froslass|slowking": {
+  "d1": "grimmsnarl_froslass",
+  "d2": "slowking",
+  "d1_wins": 44,
+  "d2_wins": 16,
+  "ties": 0,
+  "secs": 58.5
+ },
+ "hide_n_sneak|slowking": {
+  "d1": "hide_n_sneak",
+  "d2": "slowking",
+  "d1_wins": 30,
+  "d2_wins": 30,
+  "ties": 0,
+  "secs": 69.0
+ },
+ "slowking|toucannon": {
+  "d1": "slowking",
+  "d2": "toucannon",
+  "d1_wins": 29,
+  "d2_wins": 31,
+  "ties": 0,
+  "secs": 66.3
+ },
+ "raging_bolt|slowking": {
+  "d1": "raging_bolt",
+  "d2": "slowking",
+  "d1_wins": 21,
+  "d2_wins": 39,
+  "ties": 0,
+  "secs": 51.6
+ },
+ "fighting|slowking": {
+  "d1": "fighting",
+  "d2": "slowking",
+  "d1_wins": 53,
+  "d2_wins": 7,
+  "ties": 0,
+  "secs": 34.4
+ },
+ "greninja|slowking": {
+  "d1": "greninja",
+  "d2": "slowking",
+  "d1_wins": 41,
+  "d2_wins": 19,
+  "ties": 0,
+  "secs": 49.6
+ },
+ "beedrill|slowking": {
+  "d1": "beedrill",
+  "d2": "slowking",
+  "d1_wins": 35,
+  "d2_wins": 25,
+  "ties": 0,
+  "secs": 36.3
+ },
+ "cynthia_garchomp|slowking": {
+  "d1": "cynthia_garchomp",
+  "d2": "slowking",
+  "d1_wins": 48,
+  "d2_wins": 12,
+  "ties": 0,
+  "secs": 68.3
+ },
+ "alakazam_deck|grimmsnarl_froslass": {
+  "d1": "alakazam_deck",
+  "d2": "grimmsnarl_froslass",
+  "d1_wins": 16,
+  "d2_wins": 44,
+  "ties": 0,
+  "secs": 44.7
+ },
+ "alakazam_deck|hide_n_sneak": {
+  "d1": "alakazam_deck",
+  "d2": "hide_n_sneak",
+  "d1_wins": 29,
+  "d2_wins": 31,
+  "ties": 0,
+  "secs": 61.8
+ },
+ "alakazam_deck|toucannon": {
+  "d1": "alakazam_deck",
+  "d2": "toucannon",
+  "d1_wins": 40,
+  "d2_wins": 20,
+  "ties": 0,
+  "secs": 49.2
+ },
+ "alakazam_deck|raging_bolt": {
+  "d1": "alakazam_deck",
+  "d2": "raging_bolt",
+  "d1_wins": 48,
+  "d2_wins": 12,
+  "ties": 0,
+  "secs": 34.2
+ },
+ "alakazam_deck|fighting": {
+  "d1": "alakazam_deck",
+  "d2": "fighting",
+  "d1_wins": 17,
+  "d2_wins": 43,
+  "ties": 0,
+  "secs": 25.0
+ },
+ "alakazam_deck|greninja": {
+  "d1": "alakazam_deck",
+  "d2": "greninja",
+  "d1_wins": 27,
+  "d2_wins": 33,
+  "ties": 0,
+  "secs": 32.6
+ },
+ "alakazam_deck|beedrill": {
+  "d1": "alakazam_deck",
+  "d2": "beedrill",
+  "d1_wins": 31,
+  "d2_wins": 29,
+  "ties": 0,
+  "secs": 26.4
+ },
+ "alakazam_deck|cynthia_garchomp": {
+  "d1": "alakazam_deck",
+  "d2": "cynthia_garchomp",
+  "d1_wins": 22,
+  "d2_wins": 38,
+  "ties": 0,
+  "secs": 53.2
+ },
+ "grimmsnarl_froslass|hide_n_sneak": {
+  "d1": "grimmsnarl_froslass",
+  "d2": "hide_n_sneak",
+  "d1_wins": 53,
+  "d2_wins": 7,
+  "ties": 0,
+  "secs": 44.4
+ },
+ "grimmsnarl_froslass|toucannon": {
+  "d1": "grimmsnarl_froslass",
+  "d2": "toucannon",
+  "d1_wins": 46,
+  "d2_wins": 14,
+  "ties": 0,
+  "secs": 44.9
+ },
+ "grimmsnarl_froslass|raging_bolt": {
+  "d1": "grimmsnarl_froslass",
+  "d2": "raging_bolt",
+  "d1_wins": 46,
+  "d2_wins": 14,
+  "ties": 0,
+  "secs": 29.2
+ },
+ "fighting|grimmsnarl_froslass": {
+  "d1": "fighting",
+  "d2": "grimmsnarl_froslass",
+  "d1_wins": 43,
+  "d2_wins": 17,
+  "ties": 0,
+  "secs": 27.6
+ },
+ "greninja|grimmsnarl_froslass": {
+  "d1": "greninja",
+  "d2": "grimmsnarl_froslass",
+  "d1_wins": 20,
+  "d2_wins": 40,
+  "ties": 0,
+  "secs": 26.6
+ },
+ "beedrill|grimmsnarl_froslass": {
+  "d1": "beedrill",
+  "d2": "grimmsnarl_froslass",
+  "d1_wins": 30,
+  "d2_wins": 30,
+  "ties": 0,
+  "secs": 21.4
+ },
+ "cynthia_garchomp|grimmsnarl_froslass": {
+  "d1": "cynthia_garchomp",
+  "d2": "grimmsnarl_froslass",
+  "d1_wins": 31,
+  "d2_wins": 29,
+  "ties": 0,
+  "secs": 42.4
+ },
+ "hide_n_sneak|toucannon": {
+  "d1": "hide_n_sneak",
+  "d2": "toucannon",
+  "d1_wins": 22,
+  "d2_wins": 38,
+  "ties": 0,
+  "secs": 56.4
+ },
+ "hide_n_sneak|raging_bolt": {
+  "d1": "hide_n_sneak",
+  "d2": "raging_bolt",
+  "d1_wins": 36,
+  "d2_wins": 24,
+  "ties": 0,
+  "secs": 39.1
+ },
+ "fighting|hide_n_sneak": {
+  "d1": "fighting",
+  "d2": "hide_n_sneak",
+  "d1_wins": 49,
+  "d2_wins": 11,
+  "ties": 0,
+  "secs": 26.7
+ },
+ "greninja|hide_n_sneak": {
+  "d1": "greninja",
+  "d2": "hide_n_sneak",
+  "d1_wins": 47,
+  "d2_wins": 13,
+  "ties": 0,
+  "secs": 34.5
+ },
+ "beedrill|hide_n_sneak": {
+  "d1": "beedrill",
+  "d2": "hide_n_sneak",
+  "d1_wins": 43,
+  "d2_wins": 17,
+  "ties": 0,
+  "secs": 27.5
+ },
+ "cynthia_garchomp|hide_n_sneak": {
+  "d1": "cynthia_garchomp",
+  "d2": "hide_n_sneak",
+  "d1_wins": 49,
+  "d2_wins": 11,
+  "ties": 0,
+  "secs": 51.6
+ },
+ "raging_bolt|toucannon": {
+  "d1": "raging_bolt",
+  "d2": "toucannon",
+  "d1_wins": 22,
+  "d2_wins": 38,
+  "ties": 0,
+  "secs": 34.7
+ },
+ "fighting|toucannon": {
+  "d1": "fighting",
+  "d2": "toucannon",
+  "d1_wins": 51,
+  "d2_wins": 9,
+  "ties": 0,
+  "secs": 28.4
+ },
+ "greninja|toucannon": {
+  "d1": "greninja",
+  "d2": "toucannon",
+  "d1_wins": 32,
+  "d2_wins": 28,
+  "ties": 0,
+  "secs": 30.5
+ },
+ "beedrill|toucannon": {
+  "d1": "beedrill",
+  "d2": "toucannon",
+  "d1_wins": 40,
+  "d2_wins": 20,
+  "ties": 0,
+  "secs": 26.3
+ },
+ "cynthia_garchomp|toucannon": {
+  "d1": "cynthia_garchomp",
+  "d2": "toucannon",
+  "d1_wins": 38,
+  "d2_wins": 22,
+  "ties": 0,
+  "secs": 46.7
+ },
+ "fighting|raging_bolt": {
+  "d1": "fighting",
+  "d2": "raging_bolt",
+  "d1_wins": 53,
+  "d2_wins": 7,
+  "ties": 0,
+  "secs": 18.1
+ },
+ "greninja|raging_bolt": {
+  "d1": "greninja",
+  "d2": "raging_bolt",
+  "d1_wins": 25,
+  "d2_wins": 35,
+  "ties": 0,
+  "secs": 18.5
+ },
+ "beedrill|raging_bolt": {
+  "d1": "beedrill",
+  "d2": "raging_bolt",
+  "d1_wins": 34,
+  "d2_wins": 26,
+  "ties": 0,
+  "secs": 17.0
+ },
+ "cynthia_garchomp|raging_bolt": {
+  "d1": "cynthia_garchomp",
+  "d2": "raging_bolt",
+  "d1_wins": 40,
+  "d2_wins": 20,
+  "ties": 0,
+  "secs": 31.9
+ },
+ "fighting|greninja": {
+  "d1": "fighting",
+  "d2": "greninja",
+  "d1_wins": 49,
+  "d2_wins": 11,
+  "ties": 0,
+  "secs": 11.4
+ },
+ "beedrill|fighting": {
+  "d1": "beedrill",
+  "d2": "fighting",
+  "d1_wins": 19,
+  "d2_wins": 41,
+  "ties": 0,
+  "secs": 11.9
+ },
+ "cynthia_garchomp|fighting": {
+  "d1": "cynthia_garchomp",
+  "d2": "fighting",
+  "d1_wins": 18,
+  "d2_wins": 42,
+  "ties": 0,
+  "secs": 28.9
+ },
+ "beedrill|greninja": {
+  "d1": "beedrill",
+  "d2": "greninja",
+  "d1_wins": 35,
+  "d2_wins": 25,
+  "ties": 0,
+  "secs": 12.0
+ },
+ "cynthia_garchomp|greninja": {
+  "d1": "cynthia_garchomp",
+  "d2": "greninja",
+  "d1_wins": 34,
+  "d2_wins": 26,
+  "ties": 0,
+  "secs": 26.2
+ },
+ "beedrill|cynthia_garchomp": {
+  "d1": "beedrill",
+  "d2": "cynthia_garchomp",
+  "d1_wins": 28,
+  "d2_wins": 32,
+  "ties": 0,
+  "secs": 18.5
+ },
+ "mega_excadrill|slowking_annihilape": {
+  "d1": "mega_excadrill",
+  "d2": "slowking_annihilape",
+  "d1_wins": 49,
+  "d2_wins": 11,
+  "ties": 0,
+  "secs": 48.9
+ },
+ "dragapult|slowking_annihilape": {
+  "d1": "dragapult",
+  "d2": "slowking_annihilape",
+  "d1_wins": 37,
+  "d2_wins": 23,
+  "ties": 0,
+  "secs": 59.0
+ },
+ "festival_lead|slowking_annihilape": {
+  "d1": "festival_lead",
+  "d2": "slowking_annihilape",
+  "d1_wins": 34,
+  "d2_wins": 26,
+  "ties": 0,
+  "secs": 52.8
+ },
+ "dragapult_blaziken|slowking_annihilape": {
+  "d1": "dragapult_blaziken",
+  "d2": "slowking_annihilape",
+  "d1_wins": 40,
+  "d2_wins": 20,
+  "ties": 0,
+  "secs": 58.8
+ },
+ "slowking|slowking_annihilape": {
+  "d1": "slowking",
+  "d2": "slowking_annihilape",
+  "d1_wins": 34,
+  "d2_wins": 26,
+  "ties": 0,
+  "secs": 71.1
+ },
+ "alakazam_deck|slowking_annihilape": {
+  "d1": "alakazam_deck",
+  "d2": "slowking_annihilape",
+  "d1_wins": 45,
+  "d2_wins": 15,
+  "ties": 0,
+  "secs": 64.0
+ },
+ "grimmsnarl_froslass|slowking_annihilape": {
+  "d1": "grimmsnarl_froslass",
+  "d2": "slowking_annihilape",
+  "d1_wins": 51,
+  "d2_wins": 9,
+  "ties": 0,
+  "secs": 42.8
+ },
+ "hide_n_sneak|slowking_annihilape": {
+  "d1": "hide_n_sneak",
+  "d2": "slowking_annihilape",
+  "d1_wins": 35,
+  "d2_wins": 25,
+  "ties": 0,
+  "secs": 60.6
+ },
+ "slowking_annihilape|toucannon": {
+  "d1": "slowking_annihilape",
+  "d2": "toucannon",
+  "d1_wins": 24,
+  "d2_wins": 36,
+  "ties": 0,
+  "secs": 55.7
+ },
+ "raging_bolt|slowking_annihilape": {
+  "d1": "raging_bolt",
+  "d2": "slowking_annihilape",
+  "d1_wins": 31,
+  "d2_wins": 29,
+  "ties": 0,
+  "secs": 38.7
+ },
+ "fighting|slowking_annihilape": {
+  "d1": "fighting",
+  "d2": "slowking_annihilape",
+  "d1_wins": 54,
+  "d2_wins": 6,
+  "ties": 0,
+  "secs": 22.8
+ },
+ "greninja|slowking_annihilape": {
+  "d1": "greninja",
+  "d2": "slowking_annihilape",
+  "d1_wins": 49,
+  "d2_wins": 11,
+  "ties": 0,
+  "secs": 37.1
+ },
+ "beedrill|slowking_annihilape": {
+  "d1": "beedrill",
+  "d2": "slowking_annihilape",
+  "d1_wins": 49,
+  "d2_wins": 11,
+  "ties": 0,
+  "secs": 22.5
+ },
+ "cynthia_garchomp|slowking_annihilape": {
+  "d1": "cynthia_garchomp",
+  "d2": "slowking_annihilape",
+  "d1_wins": 49,
+  "d2_wins": 11,
+  "ties": 0,
+  "secs": 56.7
+ },
+ "mega_excadrill|mega_excadrill_shaymin": {
+  "d1": "mega_excadrill",
+  "d2": "mega_excadrill_shaymin",
+  "d1_wins": 34,
+  "d2_wins": 26,
+  "ties": 0,
+  "secs": 32.5
+ },
+ "dragapult|mega_excadrill_shaymin": {
+  "d1": "dragapult",
+  "d2": "mega_excadrill_shaymin",
+  "d1_wins": 17,
+  "d2_wins": 43,
+  "ties": 0,
+  "secs": 38.8
+ },
+ "festival_lead|mega_excadrill_shaymin": {
+  "d1": "festival_lead",
+  "d2": "mega_excadrill_shaymin",
+  "d1_wins": 11,
+  "d2_wins": 49,
+  "ties": 0,
+  "secs": 35.9
+ },
+ "dragapult_blaziken|mega_excadrill_shaymin": {
+  "d1": "dragapult_blaziken",
+  "d2": "mega_excadrill_shaymin",
+  "d1_wins": 23,
+  "d2_wins": 37,
+  "ties": 0,
+  "secs": 39.3
+ },
+ "mega_excadrill_shaymin|slowking": {
+  "d1": "mega_excadrill_shaymin",
+  "d2": "slowking",
+  "d1_wins": 45,
+  "d2_wins": 15,
+  "ties": 0,
+  "secs": 68.5
+ },
+ "alakazam_deck|mega_excadrill_shaymin": {
+  "d1": "alakazam_deck",
+  "d2": "mega_excadrill_shaymin",
+  "d1_wins": 28,
+  "d2_wins": 32,
+  "ties": 0,
+  "secs": 38.9
+ },
+ "grimmsnarl_froslass|mega_excadrill_shaymin": {
+  "d1": "grimmsnarl_froslass",
+  "d2": "mega_excadrill_shaymin",
+  "d1_wins": 39,
+  "d2_wins": 21,
+  "ties": 0,
+  "secs": 31.1
+ },
+ "hide_n_sneak|mega_excadrill_shaymin": {
+  "d1": "hide_n_sneak",
+  "d2": "mega_excadrill_shaymin",
+  "d1_wins": 15,
+  "d2_wins": 45,
+  "ties": 0,
+  "secs": 35.8
+ },
+ "mega_excadrill_shaymin|toucannon": {
+  "d1": "mega_excadrill_shaymin",
+  "d2": "toucannon",
+  "d1_wins": 44,
+  "d2_wins": 16,
+  "ties": 0,
+  "secs": 52.6
+ },
+ "mega_excadrill_shaymin|raging_bolt": {
+  "d1": "mega_excadrill_shaymin",
+  "d2": "raging_bolt",
+  "d1_wins": 40,
+  "d2_wins": 20,
+  "ties": 0,
+  "secs": 34.2
+ },
+ "fighting|mega_excadrill_shaymin": {
+  "d1": "fighting",
+  "d2": "mega_excadrill_shaymin",
+  "d1_wins": 49,
+  "d2_wins": 11,
+  "ties": 0,
+  "secs": 18.4
+ },
+ "greninja|mega_excadrill_shaymin": {
+  "d1": "greninja",
+  "d2": "mega_excadrill_shaymin",
+  "d1_wins": 24,
+  "d2_wins": 36,
+  "ties": 0,
+  "secs": 21.2
+ },
+ "beedrill|mega_excadrill_shaymin": {
+  "d1": "beedrill",
+  "d2": "mega_excadrill_shaymin",
+  "d1_wins": 19,
+  "d2_wins": 41,
+  "ties": 0,
+  "secs": 19.5
+ },
+ "cynthia_garchomp|mega_excadrill_shaymin": {
+  "d1": "cynthia_garchomp",
+  "d2": "mega_excadrill_shaymin",
+  "d1_wins": 29,
+  "d2_wins": 31,
+  "ties": 0,
+  "secs": 35.4
+ },
+ "gardevoir|mega_excadrill": {
+  "d1": "gardevoir",
+  "d2": "mega_excadrill",
+  "d1_wins": 29,
+  "d2_wins": 31,
+  "ties": 0,
+  "secs": 24.0
+ },
+ "dragapult|gardevoir": {
+  "d1": "dragapult",
+  "d2": "gardevoir",
+  "d1_wins": 14,
+  "d2_wins": 46,
+  "ties": 0,
+  "secs": 41.9
+ },
+ "festival_lead|gardevoir": {
+  "d1": "festival_lead",
+  "d2": "gardevoir",
+  "d1_wins": 15,
+  "d2_wins": 45,
+  "ties": 0,
+  "secs": 41.1
+ },
+ "dragapult_blaziken|gardevoir": {
+  "d1": "dragapult_blaziken",
+  "d2": "gardevoir",
+  "d1_wins": 12,
+  "d2_wins": 48,
+  "ties": 0,
+  "secs": 49.5
+ },
+ "gardevoir|slowking": {
+  "d1": "gardevoir",
+  "d2": "slowking",
+  "d1_wins": 38,
+  "d2_wins": 22,
+  "ties": 0,
+  "secs": 65.0
+ },
+ "alakazam_deck|gardevoir": {
+  "d1": "alakazam_deck",
+  "d2": "gardevoir",
+  "d1_wins": 31,
+  "d2_wins": 29,
+  "ties": 0,
+  "secs": 44.1
+ },
+ "gardevoir|grimmsnarl_froslass": {
+  "d1": "gardevoir",
+  "d2": "grimmsnarl_froslass",
+  "d1_wins": 14,
+  "d2_wins": 46,
+  "ties": 0,
+  "secs": 33.1
+ },
+ "gardevoir|hide_n_sneak": {
+  "d1": "gardevoir",
+  "d2": "hide_n_sneak",
+  "d1_wins": 48,
+  "d2_wins": 12,
+  "ties": 0,
+  "secs": 49.5
+ },
+ "gardevoir|toucannon": {
+  "d1": "gardevoir",
+  "d2": "toucannon",
+  "d1_wins": 48,
+  "d2_wins": 12,
+  "ties": 0,
+  "secs": 46.0
+ },
+ "gardevoir|raging_bolt": {
+  "d1": "gardevoir",
+  "d2": "raging_bolt",
+  "d1_wins": 47,
+  "d2_wins": 13,
+  "ties": 0,
+  "secs": 28.2
+ },
+ "fighting|gardevoir": {
+  "d1": "fighting",
+  "d2": "gardevoir",
+  "d1_wins": 19,
+  "d2_wins": 41,
+  "ties": 0,
+  "secs": 19.0
+ },
+ "gardevoir|greninja": {
+  "d1": "gardevoir",
+  "d2": "greninja",
+  "d1_wins": 36,
+  "d2_wins": 24,
+  "ties": 0,
+  "secs": 20.5
+ },
+ "beedrill|gardevoir": {
+  "d1": "beedrill",
+  "d2": "gardevoir",
+  "d1_wins": 24,
+  "d2_wins": 36,
+  "ties": 0,
+  "secs": 15.2
+ },
+ "cynthia_garchomp|gardevoir": {
+  "d1": "cynthia_garchomp",
+  "d2": "gardevoir",
+  "d1_wins": 24,
+  "d2_wins": 36,
+  "ties": 0,
+  "secs": 40.1
+ },
+ "cornerstone_box|mega_excadrill": {
+  "d1": "cornerstone_box",
+  "d2": "mega_excadrill",
+  "d1_wins": 32,
+  "d2_wins": 28,
+  "ties": 0,
+  "secs": 35.3
+ },
+ "cornerstone_box|dragapult": {
+  "d1": "cornerstone_box",
+  "d2": "dragapult",
+  "d1_wins": 41,
+  "d2_wins": 19,
+  "ties": 0,
+  "secs": 41.3
+ },
+ "cornerstone_box|festival_lead": {
+  "d1": "cornerstone_box",
+  "d2": "festival_lead",
+  "d1_wins": 43,
+  "d2_wins": 17,
+  "ties": 0,
+  "secs": 22.1
+ },
+ "cornerstone_box|dragapult_blaziken": {
+  "d1": "cornerstone_box",
+  "d2": "dragapult_blaziken",
+  "d1_wins": 44,
+  "d2_wins": 16,
+  "ties": 0,
+  "secs": 38.3
+ },
+ "cornerstone_box|slowking": {
+  "d1": "cornerstone_box",
+  "d2": "slowking",
+  "d1_wins": 51,
+  "d2_wins": 9,
+  "ties": 0,
+  "secs": 53.0
+ },
+ "alakazam_deck|cornerstone_box": {
+  "d1": "alakazam_deck",
+  "d2": "cornerstone_box",
+  "d1_wins": 32,
+  "d2_wins": 28,
+  "ties": 0,
+  "secs": 33.1
+ },
+ "cornerstone_box|grimmsnarl_froslass": {
+  "d1": "cornerstone_box",
+  "d2": "grimmsnarl_froslass",
+  "d1_wins": 38,
+  "d2_wins": 22,
+  "ties": 0,
+  "secs": 34.3
+ },
+ "cornerstone_box|hide_n_sneak": {
+  "d1": "cornerstone_box",
+  "d2": "hide_n_sneak",
+  "d1_wins": 52,
+  "d2_wins": 8,
+  "ties": 0,
+  "secs": 39.2
+ },
+ "cornerstone_box|toucannon": {
+  "d1": "cornerstone_box",
+  "d2": "toucannon",
+  "d1_wins": 48,
+  "d2_wins": 12,
+  "ties": 0,
+  "secs": 46.3
+ },
+ "cornerstone_box|raging_bolt": {
+  "d1": "cornerstone_box",
+  "d2": "raging_bolt",
+  "d1_wins": 43,
+  "d2_wins": 17,
+  "ties": 0,
+  "secs": 28.3
+ },
+ "cornerstone_box|fighting": {
+  "d1": "cornerstone_box",
+  "d2": "fighting",
+  "d1_wins": 14,
+  "d2_wins": 46,
+  "ties": 0,
+  "secs": 17.0
+ },
+ "cornerstone_box|greninja": {
+  "d1": "cornerstone_box",
+  "d2": "greninja",
+  "d1_wins": 48,
+  "d2_wins": 12,
+  "ties": 0,
+  "secs": 23.1
+ },
+ "beedrill|cornerstone_box": {
+  "d1": "beedrill",
+  "d2": "cornerstone_box",
+  "d1_wins": 37,
+  "d2_wins": 23,
+  "ties": 0,
+  "secs": 10.3
+ },
+ "cornerstone_box|cynthia_garchomp": {
+  "d1": "cornerstone_box",
+  "d2": "cynthia_garchomp",
+  "d1_wins": 36,
+  "d2_wins": 24,
+  "ties": 0,
+  "secs": 35.5
+ },
+ "crustle_modern|mega_excadrill": {
+  "d1": "crustle_modern",
+  "d2": "mega_excadrill",
+  "d1_wins": 32,
+  "d2_wins": 28,
+  "ties": 0,
+  "secs": 47.7
+ },
+ "crustle_modern|dragapult": {
+  "d1": "crustle_modern",
+  "d2": "dragapult",
+  "d1_wins": 52,
+  "d2_wins": 8,
+  "ties": 0,
+  "secs": 46.3
+ },
+ "crustle_modern|festival_lead": {
+  "d1": "crustle_modern",
+  "d2": "festival_lead",
+  "d1_wins": 47,
+  "d2_wins": 13,
+  "ties": 0,
+  "secs": 36.2
+ },
+ "crustle_modern|dragapult_blaziken": {
+  "d1": "crustle_modern",
+  "d2": "dragapult_blaziken",
+  "d1_wins": 48,
+  "d2_wins": 12,
+  "ties": 0,
+  "secs": 43.9
+ },
+ "crustle_modern|slowking": {
+  "d1": "crustle_modern",
+  "d2": "slowking",
+  "d1_wins": 56,
+  "d2_wins": 4,
+  "ties": 0,
+  "secs": 47.1
+ },
+ "alakazam_deck|crustle_modern": {
+  "d1": "alakazam_deck",
+  "d2": "crustle_modern",
+  "d1_wins": 13,
+  "d2_wins": 47,
+  "ties": 0,
+  "secs": 49.3
+ },
+ "crustle_modern|grimmsnarl_froslass": {
+  "d1": "crustle_modern",
+  "d2": "grimmsnarl_froslass",
+  "d1_wins": 49,
+  "d2_wins": 11,
+  "ties": 0,
+  "secs": 42.0
+ },
+ "crustle_modern|hide_n_sneak": {
+  "d1": "crustle_modern",
+  "d2": "hide_n_sneak",
+  "d1_wins": 49,
+  "d2_wins": 11,
+  "ties": 0,
+  "secs": 45.2
+ },
+ "crustle_modern|toucannon": {
+  "d1": "crustle_modern",
+  "d2": "toucannon",
+  "d1_wins": 43,
+  "d2_wins": 17,
+  "ties": 0,
+  "secs": 49.6
+ },
+ "crustle_modern|raging_bolt": {
+  "d1": "crustle_modern",
+  "d2": "raging_bolt",
+  "d1_wins": 53,
+  "d2_wins": 7,
+  "ties": 0,
+  "secs": 31.7
+ },
+ "crustle_modern|fighting": {
+  "d1": "crustle_modern",
+  "d2": "fighting",
+  "d1_wins": 37,
+  "d2_wins": 23,
+  "ties": 0,
+  "secs": 26.8
+ },
+ "crustle_modern|greninja": {
+  "d1": "crustle_modern",
+  "d2": "greninja",
+  "d1_wins": 42,
+  "d2_wins": 18,
+  "ties": 0,
+  "secs": 33.2
+ },
+ "beedrill|crustle_modern": {
+  "d1": "beedrill",
+  "d2": "crustle_modern",
+  "d1_wins": 18,
+  "d2_wins": 42,
+  "ties": 0,
+  "secs": 23.0
+ },
+ "crustle_modern|cynthia_garchomp": {
+  "d1": "crustle_modern",
+  "d2": "cynthia_garchomp",
+  "d1_wins": 37,
+  "d2_wins": 23,
+  "ties": 0,
+  "secs": 43.1
+ },
+ "doublade|mega_excadrill": {
+  "d1": "doublade",
+  "d2": "mega_excadrill",
+  "d1_wins": 11,
+  "d2_wins": 49,
+  "ties": 0,
+  "secs": 47.9
+ },
+ "doublade|dragapult": {
+  "d1": "doublade",
+  "d2": "dragapult",
+  "d1_wins": 31,
+  "d2_wins": 29,
+  "ties": 0,
+  "secs": 51.0
+ },
+ "doublade|festival_lead": {
+  "d1": "doublade",
+  "d2": "festival_lead",
+  "d1_wins": 43,
+  "d2_wins": 17,
+  "ties": 0,
+  "secs": 43.7
+ },
+ "doublade|dragapult_blaziken": {
+  "d1": "doublade",
+  "d2": "dragapult_blaziken",
+  "d1_wins": 27,
+  "d2_wins": 33,
+  "ties": 0,
+  "secs": 57.6
+ },
+ "doublade|slowking": {
+  "d1": "doublade",
+  "d2": "slowking",
+  "d1_wins": 43,
+  "d2_wins": 17,
+  "ties": 0,
+  "secs": 71.5
+ },
+ "alakazam_deck|doublade": {
+  "d1": "alakazam_deck",
+  "d2": "doublade",
+  "d1_wins": 36,
+  "d2_wins": 24,
+  "ties": 0,
+  "secs": 41.7
+ },
+ "doublade|grimmsnarl_froslass": {
+  "d1": "doublade",
+  "d2": "grimmsnarl_froslass",
+  "d1_wins": 14,
+  "d2_wins": 46,
+  "ties": 0,
+  "secs": 44.7
+ },
+ "doublade|hide_n_sneak": {
+  "d1": "doublade",
+  "d2": "hide_n_sneak",
+  "d1_wins": 37,
+  "d2_wins": 23,
+  "ties": 0,
+  "secs": 53.2
+ },
+ "doublade|toucannon": {
+  "d1": "doublade",
+  "d2": "toucannon",
+  "d1_wins": 33,
+  "d2_wins": 27,
+  "ties": 0,
+  "secs": 54.4
+ },
+ "doublade|raging_bolt": {
+  "d1": "doublade",
+  "d2": "raging_bolt",
+  "d1_wins": 40,
+  "d2_wins": 20,
+  "ties": 0,
+  "secs": 40.2
+ },
+ "doublade|fighting": {
+  "d1": "doublade",
+  "d2": "fighting",
+  "d1_wins": 7,
+  "d2_wins": 53,
+  "ties": 0,
+  "secs": 29.4
+ },
+ "doublade|greninja": {
+  "d1": "doublade",
+  "d2": "greninja",
+  "d1_wins": 20,
+  "d2_wins": 40,
+  "ties": 0,
+  "secs": 36.1
+ },
+ "beedrill|doublade": {
+  "d1": "beedrill",
+  "d2": "doublade",
+  "d1_wins": 36,
+  "d2_wins": 24,
+  "ties": 0,
+  "secs": 28.8
+ },
+ "cynthia_garchomp|doublade": {
+  "d1": "cynthia_garchomp",
+  "d2": "doublade",
+  "d1_wins": 42,
+  "d2_wins": 18,
+  "ties": 0,
+  "secs": 48.7
+ }
+}

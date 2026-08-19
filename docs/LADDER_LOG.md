@@ -1,0 +1,86 @@
+# Ladder log — real TCG Live matches
+
+A running record of real games played on ladder as `Goatest1`, with the pilot lessons
+that came out of them. This is the **evidence side** of the project: everything else here
+is engine-vs-engine, so a real match is the only place a wrong assumption gets punished by
+something other than our own code.
+
+Provenance rules: a match here is a single game, not a sample. Conclusions drawn from one
+game are hypotheses to be tested in the sim, and are marked as such. The parsed logs live
+outside the repo (they name real opponents) — see `docs/TCGLIVE_LOG_FIDELITY.md`.
+
+Deck piloted unless stated: **`mega_excadrill`** (the house list — 2 Jumbo Ice Cream,
+no Shaymin, matching the registry entry exactly).
+
+---
+
+## 2026-08-17 · vs `Ramukaka22` (Mega Darkrai ex / Toxtricity) · **WIN 6–3**
+
+Went second. Their engine: Toxtricity's Sinister Surge accelerates Darkness Energy but
+puts 2 damage counters on **their own** Pokémon; Munkidori's Adrena-Brain then relocates
+that self-inflicted damage onto our board. Self-damage as a resource — it killed a benched
+Drilbur for a free prize without ever attacking it.
+
+Prize flow: they took 2 (Genesect ex) + 1 (Drilbur) = 3. We took 3 (Mega Darkrai ex) +
+1 (Gastly) + 2 (Meowth ex) = 6.
+
+**Done well**
+
+- **Metallic Hammer into Mega Darkrai ex for 3 prizes.** The single highest-value swing
+  available: their main attacker, two Darkness invested, and a Mega giving up 3. Half the
+  game won in one attack. This is the mirror of the `Alamo789` loss below, where the same
+  rule ran the other way.
+- **Correct read that the retreat was worth it.** Retreating Mega Excadrill ex cost 4
+  Basic Metal Energy (its full retreat cost), which is brutal — but Maximum Drilling's 200
+  would not have KO'd a Mega Darkrai ex sitting on only 10 damage, and Metallic Hammer's
+  300 did. Paying four Energy to convert a 1-prize turn into a 3-prize turn is right.
+- **Closing on prize math, not on damage.** The last Boss's Orders pulled Meowth ex — a
+  2-prize ex — when exactly 2 prizes remained. Correct target selection to end it rather
+  than the biggest available hit.
+- **Air Balloon pivot on the final turn**, letting Metagross leave the Active Spot after
+  it had already discarded 3 Energy to Metallic Hammer and couldn't pay retreat.
+
+**To do better**
+
+- **The Boss's Orders on Gastly is the questionable one.** It bought 1 prize off a
+  freshly-benched basic. Meanwhile **Munkidori** — the piece relocating damage onto our
+  board every single turn, and the piece that took Drilbur — was never touched, and went
+  on to keep working for the rest of the game. Killing the engine over taking the cheap
+  prize is the line worth testing.
+  *Caveat:* Metagross attacked with Bounce Back (60), not Metallic Hammer (150), which
+  suggests it was short of Energy at that moment. Munkidori has 70 HP, so Bounce Back
+  would not have KO'd it either. Whether the better line existed depends on Energy in hand
+  on that turn — the log doesn't fully show it. **Hypothesis, not a verdict.**
+- **Energy attrition is this deck's real cost curve.** Across the game we discarded 4
+  Energy to one retreat, 3 to Metallic Hammer, 3 more to a second Metallic Hammer, and 1
+  to a Metagross retreat. The deck runs 17 Basic Metal and 2 Energy Recycler; neither
+  Recycler was used. Worth watching whether Recycler is being held too long.
+
+---
+
+## 2026-08-16 · vs `Alamo789` (Dragapult ex / Blaziken ex) · **LOSS 5–6**
+
+The reverse of the above, and the more instructive game.
+
+Every Pokémon in the deck is ×2 Fire, and this is a Fire deck. Mega Excadrill ex (340 HP)
+was one-shot by Smolder-sault (200 base → 400). Even Moltres's 20-base Fighting Wings hit
+it for 220. The main attacker was simultaneously the easiest thing on the board to kill
+**and** worth 3 prizes — they needed only four Knock Outs to take six prizes.
+
+**Done well:** the damage trade was actually favourable — three of their Pokémon KO'd,
+two of them 2-prize ex. Losing on prize *weighting*, not on tempo.
+
+**To do better**
+
+- 40 damage taken on a turn-3 Beldum survived evolution into Metang and was exactly what
+  made a later Phantom Dive's 6 bench counters lethal — one attack, two prizes, set up
+  eight turns earlier by chip damage.
+- `Goatest1 didn't take an action in time.` — a full turn lost to the clock during setup,
+  while they were assembling Blaziken.
+- Gravity Mountain sat in the opening hand and was shuffled away by our own Lillie's
+  Determination, never to reappear. They took the Stadium (Area Zero Underdepths)
+  uncontested.
+
+**Standing question this raises:** `Dragapult Blaziken` is **5.99% of the live metagame**
+(4th most played) and we have no deck for it. It is the matchup most likely to be
+structurally bad for this list, and it is the one we cannot currently measure.
