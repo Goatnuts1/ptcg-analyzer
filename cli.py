@@ -326,6 +326,9 @@ def main():
     ap.add_argument("--no-mirror", action="store_true",
                     help="don't mirror seats (deck1 always goes first)")
     ap.add_argument("--pool", default="data/standard_pool.json")
+    ap.add_argument("--futures", action="store_true",
+                    help="FUTURE-PROOF report: rotation exposure (hard data), rising-"
+                         "matchup trend risk (measured), labeled speculative flags")
     ap.add_argument("--list", action="store_true", help="list available decks and exit")
     ap.add_argument("--save-game", metavar="GAME_ID",
                     help="play ONE game (--deck1/--deck2/--agent/--seed) and save it to "
@@ -403,6 +406,13 @@ def main():
             save_game(args.deck1, args.deck2, args.agent, args.seed, args.save_game, args.pool)
         except KeyError as e:
             print(e)
+        return
+
+    if args.futures:
+        from src.engine.decks import DECKS
+        from src.analysis.futures import futures_report
+        print(futures_report(dict(sorted(DECKS.items())), args.pool,
+                             "docs/matrix_2026-08_mcts2.json"))
         return
 
     if args.list or not (args.deck1 and args.deck2):

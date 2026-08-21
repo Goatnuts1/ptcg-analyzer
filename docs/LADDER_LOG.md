@@ -84,3 +84,69 @@ two of them 2-prize ex. Losing on prize *weighting*, not on tempo.
 **Standing question this raises:** `Dragapult Blaziken` is **5.99% of the live metagame**
 (4th most played) and we have no deck for it. It is the matchup most likely to be
 structurally bad for this list, and it is the one we cannot currently measure.
+
+---
+
+## 2026-08-19 · vs `Estel1812` (Cynthia's Garchomp) · **WIN 6–4**
+
+The matrix's closest cell (53.3%) played out exactly as a coin-flip matchup should:
+a 2-for-3 prize trade in the middle, decided by which side's cleanup engine was better.
+Their board: triple Cynthia's Roserade (Cheer On to Glory stacking to +90 — the log's
+damage breakdowns confirm the engine's stacking implementation line for line) plus the
+Gabite Champion's Call chain.
+
+**The Mega Excadrill sacrifice (turn 7) was correct, and provably so** — see the
+analysis in the session log: with three Roserade benched, Draconic Buster hits
+260+90 = 350, which one-shots a FULL-HP 340 Mega. The Mega was un-keepable from that
+board state on; the only choice was losing it for 2 prizes (Maximum Drilling KO on
+Garchomp #1) or for nothing. Retreat was no escape either — retreat cost 4 discards
+4 of its 5 Energy, gutting it as thoroughly as the KO.
+
+**The Gravity Mountain → Metallic Hammer line from the playbook appendix fired and
+won the game**: Garchomp ex 330 → 300 under GM, Hammer = exact OHKO (misses by 30
+without it). Both edges of the card showed up, though — the same −30 dropped our own
+Metagross to 150, so Dragonslice (40+90+30 = 160) one-shot it where it would have
+survived at 180. Net still favorable (their 2-prize KO enabled vs our 1-prize loss),
+matching the variant test's conclusion that a SECOND copy isn't worth a slot.
+
+**One genuinely wasted card:** the turn-7 Jumbo Ice Cream. Heal 80 only matters
+against incoming damage in the 180–260 band (Mega at 160 damage, 340 HP); their two
+real attacks were Corkscrew Dive at 160 (survivable unhealed) and Draconic Buster at
+350 (lethal healed). Zero scenarios where it changed the outcome — and the copy might
+have saved the Gravity-Mountain-weakened Metagross later.
+
+Ladder ledger: 30–26.
+
+---
+
+## 2026-08-20 · vs `KinooThePro` (Mega Zygarde ex / Mega Audino ex box) · **WIN 6–3**
+
+Parser: 199/199 lines (100%). Two cards unresolved — **Mega Zygarde ex** (second
+sighting, different opponent: the set-gap evidence from the fidelity report keeps
+compounding) and **Mega Audino ex** (new). Lively Stadium, Hero's Cape and AZ's
+Tranquility appeared in reveals and ARE resolvable/absent per the pool check.
+
+The scariest single turn of the ladder run so far: turn-3 **Nullifying Zero snipes
+the bench for 150 ×3** — two Metang and a fully-loaded Drilbur (4 Energy) died in one
+attack, 3 prizes, 0–3 down with our board stripped. Then the comeback:
+
+- **Special Red Card at its exact window.** They had just taken 3 prizes (= 3
+  remaining, the card's own condition) with a freshly refueled hand — 9 cards to the
+  bottom, draw 3. The disruption landed on the highest-value turn it could exist.
+- **Undermine as Energy denial, twice.** Their Zygarde carried 5 Energy; two
+  Undermines discarded 4 of it (plus chip damage that eventually finished it after
+  Gaia Wave's −30 rider blunted one Maximum Drilling).
+- **The all-Mega opposing board pays 3 prizes per KO.** Zygarde KO (3) + Boss's
+  Orders dragging Mega Audino ex up for an exact-330 Maximum Drilling (3) = 6 prizes
+  in two attacks. Same prize-weighting lesson as the Ramukaka22 game, at maximum
+  amplitude.
+- Honest ledger note: they timed out on two consecutive turns mid-comeback — the win
+  is real, the margin overstates it.
+
+**Deck-building implication worth testing:** Nullifying Zero's bench snipe is exactly
+Flower Curtain's use case — the `mega_excadrill_shaymin` variant blanks all three hits
+(Metang/Drilbur are non-Rule-Box). The Shaymin call is matchup-split now: RIGHT vs
+bench-snipe (Zygarde, Slowking/Trifrost), WRONG vs Grimmsnarl (Freezing Shroud taxes
+the extra Ability body). Neither variant dominates; this is a meta call, not a fix.
+
+Ladder ledger: 31–26.

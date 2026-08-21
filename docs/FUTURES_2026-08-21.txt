@@ -1,0 +1,54 @@
+FUTURE-PROOF report — next rotation: mark H out 2027-04 (est., annual cadence)
+score = 100 − (0.7×rotation% + 0.3×trend_norm); flags are SPECULATION, never scored
+
+deck                      score   rot%  trend  worst rising matchup
+crustle_standalone         89.5  15.0%    0.0  -
+starmie_toolbox            88.3  16.7%    0.0  -
+gardevoir_real             86.0  20.0%    0.0  -
+crustle_modern             84.8  21.7%    0.0  -
+charizard_xy               84.8  21.7%    0.0  -
+cynthia_garchomp           83.6  15.0%   19.7  fighting (30.0%)
+gardevoir                  83.2  23.3%    1.7  alakazam_deck (48.3%)
+fire                       81.3  26.7%    0.0  -
+metal                      79.0  30.0%    0.0  -
+doublade                   76.8   8.3%   57.9  fighting (11.7%)
+fighting                   76.7  33.3%    0.0  -
+beedrill                   75.5  25.0%   23.3  fighting (31.7%)
+water                      75.5  35.0%    0.0  -
+mega_excadrill             75.2  21.7%   32.3  fighting (15.0%)
+no_vacancy                 74.3  36.7%    0.0  -
+dark                       74.3  36.7%    0.0  -
+mega_excadrill_shaymin     74.1  23.3%   31.8  fighting (18.3%)
+ogerpon_box                73.2  38.3%    0.0  -
+grimmsnarl_froslass        72.9  30.0%   20.2  fighting (28.3%)
+hide_n_sneak               72.8  16.7%   51.7  cynthia_garchomp (18.3%)
+the_vault                  72.0  40.0%    0.0  -
+clefairy_stock             72.0  40.0%    0.0  -
+innkeeper                  70.8  41.7%    0.0  -
+colorless                  70.8  41.7%    0.0  -
+clefairy_modified          70.8  41.7%    0.0  -
+slowking_slowbro           67.3  46.7%    0.0  -
+greninja                   62.0  35.0%   44.9  fighting (18.3%)
+cornerstone_box            61.7  43.3%   26.6  fighting (23.3%)
+alakazam_deck              57.2  50.0%   25.9  fighting (28.3%)
+dragapult                  53.5  48.3%   42.3  fighting (18.3%)
+toucannon                  51.8  40.0%   67.2  fighting (15.0%)
+dragapult_blaziken         49.8  50.0%   50.7  fighting (15.0%)
+slowking                   44.6  50.0%   67.9  fighting (11.7%)
+slowking_annihilape        44.6  40.0%   91.3  fighting (10.0%)
+raging_bolt                40.1  45.0%   94.6  fighting (11.7%)
+festival_lead              30.3  56.7%  100.0  mega_excadrill (15.0%)
+
+Largest mark-H exposures (cards lost at rotation):
+  festival_lead            56.7%  Grookey x4, Thwackey x4, Buddy-Buddy Poffin x4, Applin (SCR) x3
+  alakazam_deck            50.0%  Abra x4, Kadabra x4, Buddy-Buddy Poffin x4, Dunsparce x3
+  dragapult_blaziken       50.0%  Dreepy x4, Drakloak x4, Buddy-Buddy Poffin x4, Dragapult ex x2
+  slowking                 50.0%  Slowpoke x4, Ciphermaniac's Codebreaking x4, Academy at Night x4, Slowking x3
+  dragapult                48.3%  Dreepy x4, Drakloak x4, Buddy-Buddy Poffin x4, Dragapult ex x3
+
+SPECULATIVE FLAGS (upcoming sets; opinions, not measurements):
+  * Delta Reign (intl. 2026-11-06; JP 'Storm Emeralda' live since 07-31): four new Megas — Mega Rayquaza ex (280HP BASIC Mega, Storm Emerald 50x per Fire/Lightning Energy on its whole board, Colorless type, Fighting resistance), Mega Golisopod ex (Grass), Mega Golurk ex, Mega Malamar ex.
+  * 30th Celebration (2026-09-16): reprint-heavy; low competitive impact expected unless the new Mewtwo ex / Mew ex prints are playable.
+  * [crustle_modern] Grass techs gain a target if Mega Golisopod ex (Grass) is playable; no direct threat identified from revealed cards.
+  * [fighting] Mega Rayquaza ex resists Fighting (−30) and Basic-Mega speed beats Stage-1 setup: the current #1 sim deck is the most exposed to the November shake.
+  * [mega_excadrill] Mega Rayquaza ex is Colorless: no Weakness leverage against Metal — neutral threat, but a 280HP Basic Mega that scales past 300 outraces Metallic Hammer math.
