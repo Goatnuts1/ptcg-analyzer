@@ -189,3 +189,40 @@ The Prime Catcher strand didn't matter for the same reason it didn't vs
 SawyerOverweg: Metal Maker refuels whoever gets dragged up.
 
 Ladder ledger: 33–26.
+
+---
+
+## 2026-08-22 · vs `Fmz1822` (Slowking toolbox / Mega Kangaskhan) · **LOSS 1–6**
+
+Parser: 227/227 (100%), zero unresolved. New end-condition shape handled
+("Opponent Knocked Out all your Pokémon in play...").
+
+The full Slowking toolbox, piloted well, and the game was decided on THEIR
+TURN 2: Academy at Night plant -> Seek Inspiration -> **Trifrost off a
+discarded Kyurem** hit both Beldum (110 each, dead) and the 1-Energy Drilbur
+(dead) — three bench KOs, 3 prizes, the Mega line's entire early board gone
+in one attack. Ten turns of topdeck recovery followed (four consecutive
+draw-pass turns), a Protect Charge KO on one Slowking, and then the indignity:
+their Slowking copied **our own Metallic Hammer** (Seek-discarding the
+Metagross they run as fodder) through Protect Charge for the 300 KO on
+Genesect. Closed with a second Trifrost. They also showcased Lucky Helmet,
+Wondrous Patch, Telepathic Psychic Energy — the modern toolbox shell.
+
+**The lesson is the same as the Zygarde game, and it now has three data
+points: the house list has no answer to turn-2/3 bench wipes.** Trifrost
+(this game), Nullifying Zero (KinooThePro), Phantom Dive chip (Alamo789) all
+convert our own development — a bench of 60-100HP pieces holding Energy —
+into multi-prize turns. `mega_excadrill_shaymin` EXISTS for exactly this
+(Flower Curtain blanks Trifrost's bench halves and Nullifying Zero entirely);
+it was built after the original ladder Slowking losses and we keep not
+playing it into the matchup it answers.
+
+**Sim-calibration note (honest ledger):** the matrix says mega_excadrill
+beats `slowking` 75% and `slowking_annihilape` 80%. Real Slowking-toolbox
+record vs this pilot: 0–3 lifetime (two pre-corpus losses that spawned the
+counter-build, now this). The sim's Slowking cells are POLICY FLOORS on the
+opposing side — mcts2 cannot pilot Academy-at-Night top-deck planning, so
+those 75-80% numbers measure a lobotomized Slowking. Treat the real matchup
+as unfavorable for the house list until the Shaymin variant gets ladder reps.
+
+Ladder ledger: 33–27.
