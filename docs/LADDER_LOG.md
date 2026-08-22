@@ -253,3 +253,31 @@ The Absol box leans on Munkidori chip relocation like Ramukaka22's build; a
 KO'd 4-Energy Mega Absol before it ever attacked was the whole game.
 
 Ladder ledger: 34–27.
+
+---
+
+## 2026-08-23 · vs `VagMonstro` (Dragapult Blaziken) · **LOSS 0–3 (benched out)**
+
+First game on `mega_excadrill_shaymin` — and it produced ZERO data on the
+Flower Curtain question, because the game was a consistency brick, not a
+matchup: mulligan (7 cards, zero Basics), then a game in which only THREE
+Basics ever surfaced (3 Beldum). The Petrel/Transceiver engine can only fetch
+Trainers, so the dig never found bodies; lost by bench-out with 0 prizes
+taken. New end-condition shape parsed ("Knocked Out with no Benched
+Pokémon"), 156/156 lines, zero unresolved — including Risky Ruins, a Stadium
+already in the pool, first ladder sighting.
+
+Pilot's own read: "shit draw, wouldn't have mattered." Largely true — turn-3
+Blaziken 400 through Fire Weakness onto a Beldum is unanswerable from a
+bricked board. One marginal note for the record: the turn-4 Ultra Ball
+(discarding Metagross + Energy) fetched a second Metang while one was already
+in hand; Genesect ex (draw engine + a 220HP body in a bench-out loss) or
+Shaymin was the higher-value fetch. It buys a turn, probably not the game.
+
+Matchup ledger: Dragapult Blaziken is now 0–2 lifetime in real games (sim:
+63% favored) — but n=2 with one brick; not yet a calibration finding the way
+Slowking's 0–3 is. Their build showcased the Blaziken/Munkidori/Risky Ruins
+version — Seething Spirit recovering the retreat discard exactly as the
+implementation notes predicted.
+
+Ladder ledger: 34–28.
