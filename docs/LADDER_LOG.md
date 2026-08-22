@@ -281,3 +281,29 @@ version — Seething Spirit recovering the retreat discard exactly as the
 implementation notes predicted.
 
 Ladder ledger: 34–28.
+
+---
+
+## 2026-08-23 · vs `Orlando314` (Mega Greninja / Mega Starmie water box) · **WIN by concession**
+
+**THE CURTAIN FIRED.** First live datapoint for the variant's whole thesis,
+verbatim from the client:
+
+    Orlando314's Mega Starmie ex used Jetting Blow on Goatest1's Metagross for 120 damage.
+    Goatest1's Shaymin used Flower Curtain.
+    - Damage to Metang was prevented.
+
+Jetting Blow's bench splash hit the Curtain and died. The opponent's damage
+output for the whole game: 120 to an Active Metagross and two Itchy Pollens
+(one blanked by Grass Resistance). They conceded facing double Metagross +
+loaded Mega with two damaged Starmie on their side.
+
+Other notes: double-Shaymin opening kept (correct — one Active as a safe
+starter, one benched for the Curtain, and the Active later retreated out);
+turn-2 Gravity Mountain denied the Stadium slot all game; the Boss's +
+Metallic Hammer 300 onto a benched Mega Starmie ex (310 HP — survived by 10)
+forced their concession math anyway. The variant's first clean game is a
+proof-of-mechanism, not yet proof-of-matchup: this was a water box, not the
+Slowking toolbox the experiment is really about.
+
+Ladder ledger: 35–28 (Shaymin variant: 1–1, the loss being a no-data brick).
