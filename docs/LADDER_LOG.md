@@ -150,3 +150,26 @@ bench-snipe (Zygarde, Slowking/Trifrost), WRONG vs Grimmsnarl (Freezing Shroud t
 the extra Ability body). Neither variant dominates; this is a meta call, not a fix.
 
 Ladder ledger: 31–26.
+
+---
+
+## 2026-08-21 · vs `SawyerOverweg` (Cornerstone Ogerpon / Pecharunt ex poison box) · **WIN by concession (2–0 prizes)**
+
+Parser: 130/130 (100%), first live `Pokémon Checkup` poison block and first
+`Opponent conceded.` ending, both handled. Morpeko ex: second opponent sighting,
+still pool-missing (set gap).
+
+Short game, one clean sequence worth keeping: they used Pecharunt ex's
+Subjugating Chains to promote and poison their own Morpeko ex (a gust+setup
+engine); we answered by retreating Genesect (2 Energy — cheap vs the Mega's 4)
+into Metagross for Metallic Hammer 300, exactly lethal on the poisoned Morpeko:
+2 prizes, and their tempo piece gone. They conceded two turns later facing a
+full Metal board with Mega Excadrill loaded and their Judge disruption already
+spent (it hit our 8-card Lillie's hand but Petrel/Transceiver rebuilt in one
+turn — the Team Rocket tutor chain is real disruption insurance).
+
+Note for the anti-disruption ledger: their Boss's Orders dragged Genesect up
+early to strand it — the Metal Maker engine refueled it and the retreat cost
+only 2. This deck shrugs off gust-strand lines unless the target is the Mega.
+
+Ladder ledger: 32–26.
