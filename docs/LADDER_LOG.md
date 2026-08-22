@@ -173,3 +173,19 @@ early to strand it — the Metal Maker engine refueled it and the retreat cost
 only 2. This deck shrugs off gust-strand lines unless the target is the Mega.
 
 Ladder ledger: 32–26.
+
+---
+
+## 2026-08-22 · vs `eoja-iii` (Slowking toolbox / Mega Kangaskhan draw engine) · **WIN by concession (3–0 prizes)**
+
+Turn-4 race win: Precious Trolley into full bench, double Metal Maker loading
+Drilbur to 5 Energy in one turn, and Maximum Drilling's 330 KO'd the fresh
+Mega Kangaskhan ex (300 HP, 30 overkill) — 3 prizes on the first attack of the game. They
+rebuilt (second Kangaskhan, Boomerang Energy on Slowking, Prime Catcher
+stranding our Metang), then drew 8 off Lillie's and conceded mid-combo —
+reading between the lines: the Seek Inspiration engine had nothing worth
+copying and the prize race was unwinnable at 0–3 down against a loaded board.
+The Prime Catcher strand didn't matter for the same reason it didn't vs
+SawyerOverweg: Metal Maker refuels whoever gets dragged up.
+
+Ladder ledger: 33–26.
