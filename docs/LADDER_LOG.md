@@ -9,8 +9,13 @@ Provenance rules: a match here is a single game, not a sample. Conclusions drawn
 game are hypotheses to be tested in the sim, and are marked as such. The parsed logs live
 outside the repo (they name real opponents) — see `docs/TCGLIVE_LOG_FIDELITY.md`.
 
-Deck piloted unless stated: **`mega_excadrill`** (the house list — 2 Jumbo Ice Cream,
-no Shaymin, matching the registry entry exactly).
+Deck piloted unless stated: **`mega_excadrill`** (the house list) through 2026-08-22.
+**As of 2026-08-23 the piloted deck is `mega_excadrill_shaymin`** (the anti-bench-wipe
+variant: +2 Shaymin (DRI), +1 Gravity Mountain, −1 Ethan's Pichu, −1 Special Red Card,
+−1 Jumbo Ice Cream) — switched after the Fmz1822 Trifrost loss made it three real losses
+to turn-2/3 bench wipes. The open question this switch tests: does Flower Curtain
+actually convert the Slowking-toolbox matchup (real record 0–3) — and what does the
+Grimmsnarl handicap cost in practice? Games below state the deck when it matters.
 
 ---
 
