@@ -226,3 +226,25 @@ those 75-80% numbers measure a lobotomized Slowking. Treat the real matchup
 as unfavorable for the house list until the Shaymin variant gets ladder reps.
 
 Ladder ledger: 33–27.
+
+---
+
+## 2026-08-22 · vs `cak4597` (Mega Absol Box / Pecharunt) · **WIN by timeout (3–0 prizes)**
+
+Parser: 116/116 (100%), zero unresolved — Mega Absol ex IS in the pool (the
+rank-23 archetype, 1.15% live share, first ladder sighting). Honest ledger:
+they lagged all game (one full timeout mid-turn before the end), so this is a
+soft win — but the board state was real: 3–0 up, Mega loaded, second Metagross
+online.
+
+One sequence worth keeping — the **Air Balloon double-promote**: Petrel
+fetched Air Balloon, attached to the ACTIVE Metang, free-retreated into the
+benched fueled Metang, evolved it to Metagross, Hammer 300 = 3-prize KO on
+Mega Absol ex. The Balloon turned a stranded Active into attacker selection —
+that's the card earning its 1-of slot in a way the sim's pilot never finds.
+
+Third Pecharunt/Subjugating-Chains sighting (self-gust + self-poison engine).
+The Absol box leans on Munkidori chip relocation like Ramukaka22's build; a
+KO'd 4-Energy Mega Absol before it ever attacked was the whole game.
+
+Ladder ledger: 34–27.
