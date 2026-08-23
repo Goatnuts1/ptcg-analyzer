@@ -307,3 +307,40 @@ proof-of-mechanism, not yet proof-of-matchup: this was a water box, not the
 Slowking toolbox the experiment is really about.
 
 Ladder ledger: 35–28 (Shaymin variant: 1–1, the loss being a no-data brick).
+
+---
+
+## 2026-08-23 · vs `JackoTheClown` (Dragapult / Munkidori / Yveltal disruption) · **WIN by concession, 5–0 prizes**
+
+Variant record 3–1 (2–1 in games with data). Their disruption gauntlet — 2×
+Team Rocket's Watchtower, Special Red Card, 2× Boss's Orders, 3× Crushing
+Hammer (all three tails) — all failed against the engine's redundancy: Petrel
+chains rebuilt every stripped hand, Metal Maker re-fueled every gust-strand,
+and the second Gravity Mountain answered the Stadium war.
+
+**Two findings for the variant ledger:**
+1. **The Curtain's honest limit, demonstrated live: Phantom Dive's counters
+   went THROUGH it** (6 counters onto our benched Metagross). Correct per card
+   text — Flower Curtain prevents *damage*; placed counters are an effect, not
+   damage (engine boundary verified: Curtain lives in apply_attack_damage,
+   not place_counters). The variant blanks Trifrost/Nullifying Zero/Jetting
+   Blow splash; it does NOT blank Dragapult spread. Battle Cage is the
+   counters answer, and nobody's list runs it.
+2. **Client owner-mislabel bug, two more instances** (Finding 3, TCGLIVE
+   fidelity report): Adrena-Brain "moved 3 counters to JackoTheClown's Mega
+   Excadrill ex" and Phantom Dive "put 6 counters on JackoTheClown's
+   Metagross" — both destinations are OURS.
+
+**Pilot's question — the deck-out line:** they noticed (half-asleep) the
+opponent could be decked out. The instinct is sound and the ASYMMETRY is the
+real insight: their build drew 6–9 cards/turn (double Recon Directive, Flip
+the Script, Lillie's ×3) while OUR list regrows its own deck with Energy
+Recycler (used 3× this game). Mega Excadrill is nearly deck-out-proof;
+draw-engine decks are not. But the sequencing was right as played: at 5–0
+with Maximum Drilling KOing a 2-prizer per turn, prizes finish in ~1–2 turns
+vs ~6–8 for deck-out — attack while ahead, keep deck-out as the fallback if
+the attack line ever stalls. Kieran mode-2 note: the +30 vs ex was chosen on
+a turn the attack targeted MUNKIDORI (non-ex) — the bonus never applied;
+mode-2 only pays when the Active you're hitting is the ex.
+
+Ladder ledger: 36–28.
