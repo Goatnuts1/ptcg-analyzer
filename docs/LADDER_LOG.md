@@ -466,3 +466,48 @@ engine keeps showing up around Metal shells. Shaymin: benched, no data —
 FOURTH straight opponent with zero bench damage.
 
 Ladder ledger: 37–30 (Shaymin variant: 4–3).
+
+---
+
+## 2026-08-24 · vs `frappeman` (Mega Excadrill / Steven's Metagross ex — near-mirror) · **LOSS 0–6**
+
+The mirror we've been theorizing about: OUR shell (Petrel/Trolley/Genesect/
+Mega Excadrill) plus the Steven's package — Rare Candy into turn-2 Steven's
+Metagross ex, whose X-Boot self-accelerates (they got TWO online = 2 boosts
+per turn) and whose Metal Stomp does a flat 200 every turn. 176/176 lines
+parsed, all 22 cards resolved — every card they played is already in our
+pool.
+
+**"Shit hand" verdict: mostly true, with one structural bleed on top.** Our
+engine never arrived — no Genesect ex all game, one Petrel, no Trolley, no
+Boss, no second Poffin; first real attack came on the FINAL turn while
+Metal Stomp had been landing 200 since their turn 3. That tempo gulf is the
+draw. But the 3-prize bleed was positional: Drilbur was evolved to Mega
+Excadrill ex on turn 3 with no attack in sight, and it sat on the bench for
+five turns as Boss bait — dragged up twice, KO'd for 3. Same lesson as the
+Venusaur game, now twice in a row: **against Boss decks, the Mega evolves
+the turn it acts, not before. Benched Drilbur risks 1 prize; benched Mega
+risks 3.** Prize ledger of the loss: Beldum 1, Shaymin sac 1, Mega 3,
+Metagross 1.
+
+**The agonizing margin:** our one Metallic Hammer hit their Steven's
+Metagross ex for 300 — under our own Gravity Mountain its 340 HP was
+effectively 310. It survived on 10 HP and KO'd back. Ten damage — one
+turn-1 Dig Claws, one Kieran — and the exchange flips.
+
+**Defensible plays:** the Shaymin sacrifice after the retreat-out was the
+right prize math (Beldum is a future Metagross; Shaymin was inert vs a
+zero-bench-damage deck); Energy Recycler recovered the retreat cost;
+Gravity Mountain was net-neutral-to-positive (cost them 30 effective HP,
+our Metagross died to Stomp either way).
+
+**Variant ledger, honest read at 4–4:** the Curtain has now been LIVE-
+USEFUL in exactly one of eight variant games (Orlando314) and dead weight
+in the rest — five straight opponents with zero bench damage, and today it
+was sac fodder. The Slowking/Grimmsnarl questions it was built for remain
+untested. **Meta drift note: third Steven's-package sighting TODAY** (two
+in Metal shells, one dedicated). A `mega_excadrill_stevens` variant build +
+house-list matchup test is flagged for the next scan cycle — the cards are
+all implemented (doublade line).
+
+Ladder ledger: 37–31 (Shaymin variant: 4–4).
