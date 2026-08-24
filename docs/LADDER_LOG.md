@@ -389,3 +389,51 @@ has ZERO bench damage, so the Curtain is dead weight here; both experiment
 questions remain open.
 
 Ladder ledger: 36–29 (Shaymin variant: 3–2).
+
+---
+
+## 2026-08-24 · vs `GandalfTheBaee1` (Mega Charizard X / Oricorio ex turbo) · **LOSS 1–6**
+
+The registry's own `charizard_xy` shell, nearly card-for-card (Oricorio ex
+Excited Turbo, Battle Cage, Lillie's, Night Stretcher — theirs runs
+Firebreather). Structural problem first: our ENTIRE line is Fire-weak ×2,
+so Inferno X (90 per discarded Energy, then doubled) lands 510–540 and
+OHKOs everything we play, including the 340 HP Mega. Three Active OHKOs,
+game.
+
+**The pilot's own diagnosis is confirmed, and the miss was bigger than the
+miscount.** Final turn, the board: our Metagross ACTIVE with 5 Energy,
+their Active Mega Charizard X ex sitting at 300/360 — 60 HP from dead.
+Every attack Metagross owns was lethal: M Bounce Back (cost [M], 60 = exact
+lethal) or Metallic Hammer (150 base, no discard even needed). That's a
+3-prize KO → 4–5 and their only powered attacker off the board. Instead the
+turn went: retreat Metagross (−3 Energy), promote Genesect ex on 2 Energy
+believing Protect Charge was payable (it costs [M][M][C] — three), Boss the
+CHARMANDER up (pulling the dying Charizard out of range), pass. Genesect
+was OHKO'd for the last prize. One energy miscount converted a 3-prize
+turn into zero.
+
+**The earlier strategic fork:** the turn Metagross Hammered the fresh
+Charizard for 300, Boss's Orders was in hand and Oricorio ex sat at
+150/190. Boss + Hammer = KO Oricorio (2–2), killing Excited Turbo — the
+engine that pays Inferno X's 3-discards-a-turn (Night Stretcher recursion
+fed it all game). Hammering Charizard was defensible (it set up the lethal
+that was later missed), but the engine kill was probably the stronger line
+in a matchup where every one of our Pokémon dies to one attack.
+
+**Played well:** the mulligan reveal telegraphed Mega Charizard X from turn
+0; Precious Trolley built the full bench through Judge disruption; Jumbo
+Ice Cream's 80 heal kept Genesect alive to trade (Protect Charge KO'd
+Charmeleon); Energy Recycler kept fuel flowing after every 6-card KO
+dump.
+
+**Sim read (fresh, greedy n=200 seed 2026):** `mega_excadrill_shaymin` 68%
+vs `charizard_xy` — but aggro-bias caveat applies AND greedy underplays
+Inferno X's discard sequencing for the opponent, so treat 68% as
+optimistic. Real games say: whoever's board comes online first wins, and
+their Rare Candy + Excited Turbo setup is one turn faster than three
+Metal Makers. **Shaymin data: none again** — third straight opponent with
+zero bench damage; the Curtain has been dead weight in every game since
+Orlando314.
+
+Ladder ledger: 36–30 (Shaymin variant: 3–3).
