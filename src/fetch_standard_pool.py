@@ -130,7 +130,8 @@ def build_pool():
     # the supplement entry is silently dropped — at which point it can be deleted
     # from data/manual_cards.json. This keeps the pool reproducible from source.
     for c in load_manual_supplement():
-        if c["name"] in seen:
+        overriding = c["name"] in seen and c.get("_override_bare")
+        if c["name"] in seen and not overriding:
             print(f"  manual: skip {c['name']!r} (now in upstream)", file=sys.stderr)
             continue
         # Respect rotation: a manual card whose mark has rotated out is dropped,
@@ -140,6 +141,15 @@ def build_pool():
             print(f"  manual: skip {c['name']!r} (mark {c.get('regulationMark')!r} "
                   f"not legal)", file=sys.stderr)
             continue
+        if overriding:
+            # A real, permanent print collision under the SAME bare name: upstream's
+            # entry is a genuinely different card (different attacks/abilities), not
+            # the same card catching up. `_override_bare` says this manual print is
+            # the one the registry's decks actually mean by the bare name — replace
+            # upstream's entry instead of silently losing to it.
+            pool[:] = [x for x in pool if x["name"] != c["name"]]
+            print(f"  manual: override {c['name']!r} (manual {c['id']!r} replaces the "
+                  f"same-named upstream print)", file=sys.stderr)
         seen.add(c["name"])
         pool.append(slim(c))
         print(f"  manual: +1 {c['name']!r}", file=sys.stderr)
