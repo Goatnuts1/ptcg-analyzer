@@ -409,7 +409,6 @@ def main():
         return
 
     if args.futures:
-        from src.engine.decks import DECKS
         from src.analysis.futures import futures_report
         print(futures_report(dict(sorted(DECKS.items())), args.pool,
                              "docs/matrix_2026-08_mcts2.json"))
