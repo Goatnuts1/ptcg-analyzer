@@ -344,3 +344,48 @@ a turn the attack targeted MUNKIDORI (non-ex) — the bonus never applied;
 mode-2 only pays when the Active you're hitting is the ex.
 
 Ladder ledger: 36–28.
+
+---
+
+## 2026-08-24 · vs `DuarteLLoyd20` (Mega Venusaur ex / Teal Mask Ogerpon grass ramp) · **LOSS 1–6**
+
+New archetype, first sighting: Mega Venusaur ex (380 HP, Solar Transfer
+re-arranging Grass Energy at will) + Teal Mask Ogerpon ex (Teal Dance accel,
+Myriad Leaf Shower) + Meganium / Meowth ex / Fezandipiti, drawn by a
+Lillie's Determination + Bug Catching Set engine. Not in the registry; only
+pool gap in the whole 33-card list is **Growing Grass Energy** (313/313 log
+lines parsed).
+
+**The loss mechanism — our own Energy killed us.** Myriad Leaf Shower counts
+Energy attached to BOTH Active Pokémon. The Mega Excadrill ex KO (360 vs
+340 HP, margin 20) breaks down as: their 7 Energy = 210, OUR 5 Energy =
++150. Metal Maker had greedily stacked 3 extra Energy onto the Active that
+same turn — without those, the shower reads 270−30 = 240 and the Mega
+LIVES. Against this archetype, over-fueling the Active is literally
+self-damage at 30/card. All three KOs on our side were Active OHKOs
+(240/360/270); resistance −30 is a rounding error against an unbounded
+scaler.
+
+**Second mechanism, older pattern: the Energy-piñata Drilbur.** A 70 HP
+Grass-WEAK Basic was left holding 6 Energy in the Active (Boss'd up, then
+fed further, then attacked with Call for Family instead of retreating out)
+and died to a bare Ivysaur's 60-base Razor Leaf. One prize + 6 Energy for
+their leftmost attacker. Drilbur is the matchup's weak link — vs Grass,
+evolve it or keep it lean.
+
+**What was played well:** both Boss's Orders stranded the loaded Ogerpon and
+dodged its attack for a turn each; Gravity Mountain bounced Forest of
+Vitality and won the Stadium war; Undermine's mills hit real cards
+(Meganium, a Teal Mask Ogerpon ex, Night Stretcher); Energy Recycler
+regrowth kept the deck alive to the end.
+
+**Rematch plan:** (1) LEAN ACTIVES — attack-cost Energy only on whatever is
+in front; park Metal Maker surplus on benched Metagross. (2) Hunt the
+Ogerpons: 210 HP, Metallic Hammer 300 OHKOs through anything, 2 prizes
+each — Boss + Hammer twice is 4 prizes. (3) Don't fight the Mega Venusaur
+(350 even under Gravity Mountain); it never attacked all game — it's an
+engine, so starve its targets instead. (4) Shaymin data: none — this deck
+has ZERO bench damage, so the Curtain is dead weight here; both experiment
+questions remain open.
+
+Ladder ledger: 36–29 (Shaymin variant: 3–2).
