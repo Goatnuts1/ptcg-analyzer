@@ -324,6 +324,9 @@ _GRAMMAR: list[tuple[str, str, tuple[str, ...]]] = [
     ("detach",        r"(.+?) was discarded from {P}'s (.+?)\.",
                       ("card", "player", "from_card")),
     ("prevented",     r"Damage to (.+?) was prevented\.", ("card",)),
+    # Attack-EFFECT prevention (Mist Energy, and any future effect shield). Follows an
+    # "<X> was activated." line; distinct from `prevented`, which is damage prevention.
+    ("effect_shield", r"Effects of (.+?) did not affect (.+?)\.", ("move", "card")),
     # Both owners are captured, including the destination's — it is the field most likely
     # to be wrong (see the put_counters note above and Finding 3), and a discrepancy you
     # don't capture is a discrepancy you can't detect.
@@ -401,7 +404,7 @@ _CARD_FIELDS = {
     "discard_named": ("card",), "activated": ("card",),
     "attack": ("source", "target"), "used": ("source",),
     "switch": ("card", "other_card"), "condition": ("card",),
-    "detach": ("card", "from_card"), "prevented": ("card",),
+    "detach": ("card", "from_card"), "prevented": ("card",), "effect_shield": ("card",),
     "move_counters": ("card", "from_card"), "draw_named_bench": ("card",),
     "condition_end": ("card",), "put_counters": ("card",),
     "shuffle_named_in": ("card",), "top_of_deck_named": ("card",),

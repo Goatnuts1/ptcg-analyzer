@@ -437,3 +437,32 @@ zero bench damage; the Curtain has been dead weight in every game since
 Orlando314.
 
 Ladder ledger: 36–30 (Shaymin variant: 3–3).
+
+---
+
+## 2026-08-24 · vs `Dunny9901` (Mega Skarmory ex / Greninja ex / Steven's) · **WIN 6–0, flawless**
+
+The opponent bricked — three consecutive turns of draw-pass with no play at
+all — and the engine executed a textbook kill sequence into the stalled
+board: Metallic Hammer (Steven's Beldum), Metallic Hammer 300 + Bounce Back
+60 (Greninja ex), Maximum Drilling 330 (Mega Skarmory ex). Four attacks,
+six prizes, ZERO damage taken all game. Little matchup signal in a brick,
+but the sequencing was clean: bench-built two Metagross while the Active
+Metang tanked nothing, and the Mega was held back until the 3-prize
+Skarmory KO closed it in one hit.
+
+**Rules moment worth keeping: Mist Energy did its job and it didn't
+matter.** Bounce Back's switch effect was prevented ("Effects of Bounce
+Back did not affect Greninja ex") but the 60 DAMAGE went through and
+finished the 300-damaged Greninja anyway — effect shields don't stop
+damage, the mirror image of the Curtain lesson (damage shields don't stop
+effects). The client line was a NEW log shape; parser grammar extended
+(`effect_shield`), this game re-parses 142/142, test suite still green.
+
+**Sightings ledger:** Mega Skarmory ex is a POOL GAP (the game's only
+unresolved card). Boomerang Energy appears again (second deck running it),
+plus Mist Energy / Magnetic Metal Energy / Steven's Beldum — the Steven's
+engine keeps showing up around Metal shells. Shaymin: benched, no data —
+FOURTH straight opponent with zero bench damage.
+
+Ladder ledger: 37–30 (Shaymin variant: 4–3).
