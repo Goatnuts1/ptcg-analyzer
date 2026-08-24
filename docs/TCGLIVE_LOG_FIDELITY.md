@@ -226,6 +226,25 @@ invent card text, and correcting card data on my own reading is the same move in
 Confirm against the physical/digital card and it's a three-line change (the supplement
 entry, the registry key, and a comment in `decks.py`).
 
+## Finding 5 (RESOLVED) — a 2-Prize Mega KO, explained by an Ability the log never names
+
+One observation (2026-08-24, vs `Birulas`): `Mega Gengar ex` was Knocked Out and
+the client awarded **2** Prize cards, though the Mega Evolution ex Rule says 3
+(and the client has awarded 3 for our own Mega Excadrill ex in three logged
+games). Resolution — pilot-supplied, then confirmed in the pool entry (me2-56):
+Mega Gengar ex's Ability **Shadowy Concealment** — "If 1 of your Darkness
+Pokémon is Knocked Out by damage from an attack from your opponent's Pokémon
+ex, that player takes 1 fewer Prize card." The KO came from Mega Excadrill ex
+(an ex): 3 − 1 = 2. Consistently, a later Gengar KO by the same attacker paid
+the full prize — Mega Gengar ex had left play, taking its Ability with it.
+
+The FINDING that survives the resolution: **the log never mentions the
+Ability.** No "Shadowy Concealment was activated" line — the prize count is
+just silently different. A replay/reconcile harness cannot treat prize counts
+as derivable from the KO event alone; passive abilities alter them invisibly.
+(Also surfaced: plain **Gengar with "Mind Jack"** — 10 + 30 × opponent's Bench
+— is a pool gap.)
+
 ## What this does not do
 
 The parser reads logs. It does **not** replay them against `GameState`, and no claim in

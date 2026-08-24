@@ -511,3 +511,42 @@ house-list matchup test is flagged for the next scan cycle — the cards are
 all implemented (doublade line).
 
 Ladder ledger: 37–31 (Shaymin variant: 4–4).
+
+---
+
+## 2026-08-24 · vs `Birulas` (Mega Gengar ex / Gengar Mind Jack) · **WIN by concession, 4–2**
+
+The bounce-back, and the best-piloted game of the day. Three doctrine
+points executed on their first outing:
+- **Mega evolves the turn it acts** — Drilbur stayed Drilbur until turn 3,
+  then evolve + Maximum Drilling 330 (Haunter KO) in one motion. It went on
+  to score three of our four KOs and was healed (Jumbo Ice Cream) out of
+  Mind Jack range.
+- **Kill the Mega while it's cold** — Boss's Orders dragged the benched
+  Mega Gengar ex (1 Energy, never attacked) into Maximum Drilling. Their
+  win condition died without ever acting.
+- **Kieran's switch mode, first live use** — pivoted Shaymin out / loaded
+  Metagross in and Hammer'd the Gastly, all in tempo.
+
+**Rules find of the game (Finding 5, RESOLVED — pilot spotted it):** the
+Mega Gengar KO awarded 2 prizes, not 3. Mega Gengar ex's Ability **Shadowy
+Concealment** — a Darkness Pokémon KO'd by damage from an opponent's
+Pokémon EX yields 1 fewer prize. Our Mega is an ex; our METAGROSS line
+isn't. Rematch implication: route KOs through Metagross to pay full price.
+The log never names the Ability — prize counts silently change, a real
+constraint on the future replay harness (recorded in the fidelity report).
+
+**Cost of the wide bench, measured:** their 1-prize Gengar's Mind Jack does
+10 + 30 × OUR Bench. At 5 benched = 160, which — after THEIR Gravity
+Mountain shaved our Metagross to 150 (clever: GM as an enabler against us)
+— cleared two Metagross exactly. At 4 benched = 130, it stopped killing
+anything. Precious Trolley's fill-the-bench opening has a real price
+against Mind Jack-class scalers; second bench-width lesson of the meta
+(Feather Rondo scales the same way).
+
+Sightings: plain Gengar (Mind Jack print) is a POOL GAP; Grand Tree /
+Janine's Secret Art / Grimsley's Move / Tatsugiri seen (mulligan +
+Grimsley's). Shaymin: pivot duty, took 30, retreated — earned its slot as
+a pivot, Curtain unused (sixth straight no-bench-damage opponent).
+
+Ladder ledger: 38–31 (Shaymin variant: 5–4).
