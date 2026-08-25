@@ -550,3 +550,53 @@ Grimsley's). Shaymin: pivot duty, took 30, retreated — earned its slot as
 a pivot, Curtain unused (sixth straight no-bench-damage opponent).
 
 Ladder ledger: 38–31 (Shaymin variant: 5–4).
+
+---
+
+## 2026-08-24 · vs `PetePanZ` (Ethan's Typhlosion / Toucannon fire box) · **LOSS 2–6** · piloting `crustle_modern`
+
+**Deck note: NOT the Shaymin variant** — this was the paper deck, and it is
+the registry's `crustle_modern` card-for-card. That matters: this is the
+FIRST LIVEFIRE GAME for the matrix's maximin champion ("no losing matchup,
+floor 53.3%") — and it ran into a hard counter the matrix never modeled.
+320/320 lines parsed, all 36 cards resolved: the Ethan's Typhlosion
+archetype is fully in-pool but NOT in the registry.
+
+**Why the matchup is near-unwinnable:**
+1. **Crustle is Fire-weak ×2.** The wall the deck is named for died twice
+   without attacking — Buddy Blast hit it for 460 and 580. Mist Energy tech
+   was dead weight (Buddy Blast is pure damage, no effects to block).
+2. **Buddy Blast scales on Ethan's Adventure cards in their discard**
+   (60 each) and the engine self-feeds: Quilava's ability fetches an
+   Adventure every turn, playing it draws 3 AND banks 60 future damage.
+   It grew 110 → 460 → 580 across the game. Nothing in crustle_modern
+   touches an opponent's discard.
+3. **KOs don't stick.** We KO'd Typhlosion twice (Rapid-Fire Combo 450
+   high-roll, then a 200 base); Sacred Ash + Rare Candy rebuilt it twice
+   more. Two prizes bought zero tempo.
+4. **Feather Rondo counts BOTH benches** — 8 benched = 220/turn from a
+   1-PRIZE Toucannon, which is what actually killed both Kangaskhans
+   (through Hero's Cape the first time). Bench-width lesson #3 this
+   weekend (Mind Jack, now Rondo): our own full bench was a third of
+   their damage.
+
+**Played well:** Crushing Hammer heads bought a turn; both stall Bosses
+(Fezandipiti, then Cyndaquil) were right — the second was beaten only by
+a topdecked-or-held Rare Candy; the first Rapid-Fire Combo high-roll
+(5 heads, 450) cashed a Typhlosion. **Debatable:** benching the second
+Kangaskhan and Cornerstone Ogerpon late fed Rondo +40/turn and put a
+second 3-prize body on a board we were losing.
+
+**Calibration takeaway (important):** `crustle_modern`'s "no losing
+matchup" claim is TRUE ONLY AGAINST THE MODELED 14-DECK FIELD. The live
+ladder just produced a counter — discard-scaling damage through Fire
+weakness — that no registry deck represents. Register the Ethan's
+Typhlosion archetype next scan cycle and re-run the crustle_modern column;
+its maximin crown is provisional until then.
+
+**Client bug corpus:** Spiky Energy fired twice, owner-mislabeled BOTH
+times ("Goatest1's Toucannon" / "Goatest1's Ethan's Typhlosion" — both
+PetePanZ's). Finding 3 keeps growing.
+
+Ladder ledger: 38–32 (Shaymin variant unchanged: 5–4; crustle_modern
+livefire: 0–1).
