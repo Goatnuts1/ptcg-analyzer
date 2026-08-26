@@ -674,7 +674,7 @@ a turn-2 attacker, hold the attachment or bench a second body first.
 
 Sightings: Mega Sharpedo ex / Pecharunt ex / Toxtricity Sinister Surge —
 all in pool, archetype not in registry (third unregistered archetype hit
-this week). 148/148 lines parsed.
+this week). 116/116 lines parsed.
 
 Ladder ledger: 38–34 (Shaymin variant: 5–5, no-data game; crustle_modern
 livefire: 0–2).
