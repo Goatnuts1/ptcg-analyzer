@@ -643,3 +643,38 @@ Typhlosion build on the next-cycle list.
 
 Ladder ledger: 38–33 (Shaymin variant unchanged: 5–4; crustle_modern
 livefire: 0–2).
+
+---
+
+## 2026-08-26 · vs `RSBKChise` (Mega Sharpedo / Toxtricity darkness turbo) · **LOSS 0–4 (benched out)** · back on `mega_excadrill_shaymin`
+
+Fast bench-out: turn-2 Mega Sharpedo ex (Carvanha straight to Mega),
+Boss + Greedy Fang picked off the energy-loaded Drilbur immediately, and
+the engine never arrived — no Genesect, no Petrel/Trolley all game (same
+draw shape as the frappeman loss). Shaymin never drawn: a no-data variant
+game.
+
+**The lesson worth the loss — DON'T CHIP MEGA SHARPEDO.** Hungry Jaws is
+120+, and gets **+150 flat if Sharpedo has ANY damage counters on it**
+(pool text confirmed). Our Metang's 60-damage Beam armed it for the rest
+of the game: armed 270 one-shots Metagross (180), unarmed 120 does NOT
+(and doesn't even clear our-GM-shaved 150). Chip it only with lethal in
+sight (330 HP), otherwise leave it clean. Caveat on the counterplay:
+their own Toxtricity (Sinister Surge) places counters on their own
+Pokémon, so they can self-arm a bench Sharpedo — but making them spend
+that is still better than arming the Active for free. Note the pattern
+count: that's the THIRD self-feeding scaler the ladder has shown us
+(Myriad Leaf Shower eats our Energy, Feather Rondo/Mind Jack eat our
+bench, Hungry Jaws eats our chip damage). The doctrine generalizes:
+**know what the opponent's attack scales on, and starve it.**
+
+Also repeated: turn-1 Energy on benched Drilbur = Boss bait vs turbo
+decks (Greedy Fang KO'd it for a prize + the Energy). Against decks with
+a turn-2 attacker, hold the attachment or bench a second body first.
+
+Sightings: Mega Sharpedo ex / Pecharunt ex / Toxtricity Sinister Surge —
+all in pool, archetype not in registry (third unregistered archetype hit
+this week). 148/148 lines parsed.
+
+Ladder ledger: 38–34 (Shaymin variant: 5–5, no-data game; crustle_modern
+livefire: 0–2).
