@@ -600,3 +600,46 @@ PetePanZ's). Finding 3 keeps growing.
 
 Ladder ledger: 38–32 (Shaymin variant unchanged: 5–4; crustle_modern
 livefire: 0–1).
+
+---
+
+## 2026-08-26 · vs `PNGtaytay` (Mega Lucario / Hariyama / cosmic-duo fighting box) · **LOSS 3–6 (benched out)** · piloting `crustle_modern`
+
+crustle_modern livefire game 2, and the most instructive cell-check yet.
+The matrix says crustle_modern beats `fighting` 61.7% (37–23, n=60). Live,
+the fighting player won going away — because **the real build carries what
+our registry list doesn't: NON-EX attackers.**
+
+**The wall worked exactly as designed, and it didn't matter.** Mysterious
+Rock Inn blanked Mega Lucario ex's Aura Jab TWICE (130 → 0, verbatim in
+the log). But the deck routed every KO around it: Hariyama's Wild Press
+(non-ex, 210 with self-recoil) killed three Crustles, and the closer was
+Solrock's Cosmic Beam with THREE stacked Premium Power Pro (70+90 = 160)
+— item-boosted non-ex burst, purpose-built anti-wall tech. Our registry
+`fighting` list is ALL ex attackers (Mega Lucario ex / Regirock ex / Iron
+Boulder ex): in the sim, Rock Inn blanks the whole deck, hence 61.7%. The
+cell is optimistic against real builds. Same lesson as the PetePanZ game
+from the other side: **crustle_modern's matrix column is inflated wherever
+the modeled opponent lacks the non-ex secondary that real lists carry.**
+Both livefire counters (Fire weakness; non-ex beaters) are now on record.
+
+**Play notes.** Good: Boss + Superb Scissors on Lunatone (grass weakness,
+120→240) was a clean snipe that also killed their Lunar Cycle draw; the
+attrition math on Hariyama (their 140 self-recoil + our 120) cashed a KO;
+the Spiky mutual-KO trade was fine. Costly: after the double-KO, promoting
+Cornerstone Ogerpon ex (1 Energy, no attack that turn) into an ex-heavy
+board gave Mega Brave a free 2-prize KO — promoting the benched CRUSTLE
+instead blanks both their ex attackers and forces the 3-item Solrock line
+a turn early. Same doctrine, third time: don't put multi-prize bodies in
+front while behind. Two attach-pass turns after their Judge + Special Red
+Card show the disruption bit hard; the bench was never rebuilt, which is
+how a 3–6 loss ended as a simultaneous bench-out.
+
+Sightings: Hariyama's Heave-Ho Catcher (ability gust), Ciphermaniac's
+Codebreaking, Maximum Belt, Fighting Gong, Premium Power Pro stacking —
+all in-pool, none in the registry `fighting` list. Registry refresh of
+`fighting` toward the real Hariyama/cosmic shell joins the Ethan's
+Typhlosion build on the next-cycle list.
+
+Ladder ledger: 38–33 (Shaymin variant unchanged: 5–4; crustle_modern
+livefire: 0–2).
