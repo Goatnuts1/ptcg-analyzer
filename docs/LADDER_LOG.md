@@ -713,3 +713,42 @@ all in-pool, fourth unregistered archetype this week. 230/230 lines
 parsed.
 
 Ladder ledger: 39–34 (Shaymin variant: 5–5; crustle_modern livefire: 1–2).
+
+---
+
+## 2026-08-27 · vs `Reecie_Puffs` (Chandelure / Comfey MILL) · **LOSS by DECK-OUT, up 2–0 on prizes** · piloting `crustle_modern`
+
+First mill opponent in the corpus, and it beat us without taking a single
+prize. The engine: up to three Chandelures' Alluring Light (both players
+draw 1, each, every turn) + Comfey's Flower Shower (both draw 3) force-fed
+us 4–6 cards a turn; their side is immune because Lillie's Determination
+recycles their hand into their deck (they shuffled 18 back in one turn
+near the end); Xerosic's Machinations then deleted the 8-card hand the
+force-feeding built. We died on the draw-for-turn with 4 prizes still to
+take.
+
+**What worked:** Comfey KO'd twice (right target — the biggest drip), both
+our Lillie's were played as deck-refills (7 then 12 shuffled back — the
+only reason the game lasted this long). **What lost it, beyond the
+matchup:** (1) OPTIONAL DRAWS ARE POISON VS MILL — Run Errand every turn
+(+8 cards over the game), plus Poffin/Pokégear/Hilda/Poké Pad, all
+accelerated our own clock for marginal value. Skip the draw ability unless
+it finds this turn's KO. (2) The race was too slow: 2 prizes in ~12 turns,
+not helped by Rapid-Fire Combo rolling 0 heads twice running (25% chance).
+(3) Strategic shape: A WALL DECK PLAYS INTO MILL — walls win slow, mill
+wins slower games harder. Versus mill the correct crustle_modern posture
+is pure race: every turn spent stalling compounds their engine, and their
+board was tissue (Comfey/Maractus/Chandelure, all 1-prize).
+
+**Deck-audit note:** the JackoTheClown doctrine ("Mega Excadrill is nearly
+deck-out-proof") does NOT transfer — crustle_modern is draw-heavy with no
+Energy-Recycler-style shuffle-back, making mill its THIRD documented
+livefire predator (fire weakness, non-ex beaters, now mill). The maximin
+crown keeps shrinking against the unmodeled field.
+
+Sightings: **Mega Chandelure ex is a POOL GAP** (4th this week, joining
+Growing Grass Energy / Mega Skarmory ex / Mind Jack Gengar); Telepathic
+Psychic Energy, Xerosic's Machinations, Comfey, Maractus all in-pool.
+Fifth unregistered archetype this week. 268/268 lines parsed.
+
+Ladder ledger: 39–35 (Shaymin variant: 5–5; crustle_modern livefire: 1–3).
