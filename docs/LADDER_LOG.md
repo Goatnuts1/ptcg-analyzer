@@ -709,7 +709,7 @@ opponent prizes. Kanga either stays in hand or comes down the turn it
 swings.
 
 Sightings: Delphox / Emboar (Inferno Fandango!) / Max Rod / Firebreather —
-all in-pool, fourth unregistered archetype this week. 293/293 lines
+all in-pool, fourth unregistered archetype this week. 230/230 lines
 parsed.
 
 Ladder ledger: 39–34 (Shaymin variant: 5–5; crustle_modern livefire: 1–2).
