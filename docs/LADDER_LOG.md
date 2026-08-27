@@ -678,3 +678,38 @@ this week). 116/116 lines parsed.
 
 Ladder ledger: 38–34 (Shaymin variant: 5–5, no-data game; crustle_modern
 livefire: 0–2).
+
+---
+
+## 2026-08-26 · vs `Pandabirb` (Delphox / Emboar fire toolbox) · **WIN by concession, 2–4 down** · piloting `crustle_modern`
+
+crustle_modern's first livefire WIN (1–2) — and a strategy-defining one:
+**the opponent conceded while AHEAD 4–2 on prizes**, because the board had
+become unwinnable for them. Cornerstone Mask Ogerpon ex's Cornerstone
+Stance prevents ALL attack damage from Pokémon that have an Ability — and
+their entire engine has Abilities: Delphox (Flaring Magic), Emboar
+(Inferno Fandango), Fezandipiti, Meowth ex. Their ONLY legal attacker into
+the wall was a vanilla Fennekin plinking 10 a turn, and Spiky Energy made
+each plink cost 20 back. Demolish (140, immune to their effects) started
+cleaning: Fennekin KO, then 140 onto the gusted Fezandipiti. They ran the
+math and scooped.
+
+**The two walls cover different meta slices — this game proved the split:**
+Crustle's Rock Inn blanks EX attackers but folds to Fire weakness;
+Cornerstone blanks ABILITY-havers regardless of type. Vs a fire toolbox,
+Cornerstone is the wall, Crustle is bait. Deck identity, sharpened.
+
+**The bad beats and the one real error:** double mulligan (opponent +2
+cards, energy-and-trainers hands — variance). The error was the FOURTH
+instance of the doctrine violation: Mega Kangaskhan benched turn 3 with 2
+Energy and no attack plan; Boss + Energized Storm (30 × 10 attached
+Energy = 300, their whole board's Energy fed by Inferno Fandango) took 3
+prizes. Every multi-prize body we bench idle keeps converting into
+opponent prizes. Kanga either stays in hand or comes down the turn it
+swings.
+
+Sightings: Delphox / Emboar (Inferno Fandango!) / Max Rod / Firebreather —
+all in-pool, fourth unregistered archetype this week. 293/293 lines
+parsed.
+
+Ladder ledger: 39–34 (Shaymin variant: 5–5; crustle_modern livefire: 1–2).
