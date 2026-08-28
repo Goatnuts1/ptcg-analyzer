@@ -783,3 +783,36 @@ Energy seen AGAIN (still a gap — 3rd sighting, promote to top of the
 manual_cards queue). 291/291 lines parsed.
 
 Ladder ledger: 40–35 (Shaymin variant: 5–5; crustle_modern livefire: 2–3).
+
+---
+
+## 2026-08-27 · vs `REYBAD` (Empoleon ex / Snorlax stall-tank box) · **LOSS 0–6** · piloting `crustle_modern`
+
+Livefire 2–4, zero prizes taken, and this opponent — knowingly or not —
+packed the complete anti-Crustle toolkit:
+1. **Grass Resistance on the main tank.** Empoleon ex (320 HP, healing
+   twice via Jumbo Ice Cream) takes Superb Scissors at 120−30 = 90/turn.
+   The mono-attack problem in one number: our whole offense was 90 chip
+   into a self-healing 320.
+2. **A non-ex beater the walls can't stop — again.** Snorlax's Collapse
+   160 one-shot THREE Crustles (140 HP), its self-sleep drawback erased by
+   two heads flips and a Jumbo heal. Fourth non-ex-beater loss pattern
+   (Hariyama, Solrock, now Snorlax).
+3. **Boss + Iron Feathers 210×2** took the Mega Kangaskhan for 3 —
+   the recurring Kanga-as-Boss-magnet cost, though this time it was a
+   forced trade-off: Kanga IS the draw engine, benching it isn't optional.
+
+**The card that would have mattered never showed:** Empoleon ex has an
+Ability (Emperor's Stance) — Cornerstone Stance walls it completely. We
+never drew Cornerstone all game. With it, their ONLY wall-breaker is
+Snorlax and the game is a real fight. Draw variance, but also a list
+question: 1 Cornerstone in 60 is thin for how load-bearing it's proven
+(the Pandabirb game was won by it alone).
+
+**Print-collision find (Finding 2 strikes again):** the pool's bare
+"Snorlax" is the Lazy Press 120 print — the ladder's Snorlax used
+**Collapse 160**. Different print, unpooled. Queue "Snorlax (<set>)" for
+manual_cards alongside Growing Grass Energy / Mega Skarmory ex / Mind
+Jack Gengar / Mega Chandelure ex / Decidueye ex.
+
+Ladder ledger: 40–36 (Shaymin variant: 5–5; crustle_modern livefire: 2–4).
