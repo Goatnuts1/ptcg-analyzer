@@ -752,3 +752,34 @@ Psychic Energy, Xerosic's Machinations, Comfey, Maractus all in-pool.
 Fifth unregistered archetype this week. 268/268 lines parsed.
 
 Ladder ledger: 39–35 (Shaymin variant: 5–5; crustle_modern livefire: 1–3).
+
+---
+
+## 2026-08-27 · vs `AyItzTorch` (Vivillon / Decidueye ex grass disruption) · **WIN by concession, 2–1** · piloting `crustle_modern`
+
+The matchup crustle_modern was BUILT for, played out exactly as designed
+(livefire 2–3). Their deck: Vivillon Blow Through (120/turn) + Grand Wing
+hand-shredding (our hand bottom-decked TWICE), Decidueye ex + Maximum
+Belt as the closer, Judge ×2 on top. And the walls answered everything:
+
+- **Rock Inn's showcase moment: Crushing Arrow 240 → 0.** Decidueye ex is
+  an ex; Mysterious Rock Inn blanked the Maximum-Belt-boosted hit
+  entirely. Note the boundary AGAIN, this time our way: the attack's
+  EFFECT still discarded our Spiky Energy — walls stop damage, never
+  effects. Both directions of that rule are now in the corpus.
+- **The attrition trade favored us:** their Vivillons die to one Superb
+  Scissors (120) while our Caped Crustle needed three Blow Throughs. Two
+  Vivillons KO'd; when the second fell they were out of set-up line
+  (Spewpa forced Active) and conceded at 2–1 with their only real
+  attacker permanently walled.
+
+**Survival notes:** mulligan again (variance), Judge ×2 + Grand Wing ×2
+shredded the hand all game — the deck's own Lillie's density (played 3)
+kept restoring function; Boss stranding Decidueye out of the Active reset
+their tempo a full turn.
+
+Sightings: **Decidueye ex is a POOL GAP** (5th this week), Growing Grass
+Energy seen AGAIN (still a gap — 3rd sighting, promote to top of the
+manual_cards queue). 291/291 lines parsed.
+
+Ladder ledger: 40–35 (Shaymin variant: 5–5; crustle_modern livefire: 2–3).
