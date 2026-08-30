@@ -816,3 +816,39 @@ manual_cards alongside Growing Grass Energy / Mega Skarmory ex / Mind
 Jack Gengar / Mega Chandelure ex / Decidueye ex.
 
 Ladder ledger: 40–36 (Shaymin variant: 5–5; crustle_modern livefire: 2–4).
+
+---
+
+## 2026-08-30 · vs `leoNardocruz000` (Team Rocket's Honchkrow / Porygon-Z box) · **WIN 6–4** · piloting `crustle_modern`
+
+Livefire 3–4, and Mega Kangaskhan's best recorded game: FIVE consecutive
+Rapid-Fire Combo KOs (Porygon, Murkrow, Honchkrow, Honchkrow, Porygon2),
+with Crustle's Superb Scissors closing the sixth. The structural reason it
+worked: **their board was all 1-prize Rockets**, so 200-a-turn cleared one
+body per turn and the prize race was never in doubt — the aggro-into-
+fodder matchup is where this deck's Kanga plan actually shines.
+
+**The Kanga paradox, resolved by this game:** every prior loss featured
+Kanga as a benched Boss-magnet. Here it OPENED Active — draw engine and
+attacker in the same body from turn 0, Cape/Mist/Spiky loaded, Run Errand
+every turn while attacking. When it finally fell (3 prizes) the ledger
+read 5 KOs for 3 — a trade worth taking every time. Doctrine refinement:
+Kanga either OPENS Active or waits in hand; the bad pattern is
+specifically mid-game benching.
+
+**Respect the burst that killed it:** Team Rocket's Honchkrow's Rocket
+Feathers does 60 × Team Rocket's cards discarded from the attacker's
+hand — they dumped SEVEN (both Giovannis, both Protons, both Archers, an
+Ariana) for 420 through Cape. It's a hand-emptying nuke: the first
+Honchkrow could only afford 3 (180). After the big one their engine was
+spent, and the last Honchkrow died to Superb Scissors holding nothing.
+
+Sightings: the ENTIRE Team Rocket box — Honchkrow line, Porygon2's R
+Command (20 × cards in own discard), Porygon-Z, Articuno, Giovanni's
+double-switch, Roto-Stick, Ignition Energy — is ALREADY FULLY IN POOL
+(the TR engine overlaps mega_excadrill's search package). Sixth
+unregistered archetype of the stretch, and the cheapest to build. Their
+Team Rocket's Factory fired 5 times — the Stadium our engine already
+implements.
+
+Ladder ledger: 41–36 (Shaymin variant: 5–5; crustle_modern livefire: 3–4).
