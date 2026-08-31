@@ -249,7 +249,9 @@ def search_deck(ctx: EffectContext, predicates, dest: str = "hand",
         pick = max(candidates, key=policy)
         me.deck.remove(pick)
         if dest == "bench":
-            me.bench.append(InPlayPokemon(card=pick, played_this_turn=True))
+            newmon = InPlayPokemon(card=pick, played_this_turn=True)
+            me.bench.append(newmon)
+            on_benched_new(ctx.state, me, newmon)
         else:
             me.hand.append(pick)
         found += 1
@@ -385,6 +387,10 @@ def search_deck_to_top(ctx: EffectContext, n: int, policy=None) -> int:
 STADIUM_IMPLEMENTED: set[str] = {"Battle Cage", "Team Rocket's Watchtower",
                                  "Nighttime Mine", "Surfing Beach",
                                  "Gravity Mountain",
+                                 # Risky Ruins: passive, lives at the bench-arrival
+                                 # chokepoint `on_benched_new` (2 counters on any
+                                 # Basic non-Darkness Pokémon benched during a turn).
+                                 "Risky Ruins",
                                  # Prism Tower: "Once during each player's turn, that
                                  # player may discard 2 cards from their hand in order to
                                  # draw a card." An ACTIVATED Stadium ability, so unlike
@@ -605,6 +611,30 @@ def can_play_stadium(state: GameState, card) -> bool:
     """A Stadium is playable unless one with the SAME name is already in play
     (a same-name Stadium can't replace itself)."""
     return state.stadium is None or state.stadium.name != card.name
+
+
+# --------------------------------------------------------------------------- #
+# BENCH ARRIVAL (Risky Ruins). Chokepoint for a Pokémon ENTERING play on the Bench
+# from hand, deck, or discard — NOT for switches/retreats/promotions of Pokémon
+# already in play, which are moves, not placements. Every site that creates a new
+# benched InPlayPokemon calls this (game.apply_action play_basic; the generic
+# search-to-bench helper; Come and Get You; Buddy-Buddy Poffin). Setup placements
+# never route through these paths, matching the card's "during their turn" clause.
+# --------------------------------------------------------------------------- #
+def on_benched_new(state: Optional[GameState], player: PlayerState,
+                   mon: InPlayPokemon) -> None:
+    """Risky Ruins (MEG): "Whenever any player puts a Basic non-Darkness Pokémon
+    onto their Bench during their turn, place 2 damage counters on that Pokémon."
+    Not an Ability — not gated on ability_suppressed (same reasoning as the
+    STADIUM_HP_MODIFIERS). 20 damage cannot KO a fresh Basic (min printed HP 30),
+    so no knockout processing is needed here."""
+    if state is None or state.stadium is None:
+        return
+    if state.stadium.name != "Risky Ruins":
+        return
+    if mon.card.is_basic and "Darkness" not in (mon.card.types or ()):
+        mon.damage += 20
+        state.emit(f"Risky Ruins: 2 damage counters on {mon.card.name}")
 
 
 # --------------------------------------------------------------------------- #
@@ -1662,7 +1692,9 @@ def _come_and_get_you(ctx: EffectContext) -> None:
             break
         if c.name == "Duskull":
             ctx.me.discard.remove(c)
-            ctx.me.bench.append(InPlayPokemon(card=c, played_this_turn=True))
+            newmon = InPlayPokemon(card=c, played_this_turn=True)
+            ctx.me.bench.append(newmon)
+            on_benched_new(ctx.state, ctx.me, newmon)
             placed += 1
     if placed:
         ctx.state.emit(f"Come and Get You: benched {placed} Duskull")
@@ -3662,7 +3694,9 @@ def _buddy_buddy_poffin(ctx: EffectContext) -> bool:
         if found >= 2 or len(ctx.me.bench) >= bench_limit(ctx.state, ctx.me):
             break
         ctx.me.deck.remove(c)
-        ctx.me.bench.append(InPlayPokemon(card=c, played_this_turn=True))
+        newmon = InPlayPokemon(card=c, played_this_turn=True)
+        ctx.me.bench.append(newmon)
+        on_benched_new(ctx.state, ctx.me, newmon)
         found += 1
     ctx.rng.shuffle(ctx.me.deck) if ctx.rng else None
     if found:
@@ -3848,6 +3882,33 @@ def _crispin(ctx: EffectContext) -> bool:
     else:                                         # no Pokémon to attach to
         me.hand.extend(picked)
     ctx.state.emit(f"Crispin: attached 1 + drew {len(picked) - 1} Basic Energy")
+    return True
+
+
+def _rosas_encouragement(ctx: EffectContext) -> bool:
+    """Rosa's Encouragement (POR 84): "You can use this card only if you have more
+    Prize cards remaining than your opponent. Attach up to 2 Basic Energy cards
+    from your discard pile to 1 of your Stage 2 Pokémon." The behind-on-prizes
+    clause lives in _TRAINER_CAN_PLAY. v0 target policy: the Stage 2 with the
+    fewest attached Energy (Active preferred on ties) — the card's job in the
+    Worlds-2026 Dragapult list is refueling a Dragapult ex after a KO. Energy
+    choice prefers types the target's attack costs actually name."""
+    me = ctx.me
+    basics = [c for c in me.discard if c.is_basic_energy]
+    stage2s = [m for m in [me.active] + me.bench
+               if m is not None and "Stage 2" in m.card.subtypes]
+    if not basics or not stage2s:
+        return False
+    target = min(stage2s, key=lambda m: (len(m.energy), 0 if m is me.active else 1))
+    want = {t for a in (target.card.attacks or ()) for t in (a.cost or ())}
+    basics.sort(key=lambda c: (0 if (c.types and c.types[0] in want) else 1, c.name))
+    attached = 0
+    for c in basics[:2]:
+        me.discard.remove(c)
+        target.energy.append(c)
+        attached += 1
+    ctx.state.emit(f"Rosa's Encouragement: attached {attached} Basic Energy "
+                   f"from discard to {target.card.name}")
     return True
 
 
@@ -4352,6 +4413,7 @@ TRAINER_EFFECTS: dict[str, Callable[[EffectContext], bool]] = {
     "Lillie's Determination": _lillies_determination,
     "Judge": _judge,
     "Crispin": _crispin,
+    "Rosa's Encouragement": _rosas_encouragement,
     "Crushing Hammer": _crushing_hammer,
     "Unfair Stamp": _unfair_stamp,
     # --- core-stabilization staples ---
@@ -4417,6 +4479,13 @@ _TRAINER_CAN_PLAY: dict[str, Callable] = {
     "Lillie's Determination": lambda state, me: len(me.deck) + len(me.hand) > 0,
     "Judge": lambda state, me: len(me.deck) + len(me.hand) > 0,
     "Crispin": lambda state, me: any(c.is_basic_energy for c in me.deck),
+    # Rosa's Encouragement: the printed condition is BEHIND-on-prizes (more Prize
+    # cards REMAINING than the opponent), plus §2.1's only-when-it-does-something.
+    "Rosa's Encouragement": lambda state, me: (
+        len(me.prizes) > len(state.players[1 - state.active_index].prizes)
+        and any(c.is_basic_energy for c in me.discard)
+        and any(m is not None and "Stage 2" in m.card.subtypes
+                for m in [me.active] + me.bench)),
     # Crushing Hammer: only when the opponent has Energy to discard.
     "Crushing Hammer": lambda state, me: any(
         m.energy for m in state.players[1 - state.active_index].all_in_play()),

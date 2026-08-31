@@ -454,6 +454,7 @@ def apply_action(state: GameState, action: Action) -> None:
         newmon = InPlayPokemon(card=card, played_this_turn=True)
         p.bench.append(newmon)
         state.emit(f"benched {card.name}")
+        fx.on_benched_new(state, p, newmon)
         # on-bench-from-hand trigger (Meowth ex: Last-Ditch Catch), unless suppressed
         trigger = fx.get_on_bench_trigger(card.name)
         if trigger and not fx.ability_suppressed(state, newmon):

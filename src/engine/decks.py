@@ -1032,23 +1032,20 @@ DECK_CRUSTLE_STANDALONE = [
 
 
 # --------------------------------------------------------------------------- #
-# Crustle (modernized) — the same Dwebble/Crustle/Kangaskhan/Cornerstone Ogerpon shell,
-# updated with the tech the real 2026 Standard field has converged on for exactly the
-# weakness this project's own real losses exposed (non-ex chip damage walking past
-# Mysterious Rock Inn's ex-only protection): Milotic ex as a second wall (Sparkling
-# Scales), Hero's Cape (+100 HP, ACE SPEC) to push a wall past most non-ex one-shots,
-# Mist Energy (blocks opposing attack EFFECTS — not damage — on the holder) against
-# effect-routed answers, Spiky Energy (2-counter standing retaliation while Active) to
-# make attacking into the wall itself costly, and Crushing Hammer for energy denial.
-# Colress's Tenacity trimmed to fund the new inclusions.
+# Crustle (modernized) — Dwebble/Crustle/Kangaskhan/Cornerstone Ogerpon shell.
+# Hero's Cape, Mist Energy, Spiky Energy, Crushing Hammer as the non-ex-chip
+# package. Milotic ex used to sit in the 11th Pokémon slot as a Tera wall
+# (Sparkling Scales) but the 60 had no Feebas and no Rare Candy, so it could
+# never enter play. Replaced with a 4th Crustle (2026-08-24). The Aug 17
+# mcts2 matrix was measured on the old 3 Crustle + 1 Milotic list; treat those
+# cells as the brick-in version.
 # --------------------------------------------------------------------------- #
 DECK_CRUSTLE_MODERN = [
     # Pokémon (11)
     ("Dwebble", 4),
-    ("Crustle", 3),
+    ("Crustle", 4),
     ("Mega Kangaskhan ex", 2),
     ("Cornerstone Mask Ogerpon ex", 1),
-    ("Milotic ex", 1),
     # Trainer (33)
     ("Lillie's Determination", 4),
     ("Boss's Orders", 3),
@@ -1523,6 +1520,42 @@ DECK_GRIMMSNARL_FROSLASS: list[tuple[str, int]] = [
     ("Basic Darkness Energy", 9),
 ]
 
+# Andrew Hedrick's WORLD CHAMPIONSHIP 2026 winning list (San Francisco, Aug 28–30,
+# 1st place, 14-2-0) — STRONGEST provenance in the registry: the deck that won the
+# whole format. Dragapult ex control-aggro: Phantom Dive spread + Munkidori counter
+# movement, a heavy disruption suite (4 Crushing Hammer, Special Red Card, Unfair
+# Stamp, Budew Item-lock), Risky Ruins to tax the opponent's Basics, and Rosa's
+# Encouragement as the from-behind refuel. Source: labs.limitlesstcg.com/0071
+# (player 0103). Set codes in the source list are display noise; names are exact.
+DECK_DRAGAPULT_WORLDS: list[tuple[str, int]] = [
+    ("Dreepy", 4),
+    ("Drakloak", 4),
+    ("Dragapult ex", 3),
+    ("Munkidori", 2),
+    ("Budew", 2),
+    ("Dunsparce (JTG)", 1),
+    ("Dudunsparce", 1),
+    ("Meowth ex", 1),
+    ("Fezandipiti ex", 1),
+
+    ("Lillie's Determination", 4),
+    ("Boss's Orders", 3),
+    ("Crispin", 2),
+    ("Rosa's Encouragement", 1),
+    ("Poké Pad", 4),
+    ("Crushing Hammer", 4),
+    ("Buddy-Buddy Poffin", 4),
+    ("Night Stretcher", 3),
+    ("Ultra Ball", 3),
+    ("Unfair Stamp", 1),      # ACE SPEC
+    ("Special Red Card", 1),
+    ("Risky Ruins", 2),
+
+    ("Basic Fire Energy", 3),
+    ("Basic Darkness Energy", 3),
+    ("Basic Psychic Energy", 3),
+]
+
 DECKS: dict[str, list[tuple[str, int]]] = {
     "dragapult": TOURNAMENT_DRAGAPULT,
     "charizard_xy": TOURNAMENT_CHARIZARD_XY,
@@ -1560,6 +1593,7 @@ DECKS: dict[str, list[tuple[str, int]]] = {
     "dragapult_blaziken": DECK_DRAGAPULT_BLAZIKEN,
     "festival_lead": DECK_FESTIVAL_LEAD,
     "grimmsnarl_froslass": DECK_GRIMMSNARL_FROSLASS,
+    "dragapult_worlds": DECK_DRAGAPULT_WORLDS,
 }
 
 

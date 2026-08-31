@@ -16,8 +16,15 @@ engine (CPU only, zero tokens). The model's jobs are bounded:
 Every model output is validated against the engine before it's trusted.
 
 ## Current state
-- Data layer: done + tested. `data/standard_pool.json` = **1,300 cards** (marks
-  H/I/J; 24 in the tracked `data/manual_cards.json` supplement — Meowth ex, Mega
+- Data layer: done + tested. `data/standard_pool.json` = **1,336 cards** as of the
+  2026-08-30 rebuild (marks H/I/J; 35 in the tracked `data/manual_cards.json`
+  supplement). CAUTION learned the hard way on 2026-08-30: regenerating the pool
+  against live upstream can LOSE cards the tested baseline had (Alakazam ex,
+  Staryu/Mega Starmie ex, Telepathic Psychic Energy, Drilbur (TEF) all vanished
+  in one rebuild) — the manual supplement + the fetch script's `_override_bare`
+  mechanism (from the 2026-08-24 meta-scan, merged into this branch) are what
+  hold those in place. After ANY pool rebuild, run the full test suite before
+  trusting a single number. Original supplement list — Meowth ex, Mega
   Charizard Y ex, Poké Pad, Mega Slowbro ex, Mega Excadrill ex, Drilbur,
   Metagross (CRI), Rocky Fighting Energy, the Pitch Black Ghost prints
   Shuppet (PBL) / Banette (PBL) / Dhelmise (PBL) / Poltchageist (PBL) /
@@ -265,6 +272,25 @@ count — the way to compare two pilots on one deck at equal wall clock. Omit it
 `run()` behaves exactly as before, single-pilot.
 `src/engine/run.py` is the lower-level batch loop; `src/engine/matchup.py` is the
 instrumented validation runner (win% + right-lines evidence).
+
+## Worlds 2026 (San Francisco, Aug 28–30) — the format's ground truth
+Andrew Hedrick won Masters (14-2-0) with **Dragapult ex disruption-control**;
+top 16 = 5× Dragapult, 4× Alakazam, 3× Ogerpon "Basic Box M", 2× **Crustle**
+(5th/6th — the registry's `crustle_modern` archetype top-8'd Worlds). The
+champion's exact 60 is registered as **`dragapult_worlds`** (strongest
+provenance in the registry; source labs.limitlesstcg.com/0071 player 0103).
+Two engine pieces added for it, both tested in `tests/test_dragapult_worlds.py`:
+**Risky Ruins** (passive Stadium at the new bench-arrival chokepoint
+`effects.on_benched_new` — 2 counters on any Basic non-Darkness Pokémon benched
+during a turn, both players, from-hand AND from-deck placements; switches/
+promotions are moves, not placements, and do NOT trigger it) and
+**Rosa's Encouragement** (POR 84, manual supplement: behind-on-prizes gate in
+_TRAINER_CAN_PLAY, attach up to 2 Basic Energy from discard to 1 Stage 2,
+type-preference policy). HONEST NUMBERS: greedy floors are 26.5% vs
+mega_excadrill_shaymin / 17.5% vs crustle_modern / 55.5% vs the old `dragapult`
+list — it is a disruption-control deck (4 Hammer, Special Red Card, Unfair
+Stamp, Budew lock, Risky Ruins) and greedy cannot pilot disruption, so treat
+every greedy cell for this deck as a floor, same doctrine as festival_lead.
 
 ## Meta-2026-08 build (the three missing top-10 archetypes — now IN)
 `dragapult_blaziken` (Jon Webb NAIC 6th — TOURNAMENT provenance), `festival_lead`
