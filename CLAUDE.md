@@ -286,11 +286,15 @@ during a turn, both players, from-hand AND from-deck placements; switches/
 promotions are moves, not placements, and do NOT trigger it) and
 **Rosa's Encouragement** (POR 84, manual supplement: behind-on-prizes gate in
 _TRAINER_CAN_PLAY, attach up to 2 Basic Energy from discard to 1 Stage 2,
-type-preference policy). HONEST NUMBERS: greedy floors are 26.5% vs
-mega_excadrill_shaymin / 17.5% vs crustle_modern / 55.5% vs the old `dragapult`
-list — it is a disruption-control deck (4 Hammer, Special Red Card, Unfair
-Stamp, Budew lock, Risky Ruins) and greedy cannot pilot disruption, so treat
-every greedy cell for this deck as a floor, same doctrine as festival_lead.
+type-preference policy). HONEST NUMBERS (all FLOORS — this is a
+disruption-control deck, 4 Hammer / Special Red Card / Unfair Stamp / Budew
+lock / Risky Ruins, and neither greedy nor mcts2@60 can pilot disruption
+timing; same doctrine as festival_lead): greedy n=200 — 26.5% vs
+mega_excadrill_shaymin, 17.5% vs crustle_modern, 55.5% vs the old `dragapult`
+list, 52.5% vs charizard_xy; mcts2@60 n=60 — 31.7% vs mega_excadrill_shaymin,
+21.7% vs crustle_modern. The 55.5% vs old-dragapult is the one clean signal
+(same archetype, better cards). The deck that won Worlds losing 4-of-5 sim
+cells is the aggro-bias calibration failure in its purest form yet.
 
 ## Meta-2026-08 build (the three missing top-10 archetypes — now IN)
 `dragapult_blaziken` (Jon Webb NAIC 6th — TOURNAMENT provenance), `festival_lead`
