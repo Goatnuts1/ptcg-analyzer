@@ -1041,6 +1041,19 @@ DECK_CRUSTLE_STANDALONE = [
 # effect-routed answers, Spiky Energy (2-counter standing retaliation while Active) to
 # make attacking into the wall itself costly, and Crushing Hammer for energy denial.
 # Colress's Tenacity trimmed to fund the new inclusions.
+# 2026-08-31 update: Satoshi Matsui's Crustle reached the WORLD CHAMPIONSHIPS
+# SEMIFINAL (San Francisco, Aug 28-30 2026), losing 2-0 to eventual champion
+# Andrew Hedrick's Dragapult ex — the best real-world result on record for this
+# archetype. His verified list ran 4x Jumbo Ice Cream ("Heal 80 damage from
+# your Active Pokémon that has 3 or more Energy attached", Phantasmal Flames
+# 91) as its sustain plan; already implemented and tested here
+# (tests/test_jumbo_ice_cream.py) but previously absent from this list. One
+# copy is added, funded by trimming Crushing Hammer's unreliable coin-flip
+# denial from 2 copies to 1 — see docs and reports/weekly-meta-hunt/2026-08-31.md
+# for the full reasoning; this is a single-card swap, not a rebuild toward his
+# full list (which drops Cornerstone Mask Ogerpon ex / Milotic ex entirely for
+# 4x Mega Kangaskhan ex plus a wider disruption suite not yet all implemented
+# here — see the report before treating that as this project's next move).
 # --------------------------------------------------------------------------- #
 DECK_CRUSTLE_MODERN = [
     # Pokémon (11)
@@ -1061,7 +1074,8 @@ DECK_CRUSTLE_MODERN = [
     ("Switch", 1),
     ("Energy Switch", 2),
     ("Hero's Cape", 1),          # ACE SPEC
-    ("Crushing Hammer", 2),
+    ("Crushing Hammer", 1),
+    ("Jumbo Ice Cream", 1),
     # Energy (16)
     ("Basic Grass Energy", 5),
     ("Basic Fighting Energy", 4),
