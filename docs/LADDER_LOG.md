@@ -892,3 +892,24 @@ how close the middlegame was.
 293/293 lines parsed; the one unresolved card is Mega Skarmory ex — the
 known pool gap, now sighted in a SECOND deck. Ladder ledger: 41–37
 (Shaymin variant: 5–5; crustle_modern livefire: 3–5).
+
+---
+
+## 2026-09-01 · vs `EneL02` (Dragapult, solo-Dreepy start) · **WIN by bench-out, turn 2** · piloting the Ghost box (`hide_n_sneak` shell)
+
+Third deck of the rotation and the shortest game in the corpus: 66 log
+lines. Their risk, our punishment — they kept a LONE Dreepy start (a
+Dragapult hand that never benched), and the Ghost box's engine assembled
+lethal in two turns: Telepathic Psychic Energy benched ability-Pokémon
+straight from the deck (twice), Prism Tower turned dead hand cards into
+draws, Lillie's refilled, and Dhelmise's Vengeful Anchor counted FOUR
+Ability-havers on our board — 30 + 140, doubled by Dreepy's Psychic
+weakness = 340 into a 60 HP Basic. No bench, game.
+
+Note for the sim: this pilot's list is the `hide_n_sneak` shell updated
+with Telepathic Psychic Energy over Legacy Energy — the registry list
+predates that print. Minor, but it's the second registry list the ladder
+shows drifting (mega_excadrill's Cape/Jumbo tech being the first).
+
+66/66 lines parsed, all cards resolved. Ladder ledger: 42–37 (Shaymin
+variant: 5–5; crustle_modern livefire: 3–5).
