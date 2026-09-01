@@ -852,3 +852,42 @@ Team Rocket's Factory fired 5 times — the Stadium our engine already
 implements.
 
 Ladder ledger: 41–36 (Shaymin variant: 5–5; crustle_modern livefire: 3–4).
+
+---
+
+## 2026-09-01 · vs `JJ-Zacian` (Mega Excadrill w/ Skarmory + Cape/Jumbo tech) · **LOSS 3–6 (benched out)** · piloting `crustle_modern`
+
+Beaten by the house archetype from the wrong side of the table — their list
+is our `mega_excadrill` plus tech we've been cataloging all week (Hero's
+Cape on a Drilbur, Jumbo Ice Cream ×2 healing 160 off the Mega, a Mega
+Skarmory ex in the 60). Matrix says this pairing is a near-coinflip
+(crustle_modern 53.3% — its FLOOR cell, n=60); the live game was decided
+by three compounding factors:
+
+1. **TRIPLE mulligan** — opponent started with a 10-card hand and a
+   4-Pokémon board vs our lone Kangaskhan. Worst start of the logged
+   corpus.
+2. **The Kanga chip-war error (the one real lesson):** Kanga sat Active
+   eating FOUR Undermines (90 × 4 = 360 > 300 HP) while drawing. But
+   Undermine comes off an EX — Mysterious Rock Inn blanks it to ZERO, as
+   the log later shows verbatim, twice. The moment the first Crustle stood
+   up, retreating the damaged 3-prizer behind the wall turns their entire
+   Active's output off. New doctrine line: **vs ex-attacker decks, the
+   wall isn't just a wincon — it's the Mega's bodyguard.** Undermine's
+   mill (2/turn off our deck: both Hammers, Spiky, Mist, a Lillie's) was
+   the quieter half of that bleed.
+3. **The non-ex beater, FIFTH instance — and it's OUR tech.** Their
+   1-prize Metagross Hammer'd two Crustles (150 > 140) exactly the way we
+   told the pilot to route KOs around Shadowy Concealment on 08-27. The
+   house archetype carries the anti-Crustle answer innately: ex blanked by
+   Rock Inn, so the non-ex Metagross does the wall-breaking.
+
+**Played well:** doctrine held everywhere else — Kanga OPENED Active per
+the 08-30 refinement and traded 2-for-position early (Boss + Rapid-Fire
+300 assassinated Genesect); Kanga #2 got the Cape BEFORE fronting and
+survived Metallic Hammer 300 at 400 effective, KOing Metagross back;
+both walls blanked every Undermine aimed at them. The 3–6 line understates
+how close the middlegame was.
+
+All cards in-pool, 262/262 lines parsed. Ladder ledger: 41–37 (Shaymin
+variant: 5–5; crustle_modern livefire: 3–5).
