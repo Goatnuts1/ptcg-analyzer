@@ -889,5 +889,6 @@ survived Metallic Hammer 300 at 400 effective, KOing Metagross back;
 both walls blanked every Undermine aimed at them. The 3–6 line understates
 how close the middlegame was.
 
-All cards in-pool, 262/262 lines parsed. Ladder ledger: 41–37 (Shaymin
-variant: 5–5; crustle_modern livefire: 3–5).
+293/293 lines parsed; the one unresolved card is Mega Skarmory ex — the
+known pool gap, now sighted in a SECOND deck. Ladder ledger: 41–37
+(Shaymin variant: 5–5; crustle_modern livefire: 3–5).
