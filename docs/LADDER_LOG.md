@@ -913,3 +913,39 @@ shows drifting (mega_excadrill's Cape/Jumbo tech being the first).
 
 66/66 lines parsed, all cards resolved. Ladder ledger: 42–37 (Shaymin
 variant: 5–5; crustle_modern livefire: 3–5).
+
+---
+
+## 2026-09-01 · vs `alexy313` (Lunatone/Solrock/Hariyama fighting box) · **WIN by concession, 2–1** · piloting the Ghost box
+
+Ghost box 2–0 — this time against the same cosmic-fighting shell that beat
+crustle_modern on 08-26, and Vengeful Anchor's flat 170 (4 ability-mons)
+out-paced their setup: Lunatone KO'd with 2 Energy on it, then Boss
+dragged Fezandipiti ex into a 170 that left it one hit from giving 2.
+They conceded staring down an anchor line they couldn't out-tempo.
+
+**Pilot asked for critique. Three findings, one real:**
+1. **The TPE-on-Ursaluna misplay (the real one).** Telepathic Psychic
+   Energy's bench-search fires only when attached to a [P] Pokémon —
+   Bloodmoon Ursaluna ex is COLORLESS, so the trigger never fired, and the
+   card was then discarded paying Ursaluna's retreat. Full card spent for
+   zero. The same hand held the better line: Ultra Ball pitched KIERAN —
+   whose switch mode moves Ursaluna out for free — while a spare Poké Pad
+   or Prism Tower could have been pitched instead. Kieran-switch + TPE
+   onto a Psychic body = free retreat AND up to 2 benched Psychics (+70
+   Vengeful Anchor if they carry Abilities).
+2. **Patrat, gusted twice into the same trap.** Benched turn 1, Heave-Ho'd
+   Active, KO'd by Power Gem through Fighting weakness (free prize) — then
+   Night Stretcher'd back and IMMEDIATELY re-benched into the same live
+   gust. It survived, but Watchful Eye wasn't needed that turn; hold the
+   lock piece until it locks something.
+3. **Prism Tower before Lillie's (minor).** Discarding 2-for-1 right
+   before a full hand reset only profits when the discards are discard-
+   pile fuel; Sinistcha arguably, TPE no.
+
+**Clean play elsewhere:** Run Away Draw as a draw-3-plus-free-pivot after
+the Patrat KO; anchor count held at 4 all game; Boss on the damaged Fez
+(strand + 2-prize threat) over feeding the Maximum Belt Hariyama.
+
+151/151 lines parsed, all 36 cards resolved. Ladder ledger: 43–37 (Shaymin
+variant: 5–5; crustle_modern livefire: 3–5; Ghost box: 2–0).
