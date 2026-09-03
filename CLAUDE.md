@@ -16,15 +16,29 @@ engine (CPU only, zero tokens). The model's jobs are bounded:
 Every model output is validated against the engine before it's trusted.
 
 ## Current state
-- Data layer: done + tested. `data/standard_pool.json` = **1,300 cards** (marks
-  H/I/J; 24 in the tracked `data/manual_cards.json` supplement — Meowth ex, Mega
-  Charizard Y ex, Poké Pad, Mega Slowbro ex, Mega Excadrill ex, Drilbur,
-  Metagross (CRI), Rocky Fighting Energy, the Pitch Black Ghost prints
-  Shuppet (PBL) / Banette (PBL) / Dhelmise (PBL) / Poltchageist (PBL) /
-  Sinistcha (PBL) / Patrat (CRI) / Dunsparce (JTG), the Gwynn Supporter, and the
-  Pitch Black Toucannon line Pikipek / Trumbeak / Toucannon + Hoothoot (SCR),
-  Azumarill ex (ASC 84), and the Perfect Order Aegislash line Honedge / Doublade /
-  Aegislash (ME03 56/57/58) — merged by the fetch script and deduped by name).
+- Data layer: done + tested. `data/standard_pool.json` = **1,399 cards** as of the
+  2026-09-03 meta-scan (marks H/I/J; 33 in the tracked `data/manual_cards.json`
+  supplement — Meowth ex, Mega Charizard Y ex, Poké Pad, Mega Slowbro ex, Mega
+  Excadrill ex, Drilbur, Drilbur (TEF), Rocky Fighting Energy, Telepathic Psychic
+  Energy, Alakazam, Staryu, Metagross (CRI), the Pitch Black Ghost prints Shuppet
+  (PBL) / Banette (PBL) / Dhelmise (PBL) / Poltchageist (PBL) / Sinistcha (PBL) /
+  Patrat (CRI) / Dunsparce (JTG), the Gwynn Supporter, and the Pitch Black
+  Toucannon line Pikipek / Trumbeak / Toucannon + Hoothoot (SCR), Azumarill ex
+  (ASC 84), and the Perfect Order Aegislash line Honedge / Doublade / Aegislash
+  (ME03 56/57/58) — merged by the fetch script and deduped by name). The card
+  count moves every scan as upstream ships more of "Mega Evolution" (me1-me5);
+  don't treat the number itself as a tracked invariant, only the count-in-report.
+- `is_standard_legal()` (fetch_standard_pool.py) checks ONLY the printed
+  regulation mark now (meta-scan 2026-09-03 fix). It used to also require the
+  upstream dump's own `legalities.standard == "Legal"` as a belt-and-suspenders
+  ban-catcher — dropped because that field lags real tournament legality by
+  set (as of this scan it flagged 112 of me3 "Perfect Order"'s 124 mark-J cards
+  "Not Legal", including Mega Starmie ex and Telepathic Psychic Energy, both
+  real tournament Standard cards) and because the format currently has ZERO
+  individually banned cards (2026 rotation removes by regulation mark only) —
+  so the check had no real bans left to catch and was pure false-negative risk.
+  A genuine future ban needs explicit handling; this schema has no "Banned"
+  value to key off, only "Legal"/"Not Legal".
 - PRINT COLLISIONS: when a deck needs a DIFFERENT print of an already-pooled card,
   the new print is added as `"Name (SETCODE)"` and the pool's bare entry is left
   alone (Metagross (CRI), Shuppet (PBL), Dunsparce (JTG), ...). Registry keys use
@@ -33,6 +47,23 @@ Every model output is validated against the engine before it's trusted.
   `evolvesFrom` names the PRINTED card: `effects.print_base_name()` strips it and
   `game.evolves_onto()` / Rare Candy use that, so a suffixed PRE-evolution
   ("Dunsparce (JTG)") still evolves into its Stage 1.
+- PRINT_OVERRIDES (fetch_standard_pool.py, meta-scan 2026-09-03): the general
+  "if upstream ships this name, upstream wins and the manual entry is dropped"
+  rule assumes upstream shipping a name is the SAME card gaining upstream
+  coverage. That breaks when upstream starts shipping a bare name that used to
+  be manual-only, under a genuinely DIFFERENT print, processed earlier in
+  `list_set_codes()` order — "Drilbur" (manual = Pitch Black pbl-46, Call for
+  Family; upstream now also ships Temporal Forces sv5-85, Dig Dig Dig, processed
+  first) and "Alakazam" (manual = me1-56, Powerful Hand; upstream now also ships
+  sv6-82, Strange Hacking, processed first) are both this shape. "Rocky Fighting
+  Energy" / "Telepathic Psychic Energy" are the same fix for a different reason:
+  upstream's Energy-supertype JSON never carries a `types` field (what a Special
+  Energy provides lives only in free-text `rules`), so upstream's copy would
+  silently zero out `InPlayPokemon.provided_types()`. "Staryu" is a same-print
+  data fixup (empty `evolvesTo`, cosmetic — `game.evolves_onto()` doesn't read
+  it). Names in `PRINT_OVERRIDES` keep their manual entry even after upstream
+  starts shipping the same bare name; `Drilbur (TEF)` is a second, independently
+  reachable manual entry for the Dig Dig Dig print, not an override.
 - Engine: done + tested. `src/engine/` plays full legal games, zero tokens. Core
   rules faithful incl. evolution timing, Stadiums + the two bench chokepoints
   (Battle Cage counters / Tera attack-damage), Special Conditions, Tools, Special
