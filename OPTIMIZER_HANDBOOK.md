@@ -30,22 +30,51 @@ and in the package `__init__`. Keep it there.
 ```
 optimize.py                 CLI entrypoint
 src/optimizer/
-  types.py                  Decklist, OptimizationTarget, EvalResult (+ a data-
-                            container OptimizerReport, distinct from report.py's)
+  types.py                  Decklist, OptimizationTarget, EvalResult
   core.py                   DeckOptimizer.optimize() — the generational loop
   deck_generator.py         DeckMutator — population + 1–4 random mutations,
                             with a legality-repair pass (copy/ACE-SPEC/mark caps)
   evaluator.py              evaluate_deck() — plays games, mirrors seats,
                             rejects illegal decks (0% + recorded errors)
-  decklists.py              base decks, expanded from the engine's validated
-                            TOURNAMENT_* recipes (pool-valid by construction)
+  decklists.py              base decks, expanded from the engine DECKS registry
+                            (pool-valid by construction)
   meta.py                   get_current_meta_targets() — the opponent sets
   report.py                 OptimizerReport — print_summary() + save_json()
+  validation_runner.py      one-call driver for a meatier pass (NOT engine
+                            validation — see its docstring)
 tests/test_optimizer.py     smoke + integration tests (fast, MCTS off)
 ```
 
 The loop (per generation): mutate the current best into a population → evaluate
 each candidate → keep the highest win-rate → repeat.
+
+`generate_population` keeps index 0 as the **unmutated incumbent**, and
+`evaluate_deck` scores every candidate off the same fixed seed sequence, so the
+incumbent is re-scored on exactly the games its challengers played. Two things
+fall out of that and both are load-bearing:
+
+- **Elitism is explicit.** A generation is only adopted if it *beats* the
+  incumbent, so a run cannot drift sideways onto an equal-scoring mutant.
+- **The baseline is free.** Generation 1's incumbent score IS the base deck's
+  win rate, so every report carries `base_win_rate` and an `improvement` delta.
+  Without it a final "62%" is unreadable — you can't tell an optimizer that
+  found something from one that handed your list straight back. `print_summary`
+  also prints the per-card diff against the base list, or says plainly that
+  nothing changed.
+
+## What the mutator is allowed to reach for
+
+`DeckMutator.all_cards` is **not** the whole Standard pool — it is the union
+of every recipe in the engine's `DECKS` registry, plus basic energy (~230 names
+against a 1,300+ card pool). The pool is far wider than the set of cards whose
+effects are actually implemented, and a card
+with no registered effect is a blank in the sim: mutating toward the raw pool
+just fills lists with vanilla bodies and reads that as a deck change. Widening
+this set is the same work as implementing more effects, in that order.
+
+Mutations: replace a random slot; swap in an ex/MEGA attacker (selected by
+SUBTYPE, not by substring-matching the name); adjust one card's count up **or**
+down; or bring in a card the list doesn't already play.
 
 ## Decklist representation
 
@@ -67,15 +96,15 @@ legal before they're ever scored. Format = Standard marks `{H, I, J}`.
 
 ```bash
 # Fast greedy sweep (recommended first pass — no MCTS, seconds-to-minutes)
-python3 optimize.py --deck dragapult --target wildcard --fast --generations 4 --population 8
+python3 optimize.py --deck mega_excadrill --target wildcard --fast --generations 4 --population 8
 
 # MCTS-scored run against the current meta (slower — minutes-to-tens-of-minutes)
-python3 optimize.py --deck charizard --target current-meta --generations 6 --population 10
+python3 optimize.py --deck dragapult_blaziken --target current-meta --generations 6 --population 10
 ```
 
 | Flag | Meaning |
 |---|---|
-| `--deck` | `dragapult` \| `charizard` — starting list (from `decklists.py`) |
+| `--deck` | registry starter (default `mega_excadrill`; also blaziken-pult, crustle, festival, grimmsnarl, fighting, dragapult, charizard) |
 | `--target` | `current-meta` \| `mirror` \| `wildcard` — opponent set (`meta.py`) |
 | `--generations` | how many evolution rounds |
 | `--population` | candidates evaluated per generation |
@@ -84,10 +113,15 @@ python3 optimize.py --deck charizard --target current-meta --generations 6 --pop
 
 ### Cost model
 
-Per generation ≈ `num_games_per_matchup × population × len(opponent_decks)`
-games. MCTS at 40 iterations runs a few games/sec; greedy runs hundreds/sec.
-The `meta.py` targets ship with deliberately modest game counts — raise
-`num_games_per_matchup` for tighter confidence intervals when you have the time.
+Per generation ≈ `num_games_per_matchup × population` games. MCTS at 40
+iterations runs a few games/sec; greedy runs hundreds/sec.
+
+`num_games_per_matchup` is the TOTAL per candidate: `evaluate_deck` **splits** it
+across the opponent set (`num_games // len(opponents)`) rather than multiplying
+by it. So adding an opponent does not lengthen the run — it thins the games
+behind each matchup. The `current-meta` target's six opponents at 120 games mean
+20 games per matchup, which is noisy; raise `num_games_per_matchup` rather than
+trimming the field if you want tighter confidence.
 
 ## Tests
 
@@ -95,10 +129,12 @@ The `meta.py` targets ship with deliberately modest game counts — raise
 python3 tests/test_optimizer.py
 ```
 
-Covers: sample decks are legal 60s; the mutator keeps ≥90% of mutations legal;
-the evaluator runs, scores in `[0,1]`, and rejects illegal decks; and a tiny
-end-to-end `optimize()` produces a 60-card final deck and a report. These prove
-**wiring**, not card-game truth.
+Covers: sample decks are legal 60s; the mutator keeps ≥90% of mutations legal
+and never introduces a card outside the implemented set; counts move in both
+directions; the evaluator runs, scores in `[0,1]`, and rejects illegal decks; and
+a tiny end-to-end `optimize()` produces a 60-card final deck plus a report whose
+final win rate is never below its baseline. These prove **wiring**, not card-game
+truth.
 
 ## Provenance
 

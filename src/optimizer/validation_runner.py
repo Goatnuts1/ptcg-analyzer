@@ -31,9 +31,12 @@ def run_validation_pass(deck: str = "dragapult",
     """Run an optimization pass on a sample deck vs the current-meta target.
 
     Defaults are deliberately modest. Cost ≈
-        num_games_per_matchup * population_size * generations * n_opponents
-    games. With MCTS at ~a few games/sec that is the dominant time. Raise the
-    counts when you have time to spend; the estimate below prints first.
+        num_games_per_matchup * population_size * generations
+    games. num_games_per_matchup is the TOTAL per candidate — evaluate_deck
+    SPLITS it across the opponent set rather than multiplying by it, so adding
+    opponents thins games-per-matchup instead of lengthening the run. With MCTS
+    at ~a few games/sec that is the dominant time. Raise the counts when you
+    have time to spend; the estimate below prints first.
     """
     db = db or CardDB.from_pool()
     decks = get_sample_decks()
@@ -44,21 +47,27 @@ def run_validation_pass(deck: str = "dragapult",
     target.num_games_per_matchup = num_games_per_matchup
     target.use_mcts = use_mcts
 
-    est_games = (num_games_per_matchup * population_size *
-                 generations * len(target.opponent_decks))
-    print("🔬 Optimization pass (NOT simulator validation — see module docstring)\n")
+    n_opp = len(target.opponent_decks)
+    est_games = num_games_per_matchup * population_size * generations
+    per_matchup = max(1, num_games_per_matchup // n_opp)
+    print("Optimization pass (NOT simulator validation — see module docstring)\n")
     print(f"  deck:        {decks[deck].name}")
     print(f"  opponents:   {[d.name for d in target.opponent_decks]}")
     print(f"  budget:      ~{est_games:,} games "
           f"({'MCTS@'+str(OPTIMIZER_MCTS_ITERATIONS) if use_mcts else 'greedy'})")
+    print(f"               {per_matchup} games per candidate per opponent "
+          f"({n_opp} opponents)")
     if use_mcts and est_games > 5000:
-        print("  ⚠️  MCTS at this game count can take a long time (many minutes+).")
+        print("  WARNING: MCTS at this game count can take a long time (many minutes+).")
         print("      Pass use_mcts=False or lower the counts for a quick pass.\n")
 
     report = optimizer_optimize(db, target, decks[deck], generations, population_size)
 
-    print("\n✅ Pass complete (relative signal under an un-validated model).")
-    print(f"   Best win rate achieved: {report.win_rate:.1%}")
+    print("\nPass complete (relative signal under an un-validated model).")
+    if report.base_win_rate is not None:
+        print(f"   Base list:   {report.base_win_rate:.1%}")
+    print(f"   Best win rate achieved: {report.win_rate:.1%} "
+          f"({report.improvement:+.1%})")
     return report
 
 

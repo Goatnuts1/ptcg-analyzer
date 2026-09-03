@@ -7,8 +7,28 @@ import random
 from collections import Counter
 from typing import List
 from ..engine.cards import CardDB
+from ..engine.decks import DECKS
 from ..engine.legality import is_mark_legal, MAX_COPIES
 from .types import Decklist
+
+
+def _implemented_card_names(db: CardDB) -> list:
+    """Names the engine can actually play: union of every DECKS recipe, plus
+    basic energy. The Standard pool is an order of magnitude wider than the set
+    of cards with a registered effect, and an unimplemented card is a blank in
+    the sim — so mutating toward the raw pool just fills lists with vanilla
+    bodies and scores that as a deck change.
+    """
+    names = set()
+    for recipe in DECKS.values():
+        for name, _count in recipe:
+            card = db._by_name.get(name)
+            if card is not None and is_mark_legal(card):
+                names.add(name)
+    for n, c in db._by_name.items():
+        if c.is_basic_energy:
+            names.add(n)
+    return sorted(names)
 
 
 class DeckMutator:
@@ -16,12 +36,17 @@ class DeckMutator:
 
     def __init__(self, db: CardDB):
         self.db = db
-        # Only mutate toward cards that are legal in the current format, so the
-        # mark-legality rule is satisfied by construction. (from_pool is already
-        # standard-only, but we filter explicitly in case a wider db is passed.)
-        self.all_cards = [n for n, c in db._by_name.items() if is_mark_legal(c)]
+        self.all_cards = _implemented_card_names(db)
+        if not self.all_cards:
+            raise RuntimeError("mutator card pool is empty — DECKS/registry failed to load")
         self._basic_energy = {n for n, c in db._by_name.items() if c.is_basic_energy}
         self._ace_spec = {n for n, c in db._by_name.items() if "ACE SPEC" in c.subtypes}
+        # Big attackers, by SUBTYPE — not by substring. The old filter matched
+        # any name containing "ex"/"V"/"MEGA" as text, which both missed cards
+        # and swept in unrelated ones; "V" in particular is a rotated mechanic
+        # that matches every capital-V name in the pool.
+        self._tech_pool = [n for n in self.all_cards
+                           if {"ex", "MEGA"} & set(db._by_name[n].subtypes)]
 
     def generate_population(self, base_deck: List[str], size: int = 12) -> List[List[str]]:
         """Generate a population of varied decks."""
@@ -90,31 +115,39 @@ class DeckMutator:
         return deck
 
     def _add_tech_card(self, deck: List[str]) -> List[str]:
-        """Add a popular tech card (ex, V, etc.)."""
-        tech_pool = [c for c in self.all_cards if any(x in c for x in ["ex", "V", "ex ", "MEGA"])]
-        if tech_pool:
-            tech = random.choice(tech_pool)
-            if deck.count(tech) < 4:
-                idx = random.randrange(len(deck))
-                deck[idx] = tech
+        """Swap one slot for an ex / MEGA attacker."""
+        if not self._tech_pool or not deck:
+            return deck
+        tech = random.choice(self._tech_pool)
+        if deck.count(tech) < MAX_COPIES:
+            idx = random.randrange(len(deck))
+            deck[idx] = tech
         return deck
 
     def _adjust_counts(self, deck: List[str]) -> List[str]:
-        """Slightly increase or decrease count of a card."""
+        """Increase OR decrease the count of one card by 1.
+
+        Both directions matter: a mutator that only ever adds copies can raise a
+        line's count but never trim it, so counts ratchet upward and thinning a
+        clogged list is unreachable.
+        """
         if len(deck) < 2:
             return deck
         card = random.choice(deck)
-        if deck.count(card) >= 4:
-            return deck  # already maxed
-        # Simple: replace a random card with this one
-        idx = random.randrange(len(deck))
-        deck[idx] = card
+        up = random.random() < 0.5
+        if up and deck.count(card) < MAX_COPIES:
+            deck[random.randrange(len(deck))] = card
+        elif not up and deck.count(card) > 1:
+            deck[deck.index(card)] = random.choice(self.all_cards)
         return deck
 
     def _swap_two_cards(self, deck: List[str]) -> List[str]:
-        """Swap positions of two cards."""
-        if len(deck) < 2:
-            return deck
-        a, b = random.sample(range(len(deck)), 2)
-        deck[a], deck[b] = deck[b], deck[a]
+        """Replace one card with an implemented card the deck does not play.
+        (A positional swap is a no-op on a multiplicity list.)"""
+        present = set(deck)
+        newcomers = [c for c in self.all_cards if c not in present]
+        if not newcomers:
+            return self._replace_random_card(deck)
+        idx = random.randrange(len(deck))
+        deck[idx] = random.choice(newcomers)
         return deck

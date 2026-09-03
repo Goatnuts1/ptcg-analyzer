@@ -3,7 +3,6 @@
 core.py — Main Deck Optimizer Operating Loop
 """
 
-import argparse
 import time
 from pathlib import Path
 from typing import List
@@ -13,7 +12,6 @@ from .types import Decklist, OptimizationTarget
 from .deck_generator import DeckMutator
 from .evaluator import evaluate_deck
 from .report import OptimizerReport
-from .meta import get_current_meta_targets
 
 
 class DeckOptimizer:
@@ -27,13 +25,19 @@ class DeckOptimizer:
                  generations: int = 10, population_size: int = 12,
                  output_dir: str = "optimizer_runs") -> OptimizerReport:
 
-        Path(output_dir).mkdir(exist_ok=True)
+        if generations < 1:
+            raise ValueError("generations must be >= 1")
+        if population_size < 1:
+            raise ValueError("population_size must be >= 1")
 
-        print(f"\n🚀 Starting Optimization → {target.name}")
+        Path(output_dir).mkdir(parents=True, exist_ok=True)
+
+        print(f"\nStarting optimization -> {target.name}")
         print(f"Goal: {target.description}\n")
 
         current_best = base_deck.cards[:]
-        best_winrate = 0.0
+        base_winrate = None      # filled from generation 1 (see below)
+        best_winrate = -1.0
         history = []
 
         start_time = time.time()
@@ -55,14 +59,27 @@ class DeckOptimizer:
                 )
                 results.append((deck, score))
 
-            # Select best
+            # generate_population keeps index 0 as the unmutated incumbent, and
+            # evaluate_deck scores every candidate off the SAME fixed seed
+            # sequence — so results[0] here is the incumbent's score under
+            # exactly the games its challengers played. On generation 1 that is
+            # the base deck, which is the only honest baseline for the delta.
+            incumbent_winrate = results[0][1].win_rate
+            if base_winrate is None:
+                base_winrate = incumbent_winrate
+
+            # Select best. Elitism is explicit: a generation that produces no
+            # improvement keeps the incumbent rather than drifting sideways onto
+            # an equal-scoring mutant.
             results.sort(key=lambda x: x[1].win_rate, reverse=True)
-            current_best = results[0][0]
-            best_winrate = results[0][1].win_rate
+            if results[0][1].win_rate > best_winrate:
+                current_best = results[0][0]
+                best_winrate = results[0][1].win_rate
 
             history.append({
                 "generation": gen,
-                "win_rate": best_winrate
+                "win_rate": best_winrate,
+                "generation_best": results[0][1].win_rate,
             })
 
             print(f"  Best: {best_winrate:.1%} | Time: {time.time()-gen_start:.1f}s")
@@ -76,7 +93,8 @@ class DeckOptimizer:
             generations=generations,
             history=history,
             target=target,
-            total_time_seconds=total_time
+            total_time_seconds=total_time,
+            base_win_rate=base_winrate,
         )
 
         report.print_summary()
@@ -84,33 +102,3 @@ class DeckOptimizer:
 
         return report
 
-
-def main():
-    parser = argparse.ArgumentParser(description="Pokémon TCG Deck Optimizer")
-    parser.add_argument("--deck", choices=["dragapult", "charizard"], default="dragapult")
-    parser.add_argument("--target", choices=["current-meta", "mirror", "wildcard"], default="current-meta")
-    parser.add_argument("--generations", type=int, default=8)
-    parser.add_argument("--population", type=int, default=12)
-    parser.add_argument("--fast", action="store_true")
-    parser.add_argument("--output", default="optimizer_runs")
-    args = parser.parse_args()
-
-    db = CardDB.from_pool()
-    optimizer = DeckOptimizer(db)
-
-    # TODO: Load proper decklists from decklists.py
-    # For now using placeholder
-    print("Note: Using sample decklists (expand later)")
-
-    target = get_current_meta_targets()[0]
-    if args.fast:
-        target.use_mcts = False
-
-    optimizer.optimize(target.opponent_decks[0], target,
-                      generations=args.generations,
-                      population_size=args.population,
-                      output_dir=args.output)
-
-
-if __name__ == "__main__":
-    main()

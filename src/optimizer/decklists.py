@@ -1,22 +1,23 @@
 #!/usr/bin/env python3
 """
-decklists.py — Sample base decks for the optimizer.
+decklists.py — Base decks for the optimizer, sourced from the engine registry.
 
-These are sourced from the engine's already-validated tournament recipes
-(src/engine/decks.py: TOURNAMENT_DRAGAPULT, TOURNAMENT_CHARIZARD_XY), which
-load to legal 60-card lists against data/standard_pool.json. We expand those
-(name, count) recipes into the flat name-with-multiplicity lists the optimizer
-mutates. This guarantees every base deck is pool-valid and legal on day one —
-unlike hand-typed lists, which drift from the pool's exact card names.
+Every list is expanded from src/engine/decks.py:DECKS, so it is pool-valid by
+construction (same guarantee as the old TOURNAMENT_* copies). Starting keys are
+the August 2026 ladders that actually matter; `dragapult` / `charizard` stay as
+aliases so existing flags and tests keep working.
 """
 
-from typing import Dict, List
+from typing import Dict, List, Tuple
 
-from ..engine.decks import TOURNAMENT_DRAGAPULT, TOURNAMENT_CHARIZARD_XY
+from ..engine.decks import DECKS
 from .types import Decklist
 
 
-def _expand_names(recipe: List[tuple]) -> List[str]:
+Recipe = List[Tuple[str, int]]
+
+
+def _expand_names(recipe: Recipe) -> List[str]:
     """[(name, count), ...] -> flat ['name', 'name', ...] of length sum(counts)."""
     out: List[str] = []
     for name, count in recipe:
@@ -24,22 +25,41 @@ def _expand_names(recipe: List[tuple]) -> List[str]:
     return out
 
 
-DRAGAPULT_STANDARD = Decklist(
-    name="Dragapult ex (Standard)",
-    cards=_expand_names(TOURNAMENT_DRAGAPULT),
-    archetype="Dragapult",
-)
+def decklist_from_registry(key: str) -> Decklist:
+    if key not in DECKS:
+        raise KeyError(f"unknown deck {key!r}. have: {sorted(DECKS)}")
+    return Decklist(name=key, cards=_expand_names(DECKS[key]), archetype=key)
 
-CHARIZARD_MEGA = Decklist(
-    name="Mega Charizard X/Y ex (Standard)",
-    cards=_expand_names(TOURNAMENT_CHARIZARD_XY),
-    archetype="Charizard",
-)
+
+# CLI --deck starters. House list first; aliases map old flags onto registry keys.
+STARTING_KEYS = [
+    "mega_excadrill",
+    "mega_excadrill_shaymin",
+    "dragapult",
+    "dragapult_blaziken",
+    "crustle_modern",
+    "festival_lead",
+    "grimmsnarl_froslass",
+    "fighting",
+    "charizard_xy",
+]
+
+ALIASES = {
+    "charizard": "charizard_xy",
+}
 
 
 def get_sample_decks() -> Dict[str, Decklist]:
-    """Map the CLI --deck choices to base decklists."""
-    return {
-        "dragapult": DRAGAPULT_STANDARD,
-        "charizard": CHARIZARD_MEGA,
-    }
+    """Map CLI --deck choices to base decklists (aliases included)."""
+    out: Dict[str, Decklist] = {}
+    for key in STARTING_KEYS:
+        out[key] = decklist_from_registry(key)
+    for alias, real in ALIASES.items():
+        src = out[real]
+        out[alias] = Decklist(name=alias, cards=src.cards[:], archetype=real)
+    return out
+
+
+# Back-compat names some older imports used.
+DRAGAPULT_STANDARD = decklist_from_registry("dragapult")
+CHARIZARD_MEGA = decklist_from_registry("charizard_xy")
