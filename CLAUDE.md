@@ -332,6 +332,51 @@ lives at a chokepoint, know they exist:
   bench-width preference; treat greedy numbers for this archetype as a floor.
 
 
+## N's Zoroark ex build (2026-09-05 meta scan's one build-bar crosser)
+`ns_zoroark` = Öjvind Svinhufvud's **Worlds 2026 9th place** list (TOURNAMENT
+provenance, second only to `dragapult_worlds`; source limitlesstcg.com/decks/list/28759).
+The archetype was #8 on Limitless at 5.19% share / 48.01% real WR with no registry deck.
+Effects in the §NS-ZOROARK-2026-09 section of effects.py, tested in `tests/test_ns_zoroark.py`.
+Every card was already in the pool — this build added ZERO cards, only effects.
+- **Night Joker is NOT a discard-pile copy.** Real text (limitlesstcg JTG/98 +
+  Bulbapedia): "Choose 1 of your Benched N's Pokémon's attacks and use it as this
+  attack." It copies off your own BENCH, and the copied attack's Energy cost is NOT
+  paid — [D][D] fires N's Zekrom's [R][L][L][C] 250-damage Rampaging Thunder. The Bench
+  is a MENU, not a board. `use_copied_attack()` is the shared resolver; Slowking's Seek
+  Inspiration (the same "use it as this attack" mechanic) was refactored onto it,
+  behaviour and log lines unchanged.
+- **First attack whose CHOICE is enumerated into the Action.** `Action.copy_attack_index`
+  (+ `target_index` = bench slot) with an `mcts._semantic_key` case; ordinary attack keys
+  became `("attack", ai, -1, -1)` — all-integer sentinels, relative order preserved, so no
+  recorded number moved (verified: mcts dragapult/charizard_xy seed 1 is byte-identical).
+  It rides on `EffectContext.copy_choice`, NOT PlayerState, so there is no clone() field
+  and no start_turn reset to leak. `fx.copy_attack_options()` returns None for every
+  ordinary attack — that is what keeps other decks' action sets identical.
+  `tests/test_mcts_keys.py` now sweeps `ns_zoroark` for exactly this.
+- **POISON is a new Special Condition** — the engine's second, after Confusion.
+  `InPlayPokemon.poisoned` (cloned), cleared at all 8 sites `confused` is, applied in
+  `fx.pokemon_checkup` (1 counter per Checkup, Actives only — a Condition can't live on
+  the Bench here). Not an attack, so no attack-scoped wall stops it. Pecharunt ex's
+  Subjugating Chains poisons YOUR OWN new Active on purpose: that is what switches
+  **Binding Mochi** (+40 while the holder is Poisoned) on, at the apply_attack_damage
+  chokepoint beside Brave Bangle.
+- Other pieces: **N's Castle** (passive Stadium in `game.retreat_cost`, symmetric, no
+  owner check), **Transformation Tome** (play-2-at-once; the swap is a one-line
+  `InPlayPokemon.card` reassignment, which IS the card's "attached cards, damage
+  counters, Special Conditions, turns in play remain" clause), **N's PP Up** (Bench-only
+  Energy from discard), **Black Belt's Training** (rides `bonus_damage_vs_ex_v`; the
+  pool has ZERO V/VMAX/VSTAR so ex-only vs ex-or-V cannot diverge in this format).
+- HONEST NUMBERS — a PILOT FLOOR, not a rating. greedy n=40 vs `dragapult` 12.5%,
+  `mega_excadrill` 7.5%, `crustle_modern` 2.5%; mcts2@60 n=20 doubles it to 20.0% vs
+  both `dragapult` and `mega_excadrill`, and mcts@120 n=6 reads 33.3%. Real WR is
+  **48.01%**. Same shape as `festival_lead` (7% greedy vs 51.18% real): the deck's whole
+  skill is Bench-menu construction, Trade discard selection and routing 8 Basic Darkness
+  Energy into an Active Zoroark, none of which greedy plans. Five NARROW greedy branches
+  were added for it (copy-attack valuation, Zoroark fuel, Bench-menu payload pick +
+  widened bench cap, promotion with a Rampaging-Thunder lock pivot), each gated on
+  N's Zoroark ex so no other archetype's play changes — full suite stayed 104/104 green
+  and the mcts baseline unmoved. Do NOT quote these as the deck's strength.
+
 ## The overnight matrix (2026-08-17) — the current strength read
 `docs/BEST_DECK_2026-08.md` + raw cells in `docs/matrix_2026-08_mcts2.json`: 159
 pairings, both sides mcts2@60, n=60, seed 2026 — 20 candidates vs the 14-archetype live

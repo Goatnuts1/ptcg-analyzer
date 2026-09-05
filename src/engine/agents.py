@@ -151,11 +151,30 @@ class GreedyAgent:
                 v += 30
             return v * (2 if fx.current_stadium_name(state) == "Festival Grounds" else 1)
 
+        # COPY-ATTACK value (N's Zoroark ex's Night Joker): the attack's printed damage
+        # is nothing at all — its real value is the Benched attack the ACTION itself
+        # names. Every input here is public: whose Bench, which Pokémon, which attack.
+        # Without this, greedy sees 0 for every copy option, `max` returns whichever
+        # came first, and the deck fires N's Zorua's 20-damage Scratch instead of the
+        # 250 it paid two Darkness Energy to reach. Same known-information exception
+        # shape as Do the Wave above and Seek Inspiration below; scoped to actions that
+        # actually carry a copy index, so no other deck's ranking moves.
+        def _copy_value(a):
+            if a.copy_attack_index is None or a.target_index is None:
+                return None
+            if not (0 <= a.target_index < len(p.bench)):
+                return None
+            src = p.bench[a.target_index].card
+            if not (0 <= a.copy_attack_index < len(src.attacks)):
+                return None
+            return fx.seek_value(src, src.attacks[a.copy_attack_index])
+
         # 1. lethal attack?
         if defender is not None:
             for a in attacks:
                 atk = p.active.card.attacks[a.attack_index]
-                dmg = _wave_value(atk) or atk.damage
+                cv = _copy_value(a)
+                dmg = cv if cv is not None else (_wave_value(atk) or atk.damage)
                 for wtype, _ in defender.card.weaknesses:
                     if p.active.card.types and wtype == p.active.card.types[0]:
                         dmg *= 2
@@ -282,6 +301,15 @@ class GreedyAgent:
         if (any(fx.has_festival_lead(m.card) for m in p.all_in_play())
                 or any(c.is_pokemon and fx.has_festival_lead(c) for c in p.hand)):
             bench_cap = fx.bench_limit(state, p)
+        # A Night Joker board is a MENU, not a bench: N's Zoroark ex attacks with
+        # whatever its Benched N's Pokémon are holding, so the default development cap
+        # of 3 (four Zoroark and nothing to copy) starves the deck's only attack. Same
+        # scoped widening the Festival Lead branch above does, gated on actually owning
+        # a Night Joker user so no other archetype's bench width changes.
+        nj_board = (any(m.card.name == "N's Zoroark ex" for m in p.all_in_play())
+                    or any(c.name == "N's Zoroark ex" for c in p.hand + p.deck))
+        if nj_board:
+            bench_cap = fx.bench_limit(state, p)
         if benches and len(p.bench) < bench_cap:
             # Shaymin (DRI) first: its Flower Curtain only works FROM the Bench, so a
             # pilot holding it always benches it before random engine pieces. Scoped to
@@ -289,6 +317,25 @@ class GreedyAgent:
             for a in benches:
                 if p.hand[a.hand_index].name == "Shaymin (DRI)":
                     return a
+            # Night Joker payload next, for the same reason and in the same shape:
+            # N's Zekrom and the N's Darumaka line never attack from the Active Spot in
+            # this list (Rampaging Thunder's [R][L][L][C] is unpayable in mono-Darkness)
+            # — they exist ONLY as Bench menu items. Bench the one that would actually
+            # upgrade the menu, ahead of the random engine-piece pick.
+            if nj_board:
+                have = max((fx.seek_value(m.card, atk)
+                            for m in p.bench if fx.p_ns_pokemon(m.card)
+                            for atk in m.card.attacks), default=0)
+                best_a, best_v = None, have
+                for a in benches:
+                    c = p.hand[a.hand_index]
+                    if not (fx.p_ns_pokemon(c) and c.attacks):
+                        continue
+                    v = max(fx.seek_value(c, atk) for atk in c.attacks)
+                    if v > best_v:
+                        best_a, best_v = a, v
+                if best_a is not None:
+                    return best_a
             return self.rng.choice(benches)
         attaches = [a for a in acts if a.kind == "attach_energy"]
         if attaches:
@@ -332,6 +379,27 @@ class GreedyAgent:
                     if (mon.card.name == "Dragapult ex" and "Psychic" in card.types
                             and not any("Psychic" in e.types for e in mon.energy)):
                         return a
+            # 2a-nz. N's Zoroark ex fuel: Night Joker costs [D][D] and is the deck's
+            # ONLY attack — every other N's Pokémon is a Bench menu item that never
+            # attacks itself. Without this the Active (often Meowth ex) soaks every
+            # attachment while four fuelled-to-one Zoroark sit on the Bench, which is
+            # exactly what the first ns_zoroark sim games showed. Narrow scope: only an
+            # N's Zoroark ex, only Darkness, only until it holds 2.
+            # CONCENTRATE, don't spread: with four Zoroark on the board the naive
+            # "first one short of 2" rule puts one Energy on each and none of them can
+            # attack. Rank by how close the target already is to [D][D], tie-broken
+            # toward the Active (the one that can actually swing this turn) — N's
+            # Castle makes the follow-up retreat free anyway.
+            def _nz_target(a):
+                return p.active if a.target_index == -1 else p.bench[a.target_index]
+            nz = [a for a in attaches
+                  if "Darkness" in p.hand[a.hand_index].types
+                  and _nz_target(a) is not None
+                  and _nz_target(a).card.name == "N's Zoroark ex"
+                  and _nz_target(a).energy_count() < 2]
+            if nz:
+                return max(nz, key=lambda a: (_nz_target(a).energy_count(),
+                                              a.target_index == -1))
             # prefer attaching to the active
             active_attaches = [a for a in attaches if a.target_index == -1]
             return (active_attaches or attaches)[0]
@@ -351,6 +419,29 @@ class GreedyAgent:
                             and mon.energy_count() >= 2
                             and any("Psychic" in t for e in mon.energy
                                     for t in e.types)):
+                        return a
+
+        # 2b-nz. N's Zoroark ex promotion: Night Joker only fires from the Active Spot,
+        # and N's PP Up — the deck's Energy accelerator — attaches to the BENCH ONLY by
+        # its own text, so the fuelled Zoroark is on the Bench BY CONSTRUCTION and
+        # something has to walk it up. Same shape and thrash-guard as the Slowking
+        # branch above: only into a benched N's Zoroark ex that can already pay Night
+        # Joker's [D][D], and only while the Active is not already one. N's Castle (2 in
+        # the list) makes this retreat free for N's Pokémon, which is why the real deck
+        # plays it. Scoped by card name, so no other archetype's play changes.
+        # The `or cannot_attack` half is the Rampaging Thunder LOCK PIVOT, the same
+        # move the Blaziken branch below makes: copying N's Zekrom's 250 costs this
+        # Zoroark its next attack, and the human play is to walk up a second fuelled
+        # Zoroark rather than pass the dead turn. Without it the deck attacks every
+        # OTHER turn at best.
+        if p.active is not None and (p.active.card.name != "N's Zoroark ex"
+                                     or p.active.cannot_attack):
+            for a in acts:
+                if a.kind == "retreat":
+                    mon = p.bench[a.target_index]
+                    if (mon.card.name == "N's Zoroark ex" and not mon.cannot_attack
+                            and can_pay_cost(mon, fx.effective_cost(state, mon,
+                                                                    mon.card.attacks[0]))):
                         return a
 
         # 2b-fl. Festival Lead promotion: the whole deck runs from an FL Active
@@ -403,6 +494,9 @@ class GreedyAgent:
         # know what you just put on top of your own deck.
         def _attack_value(a):
             atk = p.active.card.attacks[a.attack_index]
+            cv = _copy_value(a)
+            if cv is not None:
+                return cv
             wv = _wave_value(atk)
             if wv is not None:
                 return wv

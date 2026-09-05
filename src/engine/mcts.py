@@ -182,7 +182,15 @@ def _semantic_key(state: GameState, a: Action):
         # the engine picks which Energy goes — so the kind alone is the decision.
         return ("stadium_garden",)
     if a.kind == "attack":
-        return ("attack", a.attack_index)
+        # The trailing pair is the COPY-ATTACK choice (N's Zoroark ex's Night Joker:
+        # which Benched N's Pokémon, which of its attacks). It is None/None for every
+        # ordinary attack, and -1 is used rather than None so the tuple stays
+        # all-integers and never hits a None-vs-int comparison when keys are sorted for
+        # tie-breaking. Ordinary attacks keep their relative key order exactly (they
+        # already differ at attack_index), so no previously recorded number moves.
+        return ("attack", a.attack_index,
+                -1 if a.target_index is None else a.target_index,
+                -1 if a.copy_attack_index is None else a.copy_attack_index)
     if a.kind == "pass":
         return ("pass",)
     # FAIL LOUD: a new action kind with no case here used to collapse into the

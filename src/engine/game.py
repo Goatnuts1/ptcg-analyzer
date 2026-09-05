@@ -45,9 +45,19 @@ class Action:
     hand_index: Optional[int] = None
     target_index: Optional[int] = None    # index into bench (or -1 for active)
     attack_index: Optional[int] = None
+    # COPY-ATTACK parameter (N's Zoroark ex's "Night Joker": "Choose 1 of your Benched
+    # N's Pokémon's attacks and use it as this attack."). For such an attack the choice
+    # is a REAL decision on public information — which benched Pokémon, which of its
+    # attacks — so it is enumerated into the action rather than buried in an effect's
+    # policy, and `mcts._semantic_key` keys on it so the search can actually compare the
+    # options. On a copy-attack action `target_index` is the BENCH index of the chosen
+    # N's Pokémon and `copy_attack_index` indexes that Pokémon's own attack list; both
+    # stay None for every other attack in the game, so no other deck's action set moves.
+    copy_attack_index: Optional[int] = None
 
     def __repr__(self):
-        return f"<{self.kind} h={self.hand_index} t={self.target_index} a={self.attack_index}>"
+        return (f"<{self.kind} h={self.hand_index} t={self.target_index} "
+                f"a={self.attack_index} c={self.copy_attack_index}>")
 
 
 PASS = Action(kind="pass")
@@ -171,6 +181,11 @@ def retreat_cost(mon: InPlayPokemon, state: "GameState" = None,
             and fx.skyliner_free_retreat(state, owner, mon)):
         return 0
     if not mon.energy and any(ab.name == "Agile" for ab in mon.card.abilities):
+        return 0
+    # N's Castle (Stadium): "N's Pokémon in play (both yours and your opponent's) have
+    # no Retreat Cost." Passive, symmetric, and it does NOT care whose Stadium it is —
+    # hence no `owner` check here, unlike Skyliner above.
+    if state is not None and fx.ns_castle_free_retreat(state, mon):
         return 0
     base = mon.card.retreat_cost
     # Jamming Tower: "Pokémon Tools attached to each Pokémon (both yours and your
@@ -363,7 +378,20 @@ def legal_actions(state: GameState) -> list[Action]:
         for ai, atk in enumerate(p.active.card.attacks):
             cost = fx.effective_cost(state, p.active, atk)   # Colorless discounts (Blood Moon)
             if can_pay_cost(p.active, cost) and atk.name not in p.active.locked_attacks:
-                actions.append(Action("attack", attack_index=ai))
+                # COPY-ATTACK attacks (Night Joker) fan out into one action per
+                # (benched Pokémon, its attack) the card lets you choose. `None` means
+                # "this is an ordinary attack" — the universal case, unchanged — and an
+                # EMPTY list means the copy attack is legal but has nothing to copy
+                # (Night Joker with no Benched N's Pokémon still resolves, and does
+                # nothing), which stays a single bare action.
+                opts = fx.copy_attack_options(state, p, p.active, atk)
+                if not opts:
+                    actions.append(Action("attack", attack_index=ai))
+                else:
+                    for bench_i, copy_i in opts:
+                        actions.append(Action("attack", attack_index=ai,
+                                              target_index=bench_i,
+                                              copy_attack_index=copy_i))
 
     return actions
 
@@ -371,14 +399,19 @@ def legal_actions(state: GameState) -> list[Action]:
 # --------------------------------------------------------------------------- #
 # Applying actions
 # --------------------------------------------------------------------------- #
-def _resolve_attack(state: GameState, atk_index: int) -> None:
+def _resolve_attack(state: GameState, atk_index: int,
+                    copy_choice: Optional[tuple] = None) -> None:
     attacker = state.current.active
     defender = state.opponent.active
     atk = attacker.card.attacks[atk_index]
     effect = fx.get_attack_effect(attacker.card.name, atk.name)
+    # `copy_choice` is the agent's (bench_index, attack_index) pick for a copy-attack
+    # (Night Joker). It rides on the EffectContext — which is built fresh per
+    # resolution and never cloned — so the choice needs no PlayerState field and
+    # therefore no clone() entry and no start_turn reset to leak across turns.
     ctx = fx.EffectContext(state=state, me=state.current, opp=state.opponent,
                            source=attacker, db=state.db, rng=state.rng,
-                           effect_kind="attack")
+                           effect_kind="attack", copy_choice=copy_choice)
 
     # Confusion: flip a coin; tails -> 30 to itself and the attack does nothing.
     if attacker.confused and not fx.flip(ctx):
@@ -500,6 +533,7 @@ def apply_action(state: GameState, action: Action) -> None:
         mon.evolved_this_turn = True       # no second evolution step this turn
         mon.ability_used_this_turn = False  # the new stage's ability is fresh
         mon.confused = False               # evolving removes Special Conditions
+        mon.poisoned = False
         state.emit(f"evolved into {card.name}")
         # on-evolve-from-hand trigger (Alakazam: Psychic Draw), unless suppressed
         trigger = fx.get_on_evolve_trigger(card.name)
@@ -526,6 +560,7 @@ def apply_action(state: GameState, action: Action) -> None:
             if p.active.energy:
                 p.discard.append(p.active.energy.pop())
         p.active.confused = False          # Special Conditions clear off the Active Spot
+        p.active.poisoned = False
         new_active = p.bench.pop(action.target_index)
         p.bench.append(p.active)
         p.active = new_active
@@ -538,6 +573,7 @@ def apply_action(state: GameState, action: Action) -> None:
         # Active Spot (same as retreat / Switch).
         newcomer = p.bench.pop(action.target_index)
         p.active.confused = False
+        p.active.poisoned = False
         p.bench.append(p.active)
         p.active = newcomer
         p.stadium_switch_used_this_turn = True
@@ -584,6 +620,7 @@ def apply_action(state: GameState, action: Action) -> None:
         mon.evolved_this_turn = True
         mon.ability_used_this_turn = False
         mon.confused = False               # evolving removes Special Conditions
+        mon.poisoned = False
         state.emit(f"Grand Tree: evolved into {stage1.name}")
         stage2 = fx.grand_tree_stage2_for(state, p, stage1)
         if stage2 is not None:
@@ -724,7 +761,9 @@ def apply_action(state: GameState, action: Action) -> None:
         return
 
     if action.kind == "attack":
-        _resolve_attack(state, action.attack_index)
+        copy_choice = (None if action.copy_attack_index is None
+                       else (action.target_index, action.copy_attack_index))
+        _resolve_attack(state, action.attack_index, copy_choice)
         # attacking always ends the turn
         state.phase = Phase.BETWEEN_TURNS
         return

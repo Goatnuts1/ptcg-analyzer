@@ -38,9 +38,14 @@ def main():
     # here for the same reason: it is the only list carrying the other two activated
     # Stadiums, Grand Tree ("stadium_evolve") and Mystery Garden ("stadium_garden").
     # doublade is here for the newest one: Team Rocket's Factory ("stadium_factory").
+    # ns_zoroark is here for a different shape of the same hazard: N's Zoroark ex's
+    # Night Joker is the only attack whose CHOICE is enumerated into the Action
+    # (target_index + copy_attack_index), so several "attack" actions coexist for one
+    # attack_index. If _semantic_key ever stopped keying on the copy parameter they
+    # would collapse into each other and the search would silently see one option.
     pairings = [("dragapult", "charizard_xy"), ("charizard_xy", "dragapult"),
                 ("hide_n_sneak", "dragapult"), ("gardevoir_real", "dragapult"),
-                ("doublade", "dragapult")]
+                ("doublade", "dragapult"), ("ns_zoroark", "dragapult")]
     for gi in range(24):
         which = pairings[gi % len(pairings)]
         da = load_deck(db, which[0])

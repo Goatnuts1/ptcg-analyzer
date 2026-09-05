@@ -40,6 +40,13 @@ class InPlayPokemon:
     played_this_turn: bool = False     # can't evolve the turn it was played
     evolved_this_turn: bool = False    # one evolution step per Pokemon per turn
     confused: bool = False             # Special Condition (cleared off the Active Spot)
+    # Special Condition #2: Poisoned. "Put 1 damage counter on the Poisoned Pokémon
+    # between turns" — resolved in effects.pokemon_checkup (the Pokémon Checkup window
+    # game.end_turn already opens for Froslass's Freezing Shroud). Same lifecycle as
+    # `confused`: cleared wherever a Pokémon leaves the Active Spot or evolves.
+    # Added for the N's Zoroark ex build (Pecharunt ex's Subjugating Chains poisons the
+    # Pokémon it promotes; Binding Mochi pays +40 only while its holder is Poisoned).
+    poisoned: bool = False
     tool: Optional[Card] = None        # attached Pokémon Tool (max 1)
     shielded: bool = False             # immune to attack damage & effects (Dunsparce Dig)
     # "During the opponent's next turn, if this Pokémon is damaged by an attack
@@ -99,6 +106,7 @@ class InPlayPokemon:
             played_this_turn=self.played_this_turn,
             evolved_this_turn=self.evolved_this_turn,
             confused=self.confused,
+            poisoned=self.poisoned,
             tool=self.tool,
             shielded=self.shielded,
             retaliate=self.retaliate,

@@ -1520,6 +1520,56 @@ DECK_GRIMMSNARL_FROSLASS: list[tuple[str, int]] = [
     ("Basic Darkness Energy", 9),
 ]
 
+# Öjvind Svinhufvud's WORLD CHAMPIONSHIPS 2026 list (San Francisco, Aug 28–30,
+# 9th place) — TOURNAMENT provenance, a Worlds top-cut finish, second only to
+# `dragapult_worlds` (the champion) in the registry. N's Zoroark ex was the #8
+# Standard archetype on the 2026-09-05 meta scan (5.19% share / 48.01% real win
+# rate) and the one build-bar crosser with no deck here.
+#
+# HOW IT WORKS: N's Zoroark ex is a 280 HP Stage 1 whose whole game is two lines
+# of text. "Trade" (discard a card, draw 2) has NO once-per-turn-across-copies
+# clause, so all four Zoroark are a draw engine at once. "Night Joker" ([D][D])
+# says "Choose 1 of your Benched N's Pokémon's attacks and use it as this
+# attack" — it does NOT pay the copied attack's cost, so two Darkness Energy
+# fire N's Zekrom's [R][L][L][C] 250-damage Rampaging Thunder or N's
+# Darmanitan's Flamebody Cannon out of a mono-Darkness deck. The Bench is a
+# menu, not a board. Pecharunt ex + 2 Binding Mochi is the secondary line:
+# Subjugating Chains promotes a Mochi holder and Poisons it, turning the Tool on
+# for +40 a swing. Source: limitlesstcg.com/decks/list/28759. Set codes in the
+# source list are display noise; names are exact.
+DECK_NS_ZOROARK: list[tuple[str, int]] = [
+    ("N's Zorua", 4),
+    ("N's Zoroark ex", 4),
+    ("N's Zekrom", 2),          # the Night Joker payload: 250 off a [D][D] cost
+    ("N's Darumaka", 1),
+    ("N's Darmanitan", 1),      # the other payload: Back Draft / Flamebody Cannon
+    ("Budew", 1),
+    ("Yveltal", 1),
+    ("Tatsugiri", 1),
+    ("Munkidori", 1),
+    ("Pecharunt ex", 1),        # Subjugating Chains -> self-Poison -> Binding Mochi
+    ("Meowth ex", 1),
+    ("Fezandipiti ex", 1),
+
+    ("Lillie's Determination", 4),
+    ("Boss's Orders", 3),
+    ("Cyrano", 2),
+    ("Black Belt's Training", 1),
+    ("Buddy-Buddy Poffin", 4),
+    ("Transformation Tome", 4),   # played 2-at-once: 2 uses from the 4 copies
+    ("N's PP Up", 3),
+    ("Ultra Ball", 3),
+    ("Poké Pad", 2),
+    ("Night Stretcher", 1),
+    ("Special Red Card", 1),
+    ("Secret Box", 1),            # ACE SPEC
+    ("Binding Mochi", 2),
+    ("N's Castle", 2),
+
+    ("Basic Darkness Energy", 8),
+]
+
+
 # Andrew Hedrick's WORLD CHAMPIONSHIP 2026 winning list (San Francisco, Aug 28–30,
 # 1st place, 14-2-0) — STRONGEST provenance in the registry: the deck that won the
 # whole format. Dragapult ex control-aggro: Phantom Dive spread + Munkidori counter
@@ -1594,6 +1644,7 @@ DECKS: dict[str, list[tuple[str, int]]] = {
     "festival_lead": DECK_FESTIVAL_LEAD,
     "grimmsnarl_froslass": DECK_GRIMMSNARL_FROSLASS,
     "dragapult_worlds": DECK_DRAGAPULT_WORLDS,
+    "ns_zoroark": DECK_NS_ZOROARK,
 }
 
 
