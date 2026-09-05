@@ -37,6 +37,10 @@ ROTATION_DATE = "2027-04 (est., annual cadence)"
 
 # Share deltas between the two most recent scans (pts). Maintained by the meta-scan
 # skill; positive = rising. Only RISERS contribute to trend risk.
+# NOT ROLLED FORWARD on 2026-08-27: play.limitlesstcg.com / limitlesstcg.com were both
+# blocked by this session's network egress policy (org-level denial, not retried per
+# the proxy README), so no fresh share table was fetched. Window still reflects
+# 2026-08-17 -> 2026-08-20; see docs/META_SCAN_2026-08-27.md.
 SHARE_TRENDS = {
     # archetype (registry name): (share_then, share_now) — 2026-08-17 -> 2026-08-20
     "raging_bolt":        (1.79, 1.97),
@@ -56,12 +60,21 @@ SHARE_TRENDS = {
 }
 
 # Speculative flags: upcoming-set concerns/opportunities per deck. LABELED SPECULATION.
+# 2026-08-27 update: the other three Storm Emeralda Megas now have search-engine-summarized
+# text (Mega Golisopod ex / Mega Golurk ex / Mega Malamar ex). Direct primary-source fetch
+# (Bulbapedia card pages, limitlesstcg) was blocked by this session's egress policy, so this
+# text is UNVERIFIED against a primary source — treat wording as approximate until a future
+# scan can confirm it directly, and do not build from it.
 SPECULATIVE_FLAGS = {
     "_global": [
         "Delta Reign (intl. 2026-11-06; JP 'Storm Emeralda' live since 07-31): four new "
         "Megas — Mega Rayquaza ex (280HP BASIC Mega, Storm Emerald 50x per Fire/Lightning "
         "Energy on its whole board, Colorless type, Fighting resistance), Mega Golisopod ex "
-        "(Grass), Mega Golurk ex, Mega Malamar ex.",
+        "(Grass ex; Ability lets it bench straight from hand once a Colorless Mega is "
+        "already in play, attack '220 for 1 Grass Energy vs. a damaged target' — text via "
+        "WebSearch summary, unverified), Mega Golurk ex (can't attack below 10 cards in "
+        "hand, self-damages 30 — unverified), Mega Malamar ex (Dark, 320 HP, damage scales "
+        "per opposing benched Pokemon — unverified, summary was partly non-English).",
         "30th Celebration (2026-09-16): reprint-heavy; low competitive impact expected "
         "unless the new Mewtwo ex / Mew ex prints are playable.",
     ],
@@ -75,7 +88,10 @@ SPECULATIVE_FLAGS = {
     ],
     "crustle_modern": [
         "Grass techs gain a target if Mega Golisopod ex (Grass) is playable; no direct "
-        "threat identified from revealed cards.",
+        "threat identified from revealed cards. UPDATE 2026-08-27 (unverified text): if "
+        "the 'ex' suffix holds, Golisopod's Finish Off is still a Pokemon-ex attack, so "
+        "Mysterious Rock Inn keeps walling it same as every other ex threat — tentatively "
+        "not a new hole, pending confirmed text.",
     ],
 }
 
