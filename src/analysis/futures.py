@@ -42,18 +42,22 @@ ROTATION_DATE = "2027-04 (est., annual cadence)"
 # the proxy README), so no fresh share table was fetched. Window still reflects
 # 2026-08-17 -> 2026-08-20; see docs/META_SCAN_2026-08-27.md.
 SHARE_TRENDS = {
-    # archetype (registry name): (share_then, share_now) — 2026-08-17 -> 2026-08-20
+    # archetype (registry name): (share_then, share_now)
+    # Rolled 2026-09-05 for the archetypes visible in that scan's live fetch
+    # (only top-12 rows were captured — see META_SCAN_2026-09-05.md); the rest
+    # carry forward their 2026-08-17->08-20 window unchanged since no fresher
+    # number for them was actually observed (08-24/08-27 fetches were blocked).
     "raging_bolt":        (1.79, 1.97),
     "cynthia_garchomp":   (1.18, 1.20),
-    "dragapult":          (12.35, 12.47),   # Dragapult + Dusknoir rows combined
-    "alakazam_deck":      (5.16, 5.24),
-    "slowking":           (5.26, 5.36),
-    "mega_excadrill":     (7.79, 7.84),
-    "festival_lead":      (6.75, 6.55),
-    "dragapult_blaziken": (5.99, 6.02),
-    "grimmsnarl_froslass": (4.66, 4.55),
-    "hide_n_sneak":       (4.10, 4.08),
-    "toucannon":          (3.40, 3.18),
+    "dragapult":          (12.47, 13.15),  # Dragapult(7.55) + Dusknoir(5.60), 09-05
+    "alakazam_deck":      (5.24, 5.81),    # Limitless now lists it "Alakazam Dudunsparce"
+    "slowking":           (5.36, 5.49),
+    "mega_excadrill":     (7.84, 7.35),
+    "festival_lead":      (6.55, 5.84),
+    "dragapult_blaziken": (6.02, 5.74),
+    "grimmsnarl_froslass": (4.55, 4.15),
+    "hide_n_sneak":       (4.08, 3.96),    # Limitless lists it "Dhelmise"
+    "toucannon":          (3.18, 2.51),
     "fighting":           (1.77, 1.89),
     "greninja":           (1.70, 1.63),
     "beedrill":           (1.22, 1.16),
