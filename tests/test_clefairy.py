@@ -263,12 +263,12 @@ def main():
     # exactly 3. ---
     st, a, b = fresh_state(db)
     a.active = InPlayPokemon(card=db.get("Kadabra"))
-    a.hand = [db.get("Alakazam")]
+    a.hand = [db.get("Alakazam (MEG)")]
     a.deck = [db.get("Basic Fire Energy")] * 10
     hand_before = len(a.hand)     # counts the Alakazam itself, popped during evolve
     st.active_index = 0
     game.apply_action(st, game.Action("evolve", hand_index=0, target_index=-1))
-    check(a.active.card.name == "Alakazam", "Kadabra should evolve into Alakazam")
+    check(a.active.card.name == "Alakazam (MEG)", "Kadabra should evolve into Alakazam")
     # the Alakazam card itself left the hand (-1), then Psychic Draw adds +3
     check(len(a.hand) == hand_before - 1 + 3,
           f"Psychic Draw should net hand -1(played)+3(drawn), got "
@@ -280,12 +280,12 @@ def main():
     abra = InPlayPokemon(card=db.get("Abra"))
     abra.played_this_turn = False
     a.active = abra
-    a.hand = [db.get("Rare Candy"), db.get("Alakazam")]
+    a.hand = [db.get("Rare Candy"), db.get("Alakazam (MEG)")]
     a.deck = [db.get("Basic Fire Energy")] * 10
     st.active_index = 0
     rc_index = next(i for i, c in enumerate(a.hand) if c.name == "Rare Candy")
     game.apply_action(st, game.Action("play_trainer", hand_index=rc_index))
-    check(a.active.card.name == "Alakazam",
+    check(a.active.card.name == "Alakazam (MEG)",
           "Rare Candy should skip Kadabra straight to Alakazam")
     check(len(a.hand) == 0 + 3,
           f"Psychic Draw should also fire via Rare Candy (hand should hold "
@@ -304,7 +304,7 @@ def main():
 
     # --- 3d. NEGATIVE: retreating does NOT draw 3 either. ---
     st, a, b = fresh_state(db)
-    a.active = InPlayPokemon(card=db.get("Alakazam"))     # already in play, no evolve
+    a.active = InPlayPokemon(card=db.get("Alakazam (MEG)"))     # already in play, no evolve
     bench_mon = InPlayPokemon(card=db.get("Dreepy"))
     a.bench = [bench_mon]
     a.hand = [db.get("Basic Fire Energy")] * 2
@@ -325,7 +325,7 @@ def main():
 
     # --- 3e. Hand size 0 -> 0 counters, 0 damage. ---
     st, a, b = fresh_state(db)
-    alakazam = InPlayPokemon(card=db.get("Alakazam"))
+    alakazam = InPlayPokemon(card=db.get("Alakazam (MEG)"))
     a.active = alakazam
     a.hand = []
     b.active = InPlayPokemon(card=db.get("Dragapult ex"))
@@ -339,7 +339,7 @@ def main():
 
     # --- 3f. Hand size 5 -> 2*5=10 counters = 100 damage. ---
     st, a, b = fresh_state(db)
-    alakazam = InPlayPokemon(card=db.get("Alakazam"))
+    alakazam = InPlayPokemon(card=db.get("Alakazam (MEG)"))
     a.active = alakazam
     a.hand = [db.get("Basic Fire Energy")] * 5
     b.active = InPlayPokemon(card=db.get("Dragapult ex"))     # 320 HP, survives 100
@@ -353,7 +353,7 @@ def main():
     # damage — Weakness must NOT apply even against a Dragon defender under a
     # Fairy Zone that would double a Psychic attacker's ATTACK damage. ---
     st, a, b = fresh_state(db)
-    alakazam = InPlayPokemon(card=db.get("Alakazam"))
+    alakazam = InPlayPokemon(card=db.get("Alakazam (MEG)"))
     a.active = alakazam
     a.hand = [db.get("Basic Fire Energy")] * 3          # 2*3=6 counters -> 60 if unaffected
     a.bench = [InPlayPokemon(card=db.get("Lillie's Clefairy ex"))]  # would rewrite Weakness
