@@ -980,13 +980,21 @@ DECK_OGERPON_BOX = [
     ("Ultra Ball", 4),
     ("Bug Catching Set", 4),
     ("Night Stretcher", 1),
-    ("Unfair Stamp", 1),         # ACE SPEC
+    ("Prime Catcher", 1),        # ACE SPEC — swapped in 2026-09-07, see decks.py note below
     ("Tera Orb", 1),             # Pokémon Tool
     ("Area Zero Underdepths", 3),  # Stadium
     # Energy (15)
     ("Basic Grass Energy", 11),
     ("Prism Energy", 4),
 ]
+# 2026-09-07 weekly meta-hunt swap: Unfair Stamp -> Prime Catcher (both already-
+# implemented ACE SPECs, so the deck still runs exactly one). Unfair Stamp's
+# can_play is gated on "a Pokémon of yours was KO'd last turn" — reactive and
+# often dead. Prime Catcher (gust + self-switch) is playable any turn the
+# opponent has a Bench and is what Cali White actually ran in her real 13th-
+# place Ogerpon Box list at the 2026 World Championships (San Francisco,
+# Aug 28) — see reports/weekly-meta-hunt/2026-09-07.md §e for the full
+# decklist and reasoning.
 
 # --------------------------------------------------------------------------- #
 # Crustle Standalone — a SIMPLIFIED-BUT-FAITHFUL-CORE version of the real
@@ -1061,13 +1069,25 @@ DECK_CRUSTLE_MODERN = [
     ("Switch", 1),
     ("Energy Switch", 2),
     ("Hero's Cape", 1),          # ACE SPEC
-    ("Crushing Hammer", 2),
+    ("Crushing Hammer", 1),
+    ("Enhanced Hammer", 1),      # swapped in 2026-09-07, see decks.py note below
     # Energy (16)
     ("Basic Grass Energy", 5),
     ("Basic Fighting Energy", 4),
     ("Mist Energy", 4),
     ("Spiky Energy", 3),
 ]
+# 2026-09-07 weekly meta-hunt swap: 1 of 2 Crushing Hammer -> Enhanced Hammer
+# (both already-implemented Items). Rune Heiremans' real 5th-place Crustle
+# list at the 2026 World Championships (San Francisco, Aug 28) ran 1 Enhanced
+# Hammer and NO Crushing Hammer at all. Crushing Hammer is a coin-flip against
+# any Energy; Enhanced Hammer is a guaranteed hit but Special-Energy-only —
+# a good trade here since the live field leans on Special Energy this deck
+# wants gone (Ogerpon Box's Prism Energy, this project's own Mist/Spiky
+# Energy techs on the mirror). Kept 1 Crushing Hammer rather than going to 2x
+# Enhanced Hammer since it still has a wider target (Basic Energy too) and
+# Heiremans' list is one data point, not a full-send signal — see
+# reports/weekly-meta-hunt/2026-09-07.md §f.
 
 
 # --------------------------------------------------------------------------- #
