@@ -3328,7 +3328,7 @@ ATTACK_EFFECTS: dict[tuple[str, str], Callable[[EffectContext], None]] = {
     # --- Journey Together / Surging Sparks / Mega Evolution ---
     ("Lillie's Clefairy ex", "Full Moon Rondo"): _full_moon_rondo,
     ("Chien-Pao", "Icicle Loop"): _icicle_loop,
-    ("Alakazam", "Powerful Hand"): _powerful_hand,
+    ("Alakazam (MEG)", "Powerful Hand"): _powerful_hand,
     # --- Perfect Order (Mega Starmie ex line) + Froakie/Frogadier ---
     ("Mega Starmie ex", "Jetting Blow"): _jetting_blow,
     ("Mega Starmie ex", "Nebula Beam"): _nebula_beam,
@@ -3356,7 +3356,7 @@ ATTACK_EFFECTS: dict[tuple[str, str], Callable[[EffectContext], None]] = {
     ("Ethan's Pichu", "Zapping Draw"): _zapping_draw,
     ("Mega Excadrill ex", "Undermine"): _undermine,
     ("Mega Excadrill ex", "Maximum Drilling"): _maximum_drilling,
-    ("Drilbur", "Call for Family"): _call_for_family,   # real tournament-list print (PBL 46)
+    ("Drilbur (PBL)", "Call for Family"): _call_for_family,   # real tournament-list print (PBL 46)
     ("Metagross (CRI)", "M Bounce Back"): _bounce_back,
     ("Metagross (CRI)", "Metallic Hammer"): _metallic_hammer,
     # --- Mega Evolution-era Fighting (Cynthia's Garchomp ex line) ---
@@ -3450,7 +3450,7 @@ ON_BENCH_TRIGGERS: dict[str, Callable[[EffectContext], None]] = {
 # (both the normal evolve action and Rare Candy count as "playing from hand to
 # evolve"). card_name -> effect(ctx with source = the just-evolved Pokémon).
 ON_EVOLVE_TRIGGERS: dict[str, Callable[[EffectContext], None]] = {
-    "Alakazam": _psychic_draw,
+    "Alakazam (MEG)": _psychic_draw,
     "Noctowl": _jewel_seeker,     # Jewel Seeker (SCR 115 / svp-141)
 }
 

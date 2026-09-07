@@ -6,8 +6,12 @@ the initial mega_excadrill build accidentally used different, non-matching print
 Black Drilbur the 2nd/416 "Tournament of Doom" list ran). Covers:
   - Metagross (CRI): M Bounce Back (60 + force the opponent to switch, their choice)
     and Metallic Hammer ("150+", optional discard 3 Metal Energy for +150).
-  - Drilbur (PBL, the bare name — NOT "Drilbur (TEF)"): Call for Family (search up to 2
-    Basic Pokémon to the Bench).
+  - Drilbur (PBL): Call for Family (search up to 2 Basic Pokémon to the Bench).
+
+UPDATED 2026-09-07 meta scan: upstream now also ships a standard-legal bare
+"Drilbur" (sv5-85, Temporal Forces, mark H) that wins the bare-name dedupe race
+over PBL 46, so the PBL print now lives under the suffixed name "Drilbur (PBL)"
+and the bare name resolves to TEF instead — both directions are asserted below.
 
 Run: python3 tests/test_metagross_cri_drilbur_pbl.py
 """
@@ -46,12 +50,23 @@ def main():
     db = CardDB.from_pool("data/standard_pool.json")
 
     metagross_cri = db.get("Metagross (CRI)")
-    drilbur_pbl = db.get("Drilbur")
+    drilbur_pbl = db.get("Drilbur (PBL)")
 
     check(metagross_cri.id == "cri-61", f"expected Chaos Rising Metagross (cri-61), got {metagross_cri.id}")
     check(drilbur_pbl.id == "pbl-46", f"expected Pitch Black Drilbur (pbl-46), got {drilbur_pbl.id}")
     check(not any(a.name == "Dig Dig Dig" for a in drilbur_pbl.abilities),
-          "the bare 'Drilbur' print must NOT carry Dig Dig Dig (that's 'Drilbur (TEF)')")
+          "the 'Drilbur (PBL)' print must NOT carry Dig Dig Dig (that's the bare 'Drilbur', TEF 85)")
+
+    # PRINT COLLISION regression guard (found 2026-09-07 meta scan): upstream now
+    # ALSO ships a standard-legal bare "Drilbur" (sv5-85, Temporal Forces, mark H)
+    # that wins the bare-name dedupe race over PBL 46 (sets.json lists TEF before
+    # ME05/Pitch Black) — so PBL 46 now lives under the suffixed name above, and
+    # the bare name resolves to TEF instead. Assert both directions so a future
+    # pool refetch that changes this fails loudly.
+    drilbur_bare = db.get("Drilbur")
+    check(drilbur_bare.id == "sv5-85", f"expected bare 'Drilbur' to be TEF 85 (sv5-85), got {drilbur_bare.id}")
+    check(any(a.name == "Dig Dig Dig" for a in drilbur_bare.abilities),
+          "the bare 'Drilbur' print (TEF 85) must carry Dig Dig Dig")
 
     # --- 1. M Bounce Back: 60 (engine-applied elsewhere) + force a switch; the
     # opponent's REPLACEMENT is chosen by _promote's healthiest-bencher policy. ---
