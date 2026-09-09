@@ -219,6 +219,41 @@ confirmation, but the pattern matches exactly.
 showing the same shape) — treat as provisionally CONFIRMED; the next
 Darkness-type opponent is the real second data point.
 
+**D14 — Audit what a card-selection Stadium/Trainer discards before playing
+it, especially the deck's OTHER win condition.** Prism Tower's discard-2,
+draw-1 (and similar draw-for-discard effects) is not free filtering — check
+what's leaving before committing, not just what's coming in.
+*Why:* `hide_n_sneak` runs exactly two real damage engines (Dhelmise's
+Vengeful Anchor and Lillie's Clefairy ex's Full Moon Rondo); feeding the
+second one into a Stadium's discard cost while already losing on the first
+means the deck never gets to use half its own game plan.
+*Evidence:* 2026-09-09 vs `UNITR3S` — both copies of `Lillie's Clefairy ex`
+discarded via Prism Tower over the game, never played, while Dhelmise
+alone was visibly not keeping up with a 330-damage Mega Excadrill ex.
+*Status:* single instance, but checkable every game this Stadium is played
+— look at the two discarded cards before confirming, not just the one
+drawn.
+
+**D15 — `hide_n_sneak` has no lever against a flat, unscaled big-Metal
+engine (Mega Excadrill ex's Maximum Drilling class) — treat it as a pure
+race from turn 1, not a trade.** No wall (Cornerstone Stance/Rock Inn
+equivalent), no HP tool, no type angle vs Metal exists anywhere in this
+list; every ~130–150 HP body dies to Maximum Drilling in one hit once 2+
+extra Energy is attached, full stop.
+*Why:* confirmed dead end, checked directly rather than assumed: Flutter
+Mane's Midnight Fluttering only suppresses the opposing ACTIVE's Ability,
+and Metal Maker fires from the BENCH — it would not have helped even if
+drawn (same limit already found checking a wildcard tech for `ns_zoroark`
+this week).
+*Evidence:* 2026-09-09 vs `UNITR3S` — 0–6 shutout; a correctly-read
+Boss's-Orders tempo denial (D2-adjacent) bought exactly one turn and no
+more, because there's no follow-up to convert a bought turn into an actual
+answer.
+*Status:* single instance, but the "no lever exists" claim is a checked
+structural fact about the decklist, not a guess — plan future games
+against this shell as a clock race (deny the setup turn, don't expect to
+out-trade it) rather than hoping a different sequencing fixes it.
+
 **On "why wasn't this already obvious":** it basically was — D10's origin
 game (2026-08-23) is the same instinct, independently confirmed sound at the
 time, and then never checked again for three weeks because there was no

@@ -1035,3 +1035,40 @@ consistent with tonight's pattern.)
 Anchor`) didn't match the resolved card — same known print-collision gap
 as the prior entry, not a new bug. Ladder ledger: 45–37 (Shaymin variant:
 5–5; crustle_modern livefire: 3–5; Ghost box: 4–0).
+
+---
+
+## 2026-09-09 · vs `UNITR3S` (Mega Excadrill ex / Metang Metal Maker burst) · **LOSS 0–6, shutout** · piloting the Ghost box
+
+The house archetype from the wrong side of the table, and a clean shutout.
+UNITR3S's engine: two Metang bodies each firing Metal Maker once per turn
+(2 Energy each, 4 in one turn on the explosive first swing) fed Mega
+Excadrill ex to Undermine (90, flat) and Maximum Drilling (200, +130 more
+at 2+ extra Energy = 330) on a clock nothing in the Ghost box's ~130–150
+HP roster survives. Six KOs, six prizes, Goatest1 landed exactly one
+attack (Vengeful Anchor, 30 — the ability count was never built up).
+
+**Not a piloting failure — a real structural gap, worth stating plainly.**
+Boss's Orders correctly denied Mega Excadrill ex an attack for one turn
+(forced Metang active instead) — right read, and it bought a turn, but
+UNITR3S just retreated Metang back down next turn and resumed; there is no
+lever in this list to make that tempo stick. `hide_n_sneak` runs no wall
+(no Cornerstone Stance / Rock Inn equivalent), no HP-boosting Tool, and no
+type angle against Metal — every body just dies to Maximum Drilling in one
+hit once 2+ extra Energy is on. Checked and ruled out: Flutter Mane's
+Midnight Fluttering wouldn't have helped even if drawn — it only
+suppresses the opposing ACTIVE's Ability, and Metal Maker was fired from
+the BENCH all game (confirmed dead end, matches the same limit found
+verifying a wildcard for `ns_zoroark` earlier this week).
+
+**One real, concrete misplay:** both copies of `Lillie's Clefairy ex` — the
+deck's OTHER scaling attacker (Full Moon Rondo) — got discarded via Prism
+Tower's draw-a-card cost instead of ever hitting the board, while already
+losing to a clock this deck can't out-tank. Prism Tower's discard isn't
+free card selection; it cost the only other damage engine in the list a
+chance to matter, in a game where Dhelmise alone was already failing to
+keep up.
+
+181/181 lines parsed, 28/28 cards resolved (same known Vengeful Anchor
+print gap, not new). Ladder ledger: 45–38 (Shaymin variant: 5–5;
+crustle_modern livefire: 3–5; Ghost box: 4–1).
