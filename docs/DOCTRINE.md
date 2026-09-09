@@ -197,6 +197,28 @@ continued trading is a cost, not progress. The 2026-09-09 game had no faster
 attack line available (down 3–5 on prizes into a two-shotting attacker), so
 D12 correctly took priority over continuing to trade.
 
+## Deck identity — known structural weaknesses
+
+**D13 — `hide_n_sneak`'s entire attacker line is Darkness-weak, not just one
+bad matchup card.** Every Ghost-box body (Shuppet / Banette / Dhelmise /
+Poltchageist / Sinistcha) is Psychic-typed with Darkness Weakness, so ANY
+Darkness-type opponent's printed damage effectively doubles against
+whatever we put in the Active Spot — this is a roster-wide structural
+exposure, not a single-card gotcha to tech around.
+*Why:* Weakness is checked on the DEFENDING Pokémon's card, and the whole
+line shares the same type — there's no in-roster answer that dodges it;
+the only real counters are denying the KO (don't front a body that's about
+to die for free) or racing before it matters (see D11/D12).
+*Evidence:* 2026-09-09 vs `Scannor991` (N's Zoroark ex) — Night Joker
+copying Virtuous Flame one-shot two Dhelmise and a Banette in a row, 170
+doubled to 340 every time. Also observed against a Mega Gengar ex / Mega
+Darkrai ex list in an earlier session game, coached in chat but never
+formally added to `LADDER_LOG.md` — not counted as a second LOGGED
+confirmation, but the pattern matches exactly.
+*Status:* single LOGGED confirmation (plus one uncounted chat-only game
+showing the same shape) — treat as provisionally CONFIRMED; the next
+Darkness-type opponent is the real second data point.
+
 **On "why wasn't this already obvious":** it basically was — D10's origin
 game (2026-08-23) is the same instinct, independently confirmed sound at the
 time, and then never checked again for three weeks because there was no

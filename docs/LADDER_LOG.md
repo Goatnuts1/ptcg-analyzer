@@ -996,3 +996,42 @@ known print-collision gap (`hide_n_sneak` runs the PBL prints under
 suffixed names; the importer has only the bare log name to go on), not a
 new bug. Ladder ledger: 44–37 (Shaymin variant: 5–5; crustle_modern
 livefire: 3–5; Ghost box: 3–0).
+
+---
+
+## 2026-09-09 · vs `Scannor991` (N's Zoroark ex — the exact archetype registered this week) · **WIN by opponent concession, down 0–3 on prizes** · piloting the Ghost box
+
+Real-world confirmation the `ns_zoroark` build was worth doing: Scannor991
+is running the archetype we just registered (Trade-chained N's Zoroark ex,
+Night Joker copying a Benched N's Reshiram's Virtuous Flame, Janine's
+Secret Art self-Poison, N's Castle) almost beat for beat. **Every KO this
+game was Night Joker copying Virtuous Flame for 170, doubled to 340 by
+Darkness Weakness** — it one-shot two Dhelmise and a Banette in a row.
+Goatest1 landed exactly one attack all game (Vengeful Anchor, 170, into a
+fresh N's Zoroark ex that Night Stretcher then returned to hand, erasing
+the damage for free) and was down 0–3 on prizes when Scannor991 conceded.
+
+**The concession itself is genuinely unexplained by the visible board** —
+this is a single-observer log, so Scannor991's remaining deck size isn't
+knowable, but the shape fits a real risk of their own archetype: `Trade`
+has no once-per-turn-across-copies clause (documented in CLAUDE.md's own
+`ns_zoroark` build notes), and this game shows them firing it 2–3 times a
+turn, every turn, on top of a Secret Box, a Cyrano, and Buddy-Buddy Poffins
+— that's a lot of self-inflicted deck-cycling for a player who was
+otherwise dominating the board. Flagging as a hypothesis, not a finding:
+their own engine may have been closer to a self-deck-out than the prize
+score suggested. Not confirmed — no visible deck-count evidence either way.
+
+**New doctrine (see `docs/DOCTRINE.md` D13):** this is the SECOND time a
+Darkness-type opponent has doubled through the Ghost box's entire attacker
+line, not just one bad matchup card — every `hide_n_sneak` body (Shuppet /
+Banette / Dhelmise / Poltchageist / Sinistcha) is Psychic-typed with
+Darkness Weakness. (First instance was an earlier session game vs a Mega
+Gengar ex / Mega Darkrai ex list, coached in chat but never formally
+logged here — chat-only, not counted as a second LOGGED confirmation, but
+consistent with tonight's pattern.)
+
+193/193 lines parsed, 38/38 cards resolved. One move (`Dhelmise: Vengeful
+Anchor`) didn't match the resolved card — same known print-collision gap
+as the prior entry, not a new bug. Ladder ledger: 45–37 (Shaymin variant:
+5–5; crustle_modern livefire: 3–5; Ghost box: 4–0).
