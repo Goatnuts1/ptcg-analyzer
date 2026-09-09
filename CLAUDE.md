@@ -406,7 +406,16 @@ is contradicted by our own ladder record). 17.4% of the live field has NO deck i
 registry — Festival Lead (6.75%), Dragapult Blaziken (5.99%, the deck that beat us), and
 Grimmsnarl Froslass (4.66%); the cards are almost all in the pool already, but none of the
 archetype-defining effects are implemented. Real ladder matches are recorded in
-`docs/LADDER_LOG.md`.
+`docs/LADDER_LOG.md` — the evidence, one game at a time, never generalized past
+what that single game showed. `docs/DOCTRINE.md` is the conclusions layer on
+top of it: standing, checkable rules that have shown up more than once or are
+load-bearing enough to check every future game against. The `ladder-doctrine`
+skill runs after every real game log (not on a schedule) to check the game
+against standing doctrine and promote new generalizable findings — a game
+that produces no new registry deck is still a complete pass if it sharpens
+doctrine. Read `docs/DOCTRINE.md` before coaching a real game if it's been a
+while; a repeated pattern not yet promoted to doctrine is a real gap, not a
+formality (see that file's own note on D10/D12 for why this exists).
 
 ## Validation status (see `docs/VALIDATION_RESULT.md`)
 Card-implementation milestone is COMPLETE (both tournament lists fully faithful).
