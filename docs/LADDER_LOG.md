@@ -949,3 +949,50 @@ the Patrat KO; anchor count held at 4 all game; Boss on the damaged Fez
 
 151/151 lines parsed, all 36 cards resolved. Ladder ledger: 43–37 (Shaymin
 variant: 5–5; crustle_modern livefire: 3–5; Ghost box: 2–0).
+
+---
+
+## 2026-09-09 · vs `Tristan421870` (Mega Chandelure ex, Psychic) · **WIN by opponent deck-out, down 3–5 on prizes** · piloting the Ghost box
+
+Both players opened with a mulligan. Tristan's Mega Chandelure ex was the
+whole story on the damage side: Phantom Maze scaled hard turn over turn
+(180, then 430, 280, 380, 380 across five KOs — base 130 plus a bonus that
+grew with the game state; not asserting the exact scaling clause here
+without pulling the card's primary text). Nothing in the 140-HP Dhelmise
+range was surviving a hit past the first couple of turns, and Tristan took
+5 prizes to our 3 (including a 3-prize Mega Chandelure ex KO off our own
+Vengeful Anchor) — **we were behind on the actual win condition when their
+deck hit zero.** Deck-out is checked at the draw step before prizes are
+even read: 1 remaining or 6, it doesn't matter once a player can't draw.
+
+**The real finding: a correctly-read and correctly-executed stall pivot.**
+Two tells lined up, and the pilot acted on both:
+1. A `Lillie's Determination` that shuffled back only **1 card** before
+   drawing 8 — meaning Tristan's hand was down to almost nothing at the
+   moment they played it. Looks like a power turn on the surface (2→8
+   cards); the thin shuffle-in count is what actually gives it away.
+2. Two immediately-following Goatest1 turns with **zero attacks** despite
+   having a live Active and resources in hand — turn N-1 built board (two
+   Dhelmise placed, one retrieved via Night Stretcher) and passed; turn N
+   drew a card and passed again. That's a deliberate clock-denial pivot,
+   not a stumble — recognized the opponent was thin and stopped feeding
+   outs/KOs once the trade math stopped mattering.
+3. Tristan's own following turn was a "didn't take an action in time"
+   skip, then their next draw step emptied the library. Goatest1 wins.
+
+**Caveat, stated plainly:** this is a single data point, not a repeatable
+Ghost-box strategy. Nothing in `hide_n_sneak`'s list targets the
+opponent's deck — Gwynn/Ultra Ball/Prism Tower/Night Stretcher are all
+self-facing. This win came from correctly reading an opponent's own
+draw-engine overuse and declining to keep trading into a hand that could
+two-shot the board, not from a mill plan. If Tristan draws one fewer dead
+card anywhere in that stretch, they take their 6th prize before the
+library empties and this is a loss.
+
+362/362 lines parsed, 36/37 cards resolved (`Jacinthe` unresolved in the
+pool — flagged, not guessed). Two moves (`Banette: Puppet Pull`,
+`Dhelmise: Vengeful Anchor`) didn't match the resolved card — this is the
+known print-collision gap (`hide_n_sneak` runs the PBL prints under
+suffixed names; the importer has only the bare log name to go on), not a
+new bug. Ladder ledger: 44–37 (Shaymin variant: 5–5; crustle_modern
+livefire: 3–5; Ghost box: 3–0).
