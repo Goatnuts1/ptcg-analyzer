@@ -38,6 +38,25 @@ from engine.legality import STANDARD_LEGAL_MARKS as LEGAL_MARKS
 
 RAW = "https://raw.githubusercontent.com/PokemonTCG/pokemon-tcg-data/master"
 
+# The plain "de-dupe by name, first one wins" policy below assumes any two
+# same-named cards across sets are harmless reprints. That's false when a name
+# got reused for a genuinely different print (different Ability/attack kit) —
+# e.g. "Drilbur" is BOTH Temporal Forces 85 (Ability: Dig Dig Dig) and Pitch
+# Black 46 (Attack: Call for Family, no Ability); mega_excadrill's registry and
+# data/manual_cards.json's bare "Drilbur" entry (pbl-46) both mean the LATTER.
+# Each entry maps (card name, id's set-code prefix) to either a disambiguating
+# suffix (kept in the pool as "Name (SUFFIX)") or None (dropped — an existing
+# manual_cards.json entry already covers that exact print under the bare name,
+# so the upstream copy would just be a redundant duplicate under a different id).
+PRINT_COLLISIONS = {
+    ("Drilbur", "sv5"): "TEF",
+    ("Drilbur", "sv8"): None,        # Surging Sparks 108, Burrow/Mud-Slap — unused, dropped
+    ("Drilbur", "zsv10pt5"): None,   # promo-subset reprint, Mud-Slap/Corkscrew Punch — unused, dropped
+    ("Drilbur", "me5"): None,        # Pitch Black 46 — this IS data/manual_cards.json's "Drilbur"
+    ("Alakazam", "sv6"): None,       # Twilight Masquerade 82, Strange Hacking/Psychic — unused;
+                                      # alakazam_deck/chienpao/clefairy need me1-56 (Psychic Draw/Powerful Hand)
+}
+
 
 def fetch_json(url):
     with urllib.request.urlopen(url, timeout=30) as r:
@@ -114,12 +133,25 @@ def build_pool():
         for c in cards:
             if not is_standard_legal(c):
                 continue
-            # De-dupe by name: many sets reprint the same card. The engine cares
-            # about the card, not which set the art came from.
-            if c["name"] in seen:
+            collision_key = (c["name"], c["id"].split("-")[0])
+            if collision_key in PRINT_COLLISIONS:
+                suffix = PRINT_COLLISIONS[collision_key]
+                if suffix is None:
+                    continue  # covered by a manual_cards.json entry under the bare name
+                name = f"{c['name']} ({suffix})"
+            else:
+                name = c["name"]
+            # De-dupe by name: many sets reprint the same card, often with a
+            # different attack/HP spread (normal in this game and harmless for
+            # any card no deck registry names directly). PRINT_COLLISIONS above
+            # is the deliberate, curated exception list for names a deck DOES
+            # reference where the reprint's rules text actually matters.
+            if name in seen:
                 continue
-            seen.add(c["name"])
-            pool.append(slim(c))
+            seen.add(name)
+            entry = slim(c)
+            entry["name"] = name
+            pool.append(entry)
             kept += 1
         if kept:
             print(f"  {code}: +{kept}", file=sys.stderr)

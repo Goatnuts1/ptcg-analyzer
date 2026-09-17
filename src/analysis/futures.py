@@ -62,8 +62,10 @@ SPECULATIVE_FLAGS = {
         "Megas — Mega Rayquaza ex (280HP BASIC Mega, Storm Emerald 50x per Fire/Lightning "
         "Energy on its whole board, Colorless type, Fighting resistance), Mega Golisopod ex "
         "(Grass), Mega Golurk ex, Mega Malamar ex.",
-        "30th Celebration (2026-09-16): reprint-heavy; low competitive impact expected "
-        "unless the new Mewtwo ex / Mew ex prints are playable.",
+        "30th Celebration (launched 2026-09-16, confirmed): reprint/collector-focused — "
+        "new 'FUR' (Futuristic Rare) Mewtwo ex / Mew ex chase cards + Classic Collection "
+        "reprints. No source found describing new competitively-relevant attacks or "
+        "Abilities; low competitive impact read stands.",
     ],
     "mega_excadrill": [
         "Mega Rayquaza ex is Colorless: no Weakness leverage against Metal — neutral "
