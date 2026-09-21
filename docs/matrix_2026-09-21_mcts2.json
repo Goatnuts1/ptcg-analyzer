@@ -102,5 +102,21 @@
   "d2_wins": 22,
   "secs": 113.2,
   "ties": 0
+ },
+ "ogerpon_box|raging_bolt": {
+  "d1": "ogerpon_box",
+  "d1_wins": 50,
+  "d2": "raging_bolt",
+  "d2_wins": 10,
+  "secs": 102.1,
+  "ties": 0
+ },
+ "ogerpon_box|toucannon": {
+  "d1": "ogerpon_box",
+  "d1_wins": 41,
+  "d2": "toucannon",
+  "d2_wins": 19,
+  "secs": 151.9,
+  "ties": 0
  }
 }
