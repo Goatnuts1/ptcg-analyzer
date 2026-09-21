@@ -39,6 +39,10 @@ ROTATION_DATE = "2027-04 (est., annual cadence)"
 # skill; positive = rising. Only RISERS contribute to trend risk.
 SHARE_TRENDS = {
     # archetype (registry name): (share_then, share_now) — 2026-08-17 -> 2026-08-20
+    # NOT refreshed 2026-09-21: play.limitlesstcg.com and every other live-share source
+    # were unreachable this scan (network egress denied the whole session, not just this
+    # tool — see docs/META_SCAN_2026-09-21.md). Carrying the 08-20 numbers forward
+    # unmodified rather than fabricating a trend; do not read these as current.
     "raging_bolt":        (1.79, 1.97),
     "cynthia_garchomp":   (1.18, 1.20),
     "dragapult":          (12.35, 12.47),   # Dragapult + Dusknoir rows combined
@@ -61,9 +65,15 @@ SPECULATIVE_FLAGS = {
         "Delta Reign (intl. 2026-11-06; JP 'Storm Emeralda' live since 07-31): four new "
         "Megas — Mega Rayquaza ex (280HP BASIC Mega, Storm Emerald 50x per Fire/Lightning "
         "Energy on its whole board, Colorless type, Fighting resistance), Mega Golisopod ex "
-        "(Grass), Mega Golurk ex, Mega Malamar ex.",
-        "30th Celebration (2026-09-16): reprint-heavy; low competitive impact expected "
-        "unless the new Mewtwo ex / Mew ex prints are playable.",
+        "(Grass, 340 HP, evolves from Wimpod #011/103 — real text confirmed 2026-09-14: "
+        "'Finishing Blow' 60 (+160 more, 220 total, if the Defending Pokemon already has "
+        "damage counters on it) and 'Quadruple Hold' 160 (Defending Pokemon can't retreat "
+        "next turn)), Mega Golurk ex, Mega Malamar ex. Also confirmed: three paired "
+        "'Legendary Stadium' cards (Legendary Summit / Legendary Ocean Trench / Legendary "
+        "Lava Lake) — no card-level interaction identified yet, full text not yet spoiled.",
+        "30th Celebration released on schedule 2026-09-16: reprint/foil/Pikachu-art heavy "
+        "(new 'Futuristic Rare' Mew ex / Mewtwo ex). No numbered-card Standard legality or "
+        "attack text confirmed yet — still no identified competitive impact.",
     ],
     "mega_excadrill": [
         "Mega Rayquaza ex is Colorless: no Weakness leverage against Metal — neutral "
@@ -74,8 +84,16 @@ SPECULATIVE_FLAGS = {
         "the current #1 sim deck is the most exposed to the November shake.",
     ],
     "crustle_modern": [
-        "Grass techs gain a target if Mega Golisopod ex (Grass) is playable; no direct "
-        "threat identified from revealed cards.",
+        "Mega Golisopod ex's confirmed text (see _global) is Grass-type AND an ex: "
+        "Mysterious Rock Inn would wall its attack damage entirely rather than the other "
+        "way around. No direct threat identified from revealed cards; if anything this "
+        "one favors the wall plan.",
+    ],
+    "ogerpon_box": [
+        "Made 2026 Worlds Top 8 (1 of 8, real result — see docs/META_SCAN_2026-09-21.md). "
+        "Mega Golisopod ex is Grass, same type as this deck's own Teal Mask Ogerpon ex "
+        "line, so it neither exploits nor relieves the deck's structural x2 Fire "
+        "Weakness. No direct interaction identified from confirmed text.",
     ],
 }
 
