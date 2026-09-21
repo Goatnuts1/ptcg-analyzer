@@ -1,0 +1,18 @@
+{
+ "alakazam_deck|ogerpon_box": {
+  "d1": "ogerpon_box",
+  "d1_wins": 56,
+  "d2": "alakazam_deck",
+  "d2_wins": 4,
+  "secs": 181.5,
+  "ties": 0
+ },
+ "beedrill|ogerpon_box": {
+  "d1": "ogerpon_box",
+  "d1_wins": 36,
+  "d2": "beedrill",
+  "d2_wins": 24,
+  "secs": 87.9,
+  "ties": 0
+ }
+}
