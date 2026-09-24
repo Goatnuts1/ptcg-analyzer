@@ -38,6 +38,16 @@ from engine.legality import STANDARD_LEGAL_MARKS as LEGAL_MARKS
 
 RAW = "https://raw.githubusercontent.com/PokemonTCG/pokemon-tcg-data/master"
 
+# The upstream dump's internal set-id prefix doesn't always match this project's
+# print-collision suffix convention (e.g. Drilbur's Temporal Forces print is
+# upstream id "sv5-85", but effects.py/tests already refer to it as
+# "Drilbur (TEF)"). Only needs an entry when a manual print-pin collides with a
+# same-named upstream card under a differently-abbreviated set id — everything
+# else falls back to the raw uppercased id prefix in build_pool().
+SET_CODE_ALIASES = {
+    "sv5": "TEF",
+}
+
 
 def fetch_json(url):
     with urllib.request.urlopen(url, timeout=30) as r:
@@ -129,10 +139,36 @@ def build_pool():
     # lists). Deduped by name, so if upstream later ships them, upstream WINS and
     # the supplement entry is silently dropped — at which point it can be deleted
     # from data/manual_cards.json. This keeps the pool reproducible from source.
+    #
+    # "Upstream WINS" assumes upstream's same-named card is a REPRINT of the same
+    # card — true almost always, but not when the manual entry is a deliberate
+    # PRINT PIN (Drilbur = pbl-46 "Call for Family", chosen because decks.py plays
+    # that exact print). Compare by ABILITIES+ATTACKS, not id: a Trainer republish
+    # can carry a cosmetically different id and reminder-text rendering (Gwynn,
+    # Gladion's Final Battle) and is still the same card upstream now owns — but a
+    # Pokemon with a genuinely different moveset under the same id-mismatch is a
+    # real collision, not a republish. Keep the manual print under the bare name
+    # (decks.py already commits to it) and relocate upstream's card to
+    # "Name (SETCODE)" per the project's print-collision convention, instead of
+    # silently discarding it (that discard is exactly how a bare "Drilbur" quietly
+    # started resolving to the wrong print — sv5-85 "Dig Dig Dig" — once upstream's
+    # set-list order put it ahead of the manual pin's intended pbl-46 print).
+    by_name = {c["name"]: c for c in pool}
     for c in load_manual_supplement():
-        if c["name"] in seen:
-            print(f"  manual: skip {c['name']!r} (now in upstream)", file=sys.stderr)
-            continue
+        existing = by_name.get(c["name"])
+        if existing is not None:
+            same_card = (existing.get("abilities") == c.get("abilities")
+                         and existing.get("attacks") == c.get("attacks"))
+            if same_card:
+                print(f"  manual: skip {c['name']!r} (now in upstream)", file=sys.stderr)
+                continue
+            set_code = existing["id"].split("-")[0]
+            alt_name = f"{c['name']} ({SET_CODE_ALIASES.get(set_code, set_code.upper())})"
+            existing["name"] = alt_name
+            seen.add(alt_name)
+            print(f"  manual: print collision on {c['name']!r} — upstream's "
+                  f"{existing['id']} relocated to {alt_name!r}, manual pin "
+                  f"{c['id']} keeps the bare name", file=sys.stderr)
         # Respect rotation: a manual card whose mark has rotated out is dropped,
         # exactly like an upstream card would be. (Keeps the supplement honest when
         # LEGAL_MARKS changes — no zombie cards lingering past rotation.)
