@@ -82,10 +82,33 @@ class GreedyAgent:
             if name == "Buddy-Buddy Poffin" and len(p.bench) < 3:
                 return a
 
-        # 0c. evolve whenever possible — almost always strong.
+        # 0c. evolve whenever possible — almost always strong. ONE narrow exception:
+        # N's Zoroark ex's whole attack is Night Joker ("choose 1 of your Benched N's
+        # Pokémon's attacks and use it as this attack") — with NOTHING benched to copy,
+        # it has no legal attack at all. Greedy evolves blindly, so without this guard
+        # it turns every single N's Zorua into another brick Zoroark ex the instant one
+        # exists, stranding the whole board with zero attacks (observed: near-0% win
+        # rate against every opponent tested). Scoped to exactly that one evolve: the
+        # FIRST Zoroark ex still evolves immediately (gets the engine started), and any
+        # evolve that still leaves another "N's" non-Zoroark-ex Pokémon benched is still
+        # safe — only the evolve that would strand the LAST copyable one is held back.
+        def _strands_night_joker(a):
+            card = p.hand[a.hand_index]
+            if card.name != "N's Zoroark ex":
+                return False
+            target = p.active if a.target_index == -1 else p.bench[a.target_index]
+            if target.card.name != "N's Zorua":
+                return False
+            if not any(m.card.name == "N's Zoroark ex" for m in p.all_in_play()):
+                return False
+            others = [m for m in p.all_in_play()
+                     if m is not target and m.card.name.startswith("N's ")
+                     and m.card.name != "N's Zoroark ex"]
+            return len(others) == 0
         evolves = [a for a in acts if a.kind == "evolve"]
-        if evolves:
-            return evolves[0]
+        safe_evolves = [a for a in evolves if not _strands_night_joker(a)]
+        if safe_evolves:
+            return safe_evolves[0]
 
         # 0c'. Grand Tree's free once-per-turn deck-search evolution. Card-POSITIVE
         # (it pulls the Stage 1, and often the Stage 2, straight out of the deck for
@@ -137,6 +160,21 @@ class GreedyAgent:
 
         attacks = [a for a in acts if a.kind == "attack"]
 
+        # Night Joker's REAL value (N's Zoroark ex): game.legal_actions enumerates one
+        # "attack" action per (Benched N's Pokémon, one of its attacks) pair, all with
+        # printed damage 0 (Night Joker itself has no number — the copied attack is
+        # the whole payoff). Without this, greedy reads every single option as the
+        # weakest possible attack and never copies even a lethal N's Zekrom Rampaging
+        # Thunder. Scoped to copy_attack_index actions only (exclusive to Night Joker;
+        # no other archetype's attacks carry it), using the same seek_value heuristic
+        # Slowking's Seek Inspiration copy-choice already relies on.
+        def _night_joker_value(a):
+            if a.copy_attack_index is None:
+                return None
+            bench_mon = p.bench[a.target_index]
+            copied = bench_mon.card.attacks[a.copy_attack_index]
+            return fx.seek_value(bench_mon.card, copied)
+
         # Do the Wave's REAL value (Dipplin): 20 x own bench (+ the turn's Gladion
         # flag, + Brave Bangle vs an ex), DOUBLED under Festival Grounds via the
         # attack-twice mechanic. Printed damage says 20, which made greedy blind to
@@ -155,7 +193,9 @@ class GreedyAgent:
         if defender is not None:
             for a in attacks:
                 atk = p.active.card.attacks[a.attack_index]
-                dmg = _wave_value(atk) or atk.damage
+                dmg = _night_joker_value(a)
+                if dmg is None:
+                    dmg = _wave_value(atk) or atk.damage
                 for wtype, _ in defender.card.weaknesses:
                     if p.active.card.types and wtype == p.active.card.types[0]:
                         dmg *= 2
@@ -402,6 +442,9 @@ class GreedyAgent:
         # greedy read of an unknown top card. This is player-legal information: you
         # know what you just put on top of your own deck.
         def _attack_value(a):
+            nj = _night_joker_value(a)
+            if nj is not None:
+                return nj
             atk = p.active.card.attacks[a.attack_index]
             wv = _wave_value(atk)
             if wv is not None:

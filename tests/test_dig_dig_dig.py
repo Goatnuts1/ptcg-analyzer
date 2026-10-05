@@ -10,8 +10,10 @@ Last-Ditch Catch — so it is verified BOTH directly and through the real engine
 action (game.apply_action("play_basic")), which is the only path a game takes.
 
 NOTE: TEF 85 is the only Standard-legal Drilbur print WITH this Ability (the Pitch
-Black and Black Bolt Drilburs are different cards); the pool's Drilbur is sv5-85 =
-TEF 85, asserted below so a future pool refetch that swaps the print fails loudly.
+Black and Black Bolt Drilburs are different cards); the pool's bare "Drilbur" is
+sv5-85 = TEF 85 (upstream's own card under that name — the Pitch Black print used by
+mega_excadrill lives at "Drilbur (PBL)" instead, since the two prints share a bare
+name), asserted below so a future pool refetch that swaps the print fails loudly.
 
 Run: python3 tests/test_dig_dig_dig.py
 """
@@ -48,11 +50,11 @@ def main():
             fails.append(msg)
 
     db = CardDB.from_pool("data/standard_pool.json")
-    # NOTE: bare "Drilbur" is now the real tournament-list print (PBL 46, Call for
-    # Family / Dig Claws, no ability) used by mega_excadrill. This test is specifically
-    # about the OTHER print, disambiguated as "Drilbur (TEF)", which still carries
-    # Dig Dig Dig and stays fully implemented/tested for any future build that wants it.
-    drilbur_card = db.get("Drilbur (TEF)")
+    # NOTE: the PBL 46 tournament-list print (Call for Family / Dig Claws, no ability)
+    # used by mega_excadrill lives at "Drilbur (PBL)" instead. This test is specifically
+    # about upstream's own bare "Drilbur" (sv5-85), which carries Dig Dig Dig and stays
+    # fully implemented/tested for any build that wants it.
+    drilbur_card = db.get("Drilbur")
     fighting = db.get("Basic Fighting Energy")
     metal = db.get("Basic Metal Energy")
 
@@ -63,9 +65,9 @@ def main():
     ab = next(a for a in drilbur_card.abilities if a.name == "Dig Dig Dig")
     check("up to 3 Basic Fighting Energy" in ab.text and "discard them" in ab.text,
           f"unexpected ability text: {ab.text!r}")
-    check(fx.get_on_bench_trigger("Drilbur (TEF)") is not None,
+    check(fx.get_on_bench_trigger("Drilbur") is not None,
           "Dig Dig Dig must be registered as an on-bench trigger")
-    check(("Drilbur (TEF)", "Dig Dig Dig") in fx.PASSIVE_ABILITIES,
+    check(("Drilbur", "Dig Dig Dig") in fx.PASSIVE_ABILITIES,
           "Dig Dig Dig must be recorded in PASSIVE_ABILITIES (it isn't an activated ability)")
 
     # --- 1. exactly up to 3 Basic Fighting Energy leave the deck for the DISCARD. ---
@@ -111,8 +113,8 @@ def main():
     a.hand = [drilbur_card]
     a.deck = [fighting] * 4 + [metal]
     apply_action(st, Action("play_basic", hand_index=0))
-    check(len(a.bench) == 1 and a.bench[0].card.name == "Drilbur (TEF)",
-          "Drilbur (TEF) must be benched")
+    check(len(a.bench) == 1 and a.bench[0].card.name == "Drilbur",
+          "Drilbur (sv5-85) must be benched")
     check(len(a.discard) == 3 and all(c.name == "Basic Fighting Energy" for c in a.discard),
           f"the on-bench trigger must fire in a real game action, discard="
           f"{[c.name for c in a.discard]}")
