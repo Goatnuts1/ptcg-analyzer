@@ -182,6 +182,12 @@ def _semantic_key(state: GameState, a: Action):
         # the engine picks which Energy goes — so the kind alone is the decision.
         return ("stadium_garden",)
     if a.kind == "attack":
+        if a.target_index is not None:
+            # Night Joker (N's Zoroark ex): the copy source + its chosen attack IS the
+            # decision — without this, every Night Joker choice collapses into the
+            # same ("attack", ai) key and all but one silently vanishes from search.
+            bench_mon = p.bench[a.target_index]
+            return ("attack", a.attack_index, bench_mon.card.name, a.copy_attack_index)
         return ("attack", a.attack_index)
     if a.kind == "pass":
         return ("pass",)

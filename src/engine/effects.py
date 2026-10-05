@@ -482,7 +482,7 @@ def print_base_name(name: str) -> str:
     """Strip this project's print-disambiguation suffix: "Dunsparce (JTG)" -> "Dunsparce".
 
     When a deck needs a DIFFERENT print of a card the pool already has under the bare
-    name, the new print is added as "Name (SETCODE)" (Metagross (CRI), Drilbur (TEF),
+    name, the new print is added as "Name (SETCODE)" (Metagross (CRI), Drilbur (PBL),
     Dunsparce (JTG), Shuppet (PBL), ...). That suffix is pool bookkeeping, NOT part of the
     card, so any rule that reads a card's PRINTED name must strip it first.
 
@@ -2515,7 +2515,8 @@ def _maximum_drilling(ctx: EffectContext) -> None:
 
 
 def _call_for_family(ctx: EffectContext) -> None:
-    """Drilbur (PBL 46, the real tournament-list print — NOT "Drilbur (TEF)"): "Search
+    """Drilbur (PBL 46, the real tournament-list print — registered as "Drilbur (PBL)",
+    NOT the bare "Drilbur" which is upstream's own sv5-85 "Dig Dig Dig" print): "Search
     your deck for up to 2 Basic Pokémon and put them onto your Bench. Then, shuffle your
     deck." Mirrors Precious Trolley's search_deck call, capped at 2 and remaining Bench
     space instead of unlimited."""
@@ -3328,7 +3329,7 @@ ATTACK_EFFECTS: dict[tuple[str, str], Callable[[EffectContext], None]] = {
     # --- Journey Together / Surging Sparks / Mega Evolution ---
     ("Lillie's Clefairy ex", "Full Moon Rondo"): _full_moon_rondo,
     ("Chien-Pao", "Icicle Loop"): _icicle_loop,
-    ("Alakazam", "Powerful Hand"): _powerful_hand,
+    ("Alakazam (MEG)", "Powerful Hand"): _powerful_hand,
     # --- Perfect Order (Mega Starmie ex line) + Froakie/Frogadier ---
     ("Mega Starmie ex", "Jetting Blow"): _jetting_blow,
     ("Mega Starmie ex", "Nebula Beam"): _nebula_beam,
@@ -3356,7 +3357,7 @@ ATTACK_EFFECTS: dict[tuple[str, str], Callable[[EffectContext], None]] = {
     ("Ethan's Pichu", "Zapping Draw"): _zapping_draw,
     ("Mega Excadrill ex", "Undermine"): _undermine,
     ("Mega Excadrill ex", "Maximum Drilling"): _maximum_drilling,
-    ("Drilbur", "Call for Family"): _call_for_family,   # real tournament-list print (PBL 46)
+    ("Drilbur (PBL)", "Call for Family"): _call_for_family,   # real tournament-list print (PBL 46)
     ("Metagross (CRI)", "M Bounce Back"): _bounce_back,
     ("Metagross (CRI)", "Metallic Hammer"): _metallic_hammer,
     # --- Mega Evolution-era Fighting (Cynthia's Garchomp ex line) ---
@@ -3440,9 +3441,11 @@ REPEATABLE_ABILITIES: set[tuple[str, str]] = {
 ON_BENCH_TRIGGERS: dict[str, Callable[[EffectContext], None]] = {
     "Meowth ex": _last_ditch_catch,
     "Chien-Pao": _snow_sink,
-    "Drilbur (TEF)": _dig_dig_dig,    # Dig Dig Dig (TEF 85) — NOT the bare "Drilbur"
-                                      # used by mega_excadrill, which is the real
-                                      # tournament-list print (PBL 46, no ability).
+    # Dig Dig Dig (TEF 85) — this is upstream's OWN bare "Drilbur" (sv5-85); the real
+    # tournament-list print mega_excadrill plays lives at "Drilbur (PBL)" instead
+    # (the two prints collided under the bare name once upstream started shipping
+    # this one itself — see data/manual_cards.json's "Drilbur (PBL)" entry).
+    "Drilbur": _dig_dig_dig,
     "Iron Leaves ex": _rapid_vernier,  # Rapid Vernier (TEF 25 / svp-128)
 }
 
@@ -3450,7 +3453,7 @@ ON_BENCH_TRIGGERS: dict[str, Callable[[EffectContext], None]] = {
 # (both the normal evolve action and Rare Candy count as "playing from hand to
 # evolve"). card_name -> effect(ctx with source = the just-evolved Pokémon).
 ON_EVOLVE_TRIGGERS: dict[str, Callable[[EffectContext], None]] = {
-    "Alakazam": _psychic_draw,
+    "Alakazam (MEG)": _psychic_draw,
     "Noctowl": _jewel_seeker,     # Jewel Seeker (SCR 115 / svp-141)
 }
 
@@ -4425,7 +4428,14 @@ _TRAINER_CAN_PLAY: dict[str, Callable] = {
     # --- core-stabilization staples (only offer when the card can do something) ---
     "Carmine": lambda state, me: len(me.deck) > 0,
     "Lacey": lambda state, me: len(me.deck) + len(me.hand) > 0,
-    "Kofu": lambda state, me: len(me.hand) >= 2 and len(me.deck) > 0,
+    # Needs 2 OTHER cards to bottom AFTER Kofu itself leaves the hand (play_trainer
+    # pops it before the effect runs) -- so 3 in hand pre-pop, not 2. The off-by-one
+    # used to let can_play say yes while the effect's own `len(me.hand) < 2` guard
+    # said no, so the card went back to hand unplayed and got re-offered identically
+    # forever: an infinite non-turn-ending loop whenever a hand settled at exactly
+    # [Kofu, X] (found via ns_zoroark's Item-heavy hand cycling, which reaches that
+    # state reliably; any deck with 2-card hands holding Kofu would hit it).
+    "Kofu": lambda state, me: len(me.hand) >= 3 and len(me.deck) > 0,
     "Cyrano": lambda state, me: any(p_pokemon_ex(c) for c in me.deck),
     "Colress's Tenacity": lambda state, me: any(p_stadium(c) or p_energy(c) for c in me.deck),
     "Lana's Aid": lambda state, me: any(p_non_rule_box_pkmn_or_basic_energy(c) for c in me.discard),
@@ -4547,7 +4557,7 @@ TOOL_IMPLEMENTED: set[str] = {"Air Balloon", "Powerglass",
 PASSIVE_ABILITIES: set[tuple[str, str]] = {
     ("Charmander", "Agile"),                 # -> retreat_cost
     ("Meowth ex", "Last-Ditch Catch"),       # -> ON_BENCH_TRIGGERS
-    ("Drilbur (TEF)", "Dig Dig Dig"),         # -> ON_BENCH_TRIGGERS
+    ("Drilbur", "Dig Dig Dig"),                # -> ON_BENCH_TRIGGERS (sv5-85, upstream's own bare print)
     # Passive damage-prevention walls -> apply_attack_damage / place_counters.
     ("Crustle", "Mysterious Rock Inn"),
     ("Milotic ex", "Sparkling Scales"),
@@ -5020,3 +5030,246 @@ _TRAINER_CAN_PLAY.update({
     # holds exactly this card
     "Gladion's Final Battle": lambda state, me: len(me.hand) == 1,
 })
+
+
+# ============================================================================ #
+# §META-2026-10 — N's Zoroark ex (6.2-10% live share across independent trackers,
+# Tier 2, Top 8/9/26th at Worlds 2026, online tournament wins) — the format's
+# biggest unregistered archetype by share. Provenance: Michele Schiraldi, 26th
+# place, World Championships 2026 (Top 32, confirmed WebSearch-corroborated
+# placement; a Worlds Top-8 list, Öjvind Svinhufvud's 9th place, shares the
+# same 19 Pokémon / near-identical Trainer line). Every card below is already
+# in the live pool (data/standard_pool.json) under its real printed text — no
+# new manual_cards.json entries needed for this archetype. Effects asserted
+# against real text in tests/test_ns_zoroark.py.
+# ============================================================================ #
+
+def _night_joker(ctx: EffectContext) -> None:
+    """N's Zoroark ex: "Choose 1 of your Benched N's Pokémon's attacks and use it as
+    this attack." The chosen (Pokémon, attack) pair arrives on ctx.target, set by
+    game._resolve_attack from the enumerated (bench slot, attack index) action —
+    see game.legal_actions' Night Joker special case. Mirrors Seek Inspiration's
+    "use it as this attack" handling exactly: the copied attack's own registered
+    effect genuinely runs (so a copied Rampaging Thunder really arms the self-lock),
+    and Weakness/Resistance still key off the COPIER's own type (Zoroark ex is
+    Darkness), not the copied Pokémon's."""
+    if ctx.target is None:
+        return
+    mon, chosen = ctx.target
+    key = (mon.card.name, chosen.name)
+    copied_effect = ATTACK_EFFECTS.get(key)
+    owns_damage = key in ATTACK_EFFECT_OWNS_DAMAGE
+    base = 0 if (copied_effect is not None
+                and (chosen.damage_suffix in ("+", "×") or owns_damage)) else chosen.damage
+    if base > 0:
+        apply_attack_damage(ctx, ctx.opp.active, base, owner=ctx.opp, source=ctx.source)
+    if copied_effect is not None:
+        copied_effect(ctx)
+    ctx.state.emit(f"Night Joker: copied {mon.card.name}'s {chosen.name}")
+
+
+def _trade(ctx: EffectContext) -> None:
+    """N's Zoroark ex Ability: "You must discard a card from your hand in order to use
+    this Ability. Once during your turn, you may draw 2 cards." Same discard-then-draw
+    shape as Klefki's Stick 'n' Draw attack, as an Ability instead."""
+    me = ctx.me
+    if me.hand:
+        i = min(range(len(me.hand)), key=lambda i: _search_value(me.hand[i]))
+        me.discard.append(me.hand.pop(i))
+        draw(ctx, 2)
+        ctx.state.emit("Trade: discarded 1, drew 2")
+
+
+def _shred(ctx: EffectContext) -> None:
+    """N's Zekrom: 70; "This attack's damage isn't affected by any effects on your
+    opponent's Active Pokémon" (bypasses Mysterious Rock Inn etc., same chokepoint flag
+    as Superb Scissors — Weakness/Resistance still apply, unlike Nebula Beam)."""
+    apply_attack_damage(ctx, ctx.opp.active, 70, owner=ctx.opp, source=ctx.source,
+                        ignore_active_effects=True)
+
+
+def _rampaging_thunder(ctx: EffectContext) -> None:
+    """N's Zekrom: 250 (engine-applied, fixed), "During your next turn, this Pokémon
+    can't use attacks." Same pending_cannot_attack rider as Blood Moon/Metal Slash."""
+    ctx.source.pending_cannot_attack = True
+    ctx.state.emit("Rampaging Thunder: this Pokémon can't attack next turn")
+
+
+def _back_draft(ctx: EffectContext) -> None:
+    """N's Darmanitan: "30 damage for each Basic Energy card in your opponent's
+    discard pile." Variable — the engine applies 0 base, this owns the whole hit."""
+    n = sum(1 for c in ctx.opp.discard if c.is_basic_energy)
+    damage_active_with_weakness(ctx, 30 * n)
+
+
+def _flamebody_cannon(ctx: EffectContext) -> None:
+    """N's Darmanitan: 90 (engine-applied to the Active), "Discard all Energy from this
+    Pokémon, and this attack also does 90 damage to 1 of your opponent's Benched
+    Pokémon." v0 bench target: the bencher closest to a KO (Jetting Blow's policy)."""
+    discarded = ctx.source.energy
+    if discarded:
+        ctx.source.energy = []
+        ctx.me.discard.extend(discarded)
+        ctx.state.emit(f"Flamebody Cannon: discarded {len(discarded)} Energy from itself")
+    if ctx.opp.bench:
+        victim = min(ctx.opp.bench, key=lambda m: m.remaining_hp)
+        apply_attack_damage(ctx, victim, 90, owner=ctx.opp, source=ctx.source)
+
+
+def _subjugating_chains_can_use(state, me, mon) -> bool:
+    """Only worth offering when the current Active is actually STUCK (can't pay for any
+    of its own attacks) and a benched Darkness Pokémon (not Pecharunt ex) CAN pay for
+    one of its own. Without this gate, the generic "any legal ability fires first"
+    GreedyAgent priority uses this EVERY turn it's legal — thrashing a perfectly good
+    attacking Active over and over (observed: 20+ uses in a single ~19-turn game) — the
+    same inertness-adjacent bug class the Cursed Blast KO-only gate exists to prevent,
+    just the opposite direction (over-eager instead of inert)."""
+    from .game import can_pay_cost
+    if me.active is None:
+        return False
+    if any(can_pay_cost(me.active, effective_cost(state, me.active, atk))
+          for atk in me.active.card.attacks):
+        return False
+    return any(
+        "Darkness" in m.card.types and m.card.name != "Pecharunt ex"
+        and any(can_pay_cost(m, effective_cost(state, m, atk)) for atk in m.card.attacks)
+        for m in me.bench)
+
+
+def _subjugating_chains(ctx: EffectContext) -> None:
+    """Pecharunt ex Ability: "Once during your turn, you may switch 1 of your Benched
+    Darkness Pokémon, except any Pecharunt ex, with your Active Pokémon. If you do, the
+    new Active Pokémon is now Poisoned." v0: brings in the healthiest eligible bencher
+    (consistent with this engine's other switch policies). Poison is NOT modeled in this
+    engine (same documented gap as Numbing Water's Paralysis — only Confusion and the
+    can't-retreat/can't-play-Items riders exist), so the condition is logged, not applied."""
+    me = ctx.me
+    candidates = [m for m in me.bench
+                 if "Darkness" in m.card.types and m.card.name != "Pecharunt ex"]
+    if not candidates or me.active is None:
+        return
+    newcomer = max(candidates, key=lambda m: m.remaining_hp)
+    idx = me.bench.index(newcomer)
+    me.bench[idx] = me.active
+    me.active = newcomer
+    ctx.state.emit(f"Subjugating Chains: switched in {newcomer.card.name} "
+                   f"(would be Poisoned — Poison not modeled, same documented gap as "
+                   f"Numbing Water's Paralysis)")
+
+
+def _irritated_outburst(ctx: EffectContext) -> None:
+    """Pecharunt ex: "60 damage for each Prize card your opponent has taken." Variable —
+    the opponent's taken-prizes count is 6 minus however many of THEIR prizes remain."""
+    taken = 6 - len(ctx.opp.prizes)
+    damage_active_with_weakness(ctx, 60 * taken)
+
+
+def _transformation_tome(ctx: EffectContext) -> bool:
+    """Item: "You must play 2 Transformation Tome cards at once. Choose a Basic Pokémon
+    in your discard pile and switch it with 1 of your Basic Pokémon in play. Any attached
+    cards, damage counters, Special Conditions, turns in play, and any other effects
+    remain on the new Pokémon."
+
+    game.apply_action's play_trainer branch already popped ONE copy before calling this
+    effect; this function finds and removes the SECOND copy itself (same shape as any
+    effect that mutates the hand further — see the CLAUDE.md note on that). v0 policy:
+    bring back the highest-HP Basic from discard, swapping it in for the WEAKEST
+    (lowest remaining HP) Basic currently in play — the wrapper (energy/tool/damage/
+    played_this_turn) is kept as-is and only `.card` changes, which IS "any attached
+    cards, damage counters, ... turns in play ... remain on the new Pokémon.\""""
+    me = ctx.me
+    second = next((i for i, c in enumerate(me.hand) if c.name == "Transformation Tome"), None)
+    if second is None:
+        return False
+    discard_basics = [c for c in me.discard if c.is_pokemon and c.is_basic]
+    in_play_basics = [m for m in me.all_in_play() if m.card.is_basic]
+    if not discard_basics or not in_play_basics:
+        return False
+    new_card = max(discard_basics, key=lambda c: c.hp or 0)
+    old_mon = min(in_play_basics, key=lambda m: m.remaining_hp)
+    me.discard.remove(new_card)
+    me.discard.append(old_mon.card)
+    old_name = old_mon.card.name
+    old_mon.card = new_card
+    me.discard.append(me.hand.pop(second))
+    ctx.state.emit(f"Transformation Tome: swapped {old_name} in play for "
+                   f"{new_card.name} from the discard pile")
+    return True
+
+
+def _ns_pp_up(ctx: EffectContext) -> bool:
+    """Item: "Attach a Basic Energy card from your discard pile to 1 of your Benched
+    N's Pokémon." (Any number of Item cards per turn — no per-turn flag needed.) v0:
+    least-loaded benched N's Pokémon, first-found discard Energy (deterministic,
+    the type-less sibling of _attach_basic_from_discard)."""
+    targets = [m for m in ctx.me.bench if m.card.name.startswith("N's ")]
+    energies = [c for c in ctx.me.discard if c.is_basic_energy]
+    if not targets or not energies:
+        return False
+    target = min(targets, key=lambda m: m.energy_count())
+    card = energies[0]
+    ctx.me.discard.remove(card)
+    target.energy.append(card)
+    ctx.state.emit(f"N's PP Up: attached {card.name} to {target.card.name}")
+    return True
+
+
+def _black_belts_training(ctx: EffectContext) -> bool:
+    """Supporter: "During this turn, attacks used by your Pokémon do 40 more damage to
+    your opponent's Active Pokémon ex (before applying Weakness and Resistance)." Same
+    turn-scoped flag Kieran's damage mode uses, set to 40 instead of 30 (the two can
+    never collide — at most 1 Supporter is played per turn)."""
+    ctx.me.bonus_damage_vs_ex_v = 40
+    ctx.state.emit("Black Belt's Training: +40 damage to the opponent's Active ex this turn")
+    return True
+
+
+ATTACK_EFFECTS.update({
+    ("N's Zoroark ex", "Night Joker"): _night_joker,
+    ("N's Zekrom", "Shred"): _shred,
+    ("N's Zekrom", "Rampaging Thunder"): _rampaging_thunder,
+    ("N's Darmanitan", "Back Draft"): _back_draft,
+    ("N's Darmanitan", "Flamebody Cannon"): _flamebody_cannon,
+    ("Pecharunt ex", "Irritated Outburst"): _irritated_outburst,
+})
+
+ATTACK_EFFECT_OWNS_DAMAGE.update({
+    ("N's Zekrom", "Shred"),             # fixed 70, but owns it for ignore_active_effects
+})
+
+ABILITY_EFFECTS.update({
+    ("N's Zoroark ex", "Trade"): _trade,
+    ("Pecharunt ex", "Subjugating Chains"): _subjugating_chains,
+})
+
+ABILITY_CAN_USE.update({
+    ("N's Zoroark ex", "Trade"): lambda state, me, mon: len(me.hand) >= 1,
+    ("Pecharunt ex", "Subjugating Chains"): _subjugating_chains_can_use,
+})
+
+TRAINER_EFFECTS.update({
+    "Transformation Tome": _transformation_tome,
+    "N's PP Up": _ns_pp_up,
+    "Black Belt's Training": _black_belts_training,
+})
+
+_TRAINER_CAN_PLAY.update({
+    "Transformation Tome": lambda state, me: (
+        sum(1 for c in me.hand if c.name == "Transformation Tome") >= 2
+        and any(c.is_pokemon and c.is_basic for c in me.discard)
+        and any(m.card.is_basic for m in me.all_in_play())
+    ),
+    "N's PP Up": lambda state, me: (
+        any(m.card.name.startswith("N's ") for m in me.bench)
+        and any(c.is_basic_energy for c in me.discard)
+    ),
+    "Black Belt's Training": lambda state, me: (
+        state.players[1 - state.active_index].active is not None
+        and _is_ex_or_v(state.players[1 - state.active_index].active.card)
+    ),
+})
+
+# N's Castle (Stadium): "N's Pokémon in play (both yours and your opponent's) have no
+# Retreat Cost." A PASSIVE Stadium -> game.retreat_cost's own N's-name-prefix check
+# (mirrors Jamming Tower's shape: consulted at the one site that reads retreat cost).
+STADIUM_IMPLEMENTED.add("N's Castle")

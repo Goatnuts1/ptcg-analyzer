@@ -277,10 +277,10 @@ def main():
     a.turns_taken = 2
     kadabra_mon = InPlayPokemon(card=db.get("Kadabra"))
     a.active = kadabra_mon
-    a.hand = [db.get("Alakazam")]
+    a.hand = [db.get("Alakazam (MEG)")]
     a.deck = [db.get("Basic Fire Energy")] * 10
     game.apply_action(st, game.Action(kind="evolve", hand_index=0, target_index=-1))
-    check(a.active.card.name == "Alakazam", "evolve should install Alakazam")
+    check(a.active.card.name == "Alakazam (MEG)", "evolve should install Alakazam")
     check(len(a.hand) == 3,
           f"Psychic Draw should draw exactly 3 on a normal evolve, got {len(a.hand)}")
 
@@ -290,12 +290,12 @@ def main():
     a.turns_taken = 2
     abra_mon = InPlayPokemon(card=db.get("Abra"))       # in play, not played this turn
     a.active = abra_mon
-    a.hand = [db.get("Alakazam")]
+    a.hand = [db.get("Alakazam (MEG)")]
     a.deck = [db.get("Basic Fire Energy")] * 10
     ctx = fx.EffectContext(state=st, me=a, opp=b, db=db, rng=st.rng)
     did = fx._rare_candy(ctx)
     check(did, "Rare Candy should succeed evolving Abra straight to Alakazam")
-    check(a.active.card.name == "Alakazam", "Rare Candy should install Alakazam")
+    check(a.active.card.name == "Alakazam (MEG)", "Rare Candy should install Alakazam")
     check(len(a.hand) == 3,
           f"Psychic Draw should also fire via Rare Candy, got hand={len(a.hand)}")
 
@@ -303,11 +303,11 @@ def main():
     # on-evolve hook is a separate registry from ON_BENCH_TRIGGERS — Alakazam is
     # not registered there, so playing it to the bench draws nothing). ---
     st, a, b = fresh_state(db)
-    a.hand = [db.get("Alakazam")]
+    a.hand = [db.get("Alakazam (MEG)")]
     a.deck = [db.get("Basic Fire Energy")] * 10
     st.active_index = 0
     game.apply_action(st, game.Action(kind="play_basic", hand_index=0))
-    check(any(m.card.name == "Alakazam" for m in a.bench),
+    check(any(m.card.name == "Alakazam (MEG)" for m in a.bench),
           "Alakazam should have been benched")
     check(len(a.hand) == 0,
           f"Psychic Draw must NOT fire on a normal Basic play, got hand={len(a.hand)}")
@@ -315,7 +315,7 @@ def main():
     # --- 3d. NEGATIVE: retreat does not fire Psychic Draw (no card is played from
     # hand during a retreat). ---
     st, a, b = fresh_state(db)
-    alakazam_mon = InPlayPokemon(card=db.get("Alakazam"))
+    alakazam_mon = InPlayPokemon(card=db.get("Alakazam (MEG)"))
     a.active = alakazam_mon
     bench_mon = InPlayPokemon(card=db.get("Dreepy"))
     a.bench = [bench_mon]
@@ -323,7 +323,7 @@ def main():
     hand_before = len(a.hand)     # 0
     game.apply_action(st, game.Action(kind="retreat", target_index=0))
     check(a.active.card.name == "Dreepy" and
-          any(m.card.name == "Alakazam" for m in a.bench),
+          any(m.card.name == "Alakazam (MEG)" for m in a.bench),
           "retreat should swap active/bench normally")
     check(len(a.hand) == hand_before,
           f"Psychic Draw must NOT fire on retreat, got hand={len(a.hand)}")
@@ -335,7 +335,7 @@ def main():
 
     # --- 3e. Hand size 0 -> 0 counters placed. ---
     st, a, b = fresh_state(db)
-    a.active = InPlayPokemon(card=db.get("Alakazam"))
+    a.active = InPlayPokemon(card=db.get("Alakazam (MEG)"))
     a.hand = []
     b.active = InPlayPokemon(card=db.get("Dragapult ex"))
     st.active_index = 0
@@ -348,7 +348,7 @@ def main():
 
     # --- 3f. Hand size 5 -> 2*5=10 counters = 100 damage. ---
     st, a, b = fresh_state(db)
-    a.active = InPlayPokemon(card=db.get("Alakazam"))
+    a.active = InPlayPokemon(card=db.get("Alakazam (MEG)"))
     a.hand = [db.get("Basic Fire Energy")] * 5
     b.active = InPlayPokemon(card=db.get("Dragapult ex"))
     st.active_index = 0
@@ -361,7 +361,7 @@ def main():
     # damage): Meditite is weak to Psychic x2 (Alakazam's own type), but the
     # counters must NOT be doubled -- 2 cards -> 4 counters = 40, not 80. ---
     st, a, b = fresh_state(db)
-    a.active = InPlayPokemon(card=db.get("Alakazam"))
+    a.active = InPlayPokemon(card=db.get("Alakazam (MEG)"))
     a.hand = [db.get("Basic Fire Energy")] * 2
     b.active = InPlayPokemon(card=db.get("Meditite"))     # weak to Psychic x2
     st.active_index = 0
