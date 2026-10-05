@@ -61,9 +61,17 @@ SPECULATIVE_FLAGS = {
         "Delta Reign (intl. 2026-11-06; JP 'Storm Emeralda' live since 07-31): four new "
         "Megas — Mega Rayquaza ex (280HP BASIC Mega, Storm Emerald 50x per Fire/Lightning "
         "Energy on its whole board, Colorless type, Fighting resistance), Mega Golisopod ex "
-        "(Grass), Mega Golurk ex, Mega Malamar ex.",
-        "30th Celebration (2026-09-16): reprint-heavy; low competitive impact expected "
-        "unless the new Mewtwo ex / Mew ex prints are playable.",
+        "(Grass), Mega Golurk ex, Mega Malamar ex. Also confirmed (2026-09 scan): +27 cards "
+        "from JP 'MEGA Starter Decks' beyond the 103-card main set, headlined by Eevee ex, "
+        "Zoroark ex, Meowscarada ex (named only — no attack/Ability text surfaced yet, so no "
+        "relevance call); three split 'Legendary Stadium' cards (Legendary Summit / Ocean "
+        "Trench / Lava Lake) confirmed-but-textless, same caveat.",
+        "30th Celebration: tournament-legal from 2026-09-25 (confirmed, was pending as of the "
+        "last scan). Reprint-heavy; the gold-bordered Classic Collection subset is explicitly "
+        "NOT tournament legal. Two named numbered-set cards: a Pikachu ex ('Pika Pika Parade': "
+        "[C] search deck for a Basic Pokemon, bench it) and a Mew ex ('Memory Helix': copy a "
+        "Benched Pokemon's attack) — neither is relevant to a currently-registered archetype's "
+        "type/plan; no swap candidate identified.",
     ],
     "mega_excadrill": [
         "Mega Rayquaza ex is Colorless: no Weakness leverage against Metal — neutral "
