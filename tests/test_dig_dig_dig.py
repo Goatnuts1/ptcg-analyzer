@@ -10,8 +10,15 @@ Last-Ditch Catch — so it is verified BOTH directly and through the real engine
 action (game.apply_action("play_basic")), which is the only path a game takes.
 
 NOTE: TEF 85 is the only Standard-legal Drilbur print WITH this Ability (the Pitch
-Black and Black Bolt Drilburs are different cards); the pool's Drilbur is sv5-85 =
-TEF 85, asserted below so a future pool refetch that swaps the print fails loudly.
+Black and Black Bolt Drilburs are different cards). As of the 2026-09-07 meta scan,
+upstream ships TEF 85 as a standard-legal card in its own right, so it wins the
+bare-name dedupe race and the pool's BARE "Drilbur" now IS TEF 85 (id sv5-85) —
+mega_excadrill's PBL 46 print moved to the suffixed name "Drilbur (PBL)" instead
+(see test_metagross_cri_drilbur_pbl.py). This test still looks up the explicit
+"Drilbur (TEF)" alias (manual_cards.json, id "sv5-85-tef" — same real card, a
+distinguishing id because the pool already carries sv5-85 under the bare name and
+ids must be unique) so it keeps working even if a future pool refetch changes which
+print wins the bare-name slot again.
 
 Run: python3 tests/test_dig_dig_dig.py
 """
@@ -48,18 +55,18 @@ def main():
             fails.append(msg)
 
     db = CardDB.from_pool("data/standard_pool.json")
-    # NOTE: bare "Drilbur" is now the real tournament-list print (PBL 46, Call for
-    # Family / Dig Claws, no ability) used by mega_excadrill. This test is specifically
-    # about the OTHER print, disambiguated as "Drilbur (TEF)", which still carries
-    # Dig Dig Dig and stays fully implemented/tested for any future build that wants it.
+    # NOTE: bare "Drilbur" is now TEF 85 itself (upstream dedupe), and mega_excadrill's
+    # PBL 46 print lives under "Drilbur (PBL)" instead. This test uses the explicit
+    # "Drilbur (TEF)" alias so it stays correct regardless of which print wins the
+    # bare-name slot in a future pool refetch.
     drilbur_card = db.get("Drilbur (TEF)")
     fighting = db.get("Basic Fighting Energy")
     metal = db.get("Basic Metal Energy")
 
     # --- 0. the pool's Drilbur (TEF) is the print that HAS the Ability, and the trigger
     # is registered as an on-bench trigger + counted as an implemented passive. ---
-    check(drilbur_card.id == "sv5-85",
-          f"expected Temporal Forces Drilbur (sv5-85), pool has {drilbur_card.id}")
+    check(drilbur_card.id == "sv5-85-tef",
+          f"expected Temporal Forces Drilbur (sv5-85-tef), pool has {drilbur_card.id}")
     ab = next(a for a in drilbur_card.abilities if a.name == "Dig Dig Dig")
     check("up to 3 Basic Fighting Energy" in ab.text and "discard them" in ab.text,
           f"unexpected ability text: {ab.text!r}")
