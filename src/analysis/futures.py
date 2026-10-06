@@ -61,9 +61,28 @@ SPECULATIVE_FLAGS = {
         "Delta Reign (intl. 2026-11-06; JP 'Storm Emeralda' live since 07-31): four new "
         "Megas — Mega Rayquaza ex (280HP BASIC Mega, Storm Emerald 50x per Fire/Lightning "
         "Energy on its whole board, Colorless type, Fighting resistance), Mega Golisopod ex "
-        "(Grass), Mega Golurk ex, Mega Malamar ex.",
-        "30th Celebration (2026-09-16): reprint-heavy; low competitive impact expected "
-        "unless the new Mewtwo ex / Mew ex prints are playable.",
+        "(Grass), Mega Golurk ex, Mega Malamar ex. UNVERIFIED UPDATE (2026-09-28 scan): a "
+        "WebSearch synthesis (not a primary-source fetch — Bulbapedia/limitlesstcg were both "
+        "blocked) described Mega Rayquaza ex's attack as 50 dmg per Energy attached across "
+        "ALL of your Pokemon (broader than the line above) plus an on-Bench Ability digging "
+        "4 for a Basic Energy. Flagging the discrepancy, not resolving it — do not treat "
+        "either wording as confirmed until a primary card page is reachable.",
+        "30th Celebration: tournament legality date now CONFIRMED 2026-09-25 (2026-09-16 was "
+        "the product release date, not the legality date). Numbered main set is Standard/"
+        "Expanded legal from 09-25; the gold-bordered Classic Collection subset is explicitly "
+        "NOT tournament legal. Two named cards so far: a Pikachu ex ('Pika Pika Parade': "
+        "search deck for a Basic Pokemon, bench it) and a Mew ex ('Memory Helix': copy a "
+        "benched Pokemon's attack) — neither Grass- nor Fighting-typed, full cost/damage text "
+        "still not confirmed (sources blocked). LOW impact verdict unchanged; no swap "
+        "candidate identified for any tracked archetype.",
+        "WATCH (2026-09-28 scan, unverified/WebSearch-sourced): Baltimore Regional "
+        "(2026-09-19/20) reportedly won by a 'Basic Box' (4 Mega Kangaskhan ex + Meowth ex / "
+        "Latias ex / Teal Mask Ogerpon ex / Lillie's Clefairy ex + Chien-Pao / Raging Bolt ex "
+        "/ Iron Leaves ex / Fezandipiti ex / Enamorus / Iron Crown ex / Wellspring Mask "
+        "Ogerpon ex) list — same archetype family as the registered `clefairy_stock` "
+        "(NAIC-2026-winning list) but a different specific 60. Worth a share-number check "
+        "next week once live access returns; not a build trigger on its own since the "
+        "archetype is already represented.",
     ],
     "mega_excadrill": [
         "Mega Rayquaza ex is Colorless: no Weakness leverage against Metal — neutral "
