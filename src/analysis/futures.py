@@ -61,7 +61,10 @@ SPECULATIVE_FLAGS = {
         "Delta Reign (intl. 2026-11-06; JP 'Storm Emeralda' live since 07-31): four new "
         "Megas — Mega Rayquaza ex (280HP BASIC Mega, Storm Emerald 50x per Fire/Lightning "
         "Energy on its whole board, Colorless type, Fighting resistance), Mega Golisopod ex "
-        "(Grass), Mega Golurk ex, Mega Malamar ex.",
+        "(Grass), Mega Golurk ex, Mega Malamar ex. Confirmed (2026-09-03 scan) this set "
+        "also introduces 'Legendary Stadiums' — Stadium cards played and read as a PAIR — "
+        "a new Stadium-zone mechanic with no engine hook yet; full text not yet revealed, "
+        "so no mechanic implication is scored until real cards are seen.",
         "30th Celebration (2026-09-16): reprint-heavy; low competitive impact expected "
         "unless the new Mewtwo ex / Mew ex prints are playable.",
     ],
