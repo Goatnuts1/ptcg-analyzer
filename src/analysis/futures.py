@@ -58,12 +58,27 @@ SHARE_TRENDS = {
 # Speculative flags: upcoming-set concerns/opportunities per deck. LABELED SPECULATION.
 SPECULATIVE_FLAGS = {
     "_global": [
-        "Delta Reign (intl. 2026-11-06; JP 'Storm Emeralda' live since 07-31): four new "
-        "Megas — Mega Rayquaza ex (280HP BASIC Mega, Storm Emerald 50x per Fire/Lightning "
-        "Energy on its whole board, Colorless type, Fighting resistance), Mega Golisopod ex "
-        "(Grass), Mega Golurk ex, Mega Malamar ex.",
-        "30th Celebration (2026-09-16): reprint-heavy; low competitive impact expected "
-        "unless the new Mewtwo ex / Mew ex prints are playable.",
+        "Delta Reign (intl. 2026-11-06, prerelease 10-24..11-01, TCG Live digital launch "
+        "11-05; JP 'Storm Emeralda' live since 07-31): four new Megas — Mega Rayquaza ex "
+        "(280HP BASIC Mega, Storm Emerald 50x per Fire/Lightning Energy on its whole board, "
+        "Colorless type, Fighting resistance), Mega Golisopod ex (Grass), Mega Golurk ex, "
+        "Mega Malamar ex. Introduces a new 'Legendary Stadiums' mechanic (Stadiums played as "
+        "a paired set) — mechanic name only confirmed so far, no card text seen; do not "
+        "implement or score until real text is fetched. UPDATE 2026-09-14 (JP City League / "
+        "Tier-list chatter, not a primary Limitless read — treat as soft): Mega Rayquaza ex "
+        "decks are already reported running near parity with Dragapult ex's JP share post-"
+        "Storm-Emeralda. The same chatter says JP Alakazam (Fudin) and JP Mega Excadrill ex "
+        "(Mega Doryuzu — our own house archetype's counterpart) have BOTH lost share since "
+        "Storm Emeralda, attributed to a newly-relevant Fearow. This is the strongest signal "
+        "yet that the Nov-6 shake is a real format break, not a minor addition — still not "
+        "scored, and worth a direct follow-up next scan (real Fearow card text, real JP "
+        "share numbers) given it names mega_excadrill specifically.",
+        "30th Celebration (2026-09-16, 2 days from this scan): reprint-heavy, all-foil; "
+        "Classic Collection subset + new Mewtwo ex / Mew ex 'Futuristic Rare' prints. Could "
+        "not confirm this scan whether the Mewtwo ex / Mew ex prints carry NEW attack text "
+        "or are alternate arts of already-pooled cards (source access issue below) — low "
+        "competitive impact expected per prior scans, but unconfirmed; re-check next scan "
+        "once the set is live and the fetch script's upstream dump picks it up.",
     ],
     "mega_excadrill": [
         "Mega Rayquaza ex is Colorless: no Weakness leverage against Metal — neutral "
