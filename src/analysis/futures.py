@@ -37,6 +37,15 @@ ROTATION_DATE = "2027-04 (est., annual cadence)"
 
 # Share deltas between the two most recent scans (pts). Maintained by the meta-scan
 # skill; positive = rising. Only RISERS contribute to trend risk.
+#
+# NOT ROLLED FORWARD on 2026-10-08: the live Limitless table (play.limitlesstcg.com)
+# was unreachable this cycle (network egress policy blocks the domain outright, the
+# same block the weekly meta-hunt routine has independently hit for five straight
+# reports) and no fresher per-archetype share numbers exist to replace these with.
+# Flattening the window to a zero-delta "now" would launder that absence into a
+# claim ("nothing is rising"), which is worse than leaving the real, dated
+# 2026-08-17->2026-08-20 window in place with this note attached. Re-roll once the
+# source is reachable again.
 SHARE_TRENDS = {
     # archetype (registry name): (share_then, share_now) — 2026-08-17 -> 2026-08-20
     "raging_bolt":        (1.79, 1.97),
@@ -58,24 +67,57 @@ SHARE_TRENDS = {
 # Speculative flags: upcoming-set concerns/opportunities per deck. LABELED SPECULATION.
 SPECULATIVE_FLAGS = {
     "_global": [
-        "Delta Reign (intl. 2026-11-06; JP 'Storm Emeralda' live since 07-31): four new "
-        "Megas — Mega Rayquaza ex (280HP BASIC Mega, Storm Emerald 50x per Fire/Lightning "
-        "Energy on its whole board, Colorless type, Fighting resistance), Mega Golisopod ex "
-        "(Grass), Mega Golurk ex, Mega Malamar ex.",
+        "Delta Reign (intl. 2026-11-06, prereleases 10-24..11-01; JP 'Storm Emeralda' live "
+        "since 07-31): four new Megas — Mega Rayquaza ex, Mega Golisopod ex (Grass), Mega "
+        "Golurk ex, Mega Malamar ex. Mega Rayquaza ex full text confirmed 2026-10 (JP->EN "
+        "translation, not yet an official English print, wording may still change): "
+        "Colorless-type Basic Mega ex, 280 HP, Weakness Lightning x2, Resistance Fighting "
+        "-30, Retreat 2. Ability 'Ruler's Roar' (once per turn, triggers when played from "
+        "hand to the Bench): look at the top 4 cards of your deck, attach a Basic Energy "
+        "found there to this Pokemon, shuffle the rest to the bottom. Attack 'Storm "
+        "Emeralda' (Fire/Lightning/Colorless): 50 damage x the number of Fire Energy AND "
+        "Lightning Energy attached to ALL of your Pokemon (sources disagree whether Ruler's "
+        "Roar grabs one Energy or 'any number' found among the four -- flagged, not "
+        "resolved). Standard Mega-ex rule: Knocked Out gives up 3 prizes.",
+        "New mechanic confirmed for Delta Reign: 'Legendary Stadium' cards print as two "
+        "connecting half-cards that must both be played together to form one Stadium. No "
+        "Legendary Stadium's actual in-game effect text has surfaced yet -- mechanic "
+        "confirmed, effects unknown, nothing to score or build against until a wording "
+        "emerges (watch Area Zero Underdepths-dependent lists, e.g. ogerpon_box).",
         "30th Celebration (2026-09-16): reprint-heavy; low competitive impact expected "
-        "unless the new Mewtwo ex / Mew ex prints are playable.",
+        "unless the new Mewtwo ex / Mew ex prints are playable. No competitive sighting of "
+        "either print found in tournament results through Frankfurt/Brisbane (2026-09-26/27).",
     ],
     "mega_excadrill": [
-        "Mega Rayquaza ex is Colorless: no Weakness leverage against Metal — neutral "
+        "Mega Rayquaza ex is Colorless: no Weakness leverage against Metal -- neutral "
         "threat, but a 280HP Basic Mega that scales past 300 outraces Metallic Hammer math.",
     ],
     "fighting": [
-        "Mega Rayquaza ex resists Fighting (−30) and Basic-Mega speed beats Stage-1 setup: "
+        "Mega Rayquaza ex resists Fighting (-30) and Basic-Mega speed beats Stage-1 setup: "
         "the current #1 sim deck is the most exposed to the November shake.",
     ],
     "crustle_modern": [
         "Grass techs gain a target if Mega Golisopod ex (Grass) is playable; no direct "
         "threat identified from revealed cards.",
+        "Mega Rayquaza ex, confirmed text: it is still just another Pokemon-ex. Mysterious "
+        "Rock Inn's ex-gate ('prevent all damage done to this Pokemon by attacks from your "
+        "opponent's Pokemon ex') blocks its attack damage outright regardless of how large "
+        "Storm Emeralda scales -- not an imminent threat to the wall plan on card-type "
+        "grounds alone.",
+        "REAL-WORLD, not speculative (logged here because it bears on the same ex-gate): "
+        "Alakazam/Dusknoir, a non-ex Stage 2 whose Powerful Hand places damage counters "
+        "rather than dealing attack damage, won 1st AND 2nd at the 2,793-player Frankfurt "
+        "Regional (2026-09-26/27) -- the first real Regional win behind this project's "
+        "long-documented 'non-ex chip damage walks past Mysterious Rock Inn' hole. Below "
+        "this scan's 2% build bar on single-event share (26/2793 = 0.93%) and not yet "
+        "confirmed as a two-scan riser, so not built this cycle -- flagged as the top "
+        "watchlist item for the next scan.",
+    ],
+    "ogerpon_box": [
+        "Mega Rayquaza ex is Colorless-type even though Storm Emeralda burns Fire Energy as "
+        "fuel -- burning a type of Energy does not make the attacker that type, so it does "
+        "NOT trigger this deck's Grass Weakness x2. Confirmed real text, not a threat on "
+        "card-type grounds.",
     ],
 }
 
