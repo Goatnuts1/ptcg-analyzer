@@ -38,6 +38,28 @@ from engine.legality import STANDARD_LEGAL_MARKS as LEGAL_MARKS
 
 RAW = "https://raw.githubusercontent.com/PokemonTCG/pokemon-tcg-data/master"
 
+# Names where the bare slot is PINNED to our own manual_cards.json print, because
+# a deck (or the effects.py attack/ability registry) in this project is built
+# around that exact print and upstream ships MORE THAN ONE Standard-legal card
+# under the same English name — "de-dupe by name, first-set-iterated wins" then
+# silently and non-deterministically decides which print a deck actually gets,
+# as set-list ordering shifts over time:
+#   - "Drilbur": PBL 46 (plain, Call for Family/Dig Claws — mega_excadrill's
+#     real tournament print) collides with sv5-85 (Temporal Forces, Dig Dig Dig
+#     — kept as "Drilbur (TEF)", not used by any registered deck today).
+#   - "Alakazam": me1-56 (Powerful Hand / Psychic Draw — what effects.py's
+#     ("Alakazam", "Powerful Hand") / "Alakazam" ability-key registrations and
+#     DECK_ALAKAZAM are built against) collides with sv6-82 (Twilight Masquerade,
+#     Strange Hacking/Psychic, no Ability — kept as "Alakazam (TWM)", not used
+#     by any registered deck today).
+# Upstream's same-named cards are skipped entirely here; the manual supplement
+# carries BOTH prints explicitly (the pinned bare name AND the colliding print
+# under its own "(SETCODE)" suffix), so no real print is lost, it just stops
+# getting silently swapped under decks that name the bare card. Found
+# 2026-10-08 when a fresh pool fetch flipped both mega_excadrill's "Drilbur"
+# and alakazam_deck's "Alakazam" to the wrong print overnight.
+UPSTREAM_NAME_COLLISIONS = {"Drilbur", "Alakazam"}
+
 
 def fetch_json(url):
     with urllib.request.urlopen(url, timeout=30) as r:
@@ -113,6 +135,8 @@ def build_pool():
         kept = 0
         for c in cards:
             if not is_standard_legal(c):
+                continue
+            if c["name"] in UPSTREAM_NAME_COLLISIONS:
                 continue
             # De-dupe by name: many sets reprint the same card. The engine cares
             # about the card, not which set the art came from.
