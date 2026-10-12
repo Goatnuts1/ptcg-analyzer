@@ -60,7 +60,7 @@ def main():
     st, a, b = fresh_state(db)
     kadabra = InPlayPokemon(card=db.get("Kadabra"))
     a.active = kadabra
-    alakazam_card = db.get("Alakazam")
+    alakazam_card = db.get("Alakazam (MEG)")
     a.hand = [alakazam_card]
     # deck needs >=3 cards to draw fully; use filler basic energy
     filler = db.get("Basic Psychic Energy")
@@ -70,7 +70,7 @@ def main():
     deck_before = len(a.deck)
     game.apply_action(st, Action(kind="evolve", hand_index=0, target_index=-1))
 
-    check(a.active.card.name == "Alakazam",
+    check(a.active.card.name == "Alakazam (MEG)",
           f"evolve should replace mon.card with Alakazam, got {a.active.card.name}")
     # hand: -1 (Alakazam popped to evolve) +3 (Psychic Draw) = hand_before + 2
     check(len(a.hand) == hand_before + 2,
@@ -87,13 +87,13 @@ def main():
     # EVOLVE 1 of your Pokémon" — not merely upon entering play.
     # =================================================================== #
     st, a, b = fresh_state(db)
-    a.hand = [db.get("Alakazam")]
+    a.hand = [db.get("Alakazam (MEG)")]
     a.deck = [filler, filler, filler, filler, filler]
     hand_before = len(a.hand)
     deck_before = len(a.deck)
     game.apply_action(st, Action(kind="play_basic", hand_index=0))
 
-    check(len(a.bench) == 1 and a.bench[0].card.name == "Alakazam",
+    check(len(a.bench) == 1 and a.bench[0].card.name == "Alakazam (MEG)",
           "play_basic should still bench the Alakazam card")
     check(len(a.hand) == hand_before - 1,
           f"play_basic should only pop the played card, no extra draw: "
@@ -107,7 +107,7 @@ def main():
     # NOT draw (only the evolve-from-hand moment triggers it).
     # =================================================================== #
     st, a, b = fresh_state(db)
-    alakazam_active = InPlayPokemon(card=db.get("Alakazam"))
+    alakazam_active = InPlayPokemon(card=db.get("Alakazam (MEG)"))
     a.active = alakazam_active
     bench_mon = InPlayPokemon(card=db.get("Abra"))
     a.bench = [bench_mon]
@@ -132,7 +132,7 @@ def main():
     # =================================================================== #
     st, a, b = fresh_state(db)
     a.active = InPlayPokemon(card=db.get("Kadabra"))
-    a.hand = [db.get("Alakazam")]
+    a.hand = [db.get("Alakazam (MEG)")]
     a.deck = [filler]                  # only 1 card available, not 3
     game.apply_action(st, Action(kind="evolve", hand_index=0, target_index=-1))
 
@@ -151,7 +151,7 @@ def main():
     # Weakness/Resistance multiplier applies).
     # =================================================================== #
     st, a, b = fresh_state(db)
-    attacker = InPlayPokemon(card=db.get("Alakazam"))
+    attacker = InPlayPokemon(card=db.get("Alakazam (MEG)"))
     attacker.energy = [db.get("Basic Psychic Energy")]
     a.active = attacker
     defender = InPlayPokemon(card=db.get("Dragapult ex"))   # high HP, survives
@@ -173,7 +173,7 @@ def main():
     # POWERFUL HAND — NEGATIVE: hand size 0 -> 0 counters placed.
     # =================================================================== #
     st, a, b = fresh_state(db)
-    attacker = InPlayPokemon(card=db.get("Alakazam"))
+    attacker = InPlayPokemon(card=db.get("Alakazam (MEG)"))
     attacker.energy = [db.get("Basic Psychic Energy")]
     a.active = attacker
     defender = InPlayPokemon(card=db.get("Dragapult ex"))
@@ -192,7 +192,7 @@ def main():
     # POWERFUL HAND — hand size scaling sanity: 1 card -> 2 counters (=20).
     # =================================================================== #
     st, a, b = fresh_state(db)
-    attacker = InPlayPokemon(card=db.get("Alakazam"))
+    attacker = InPlayPokemon(card=db.get("Alakazam (MEG)"))
     attacker.energy = [db.get("Basic Psychic Energy")]
     a.active = attacker
     defender = InPlayPokemon(card=db.get("Dragapult ex"))
@@ -215,7 +215,7 @@ def main():
     # silently applied on the effect path).
     # =================================================================== #
     st, a, b = fresh_state(db)
-    attacker = InPlayPokemon(card=db.get("Alakazam"))
+    attacker = InPlayPokemon(card=db.get("Alakazam (MEG)"))
     attacker.energy = [db.get("Basic Psychic Energy")]
     a.active = attacker
     kadabra_defender = InPlayPokemon(card=db.get("Kadabra"))  # ×2 weak to Darkness,

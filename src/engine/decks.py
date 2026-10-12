@@ -710,12 +710,17 @@ DECK_THE_VAULT = [
 # does not resolve in the pool — substituted with Basic Psychic Energy (the
 # printed "Psychic Energy (MEE)" basic is likewise mapped to the engine's
 # injected "Basic Psychic Energy"), noted here and in the validation report.
+# PRINT COLLISION (found 2026-09-07 meta scan): upstream now also ships a
+# standard-legal "Alakazam" (sv6-82, Twilight Masquerade, mark H, "Strange
+# Hacking"/"Psychic") that wins the bare-name dedupe race over the MEG print
+# this list actually needs (sets.json lists TWM before ME01). The MEG print
+# is added as "Alakazam (MEG)" per the print-collision convention.
 # --------------------------------------------------------------------------- #
 DECK_ALAKAZAM = [
     # Pokémon (22)
     ("Abra", 4),
     ("Kadabra", 4),
-    ("Alakazam", 3),
+    ("Alakazam (MEG)", 3),
     ("Dunsparce", 3),
     ("Dudunsparce", 3),
     ("Fezandipiti ex", 1),
@@ -927,7 +932,7 @@ DECK_MEGA_EXCADRILL_SHAYMIN = [
     ("Beldum", 4),
     ("Metang", 4),
     ("Metagross (CRI)", 2),
-    ("Drilbur", 3),
+    ("Drilbur (PBL)", 3),
     ("Mega Excadrill ex", 2),
     ("Genesect ex", 2),
     ("Shaymin (DRI)", 2),
@@ -1085,10 +1090,17 @@ DECK_CRUSTLE_MODERN = [
 # repositions with M Bounce Back (60 + force the opponent to switch out) or
 # closes with Metallic Hammer (150, optionally discard 3 Metal Energy for +150
 # = 300) — a real synergy with the list's own 2x Energy Recycler, which
-# recurs exactly what Metallic Hammer just discarded. Genesect ex is the
-# consistency Basic (Metallic Signal fetches 2 Evolution Metal Pokémon; Protect
-# Charge hits 150 and takes 30 less next turn), Ethan's Pichu is a free-attack
-# opener that draws.
+# recurs exactly what Metallic Hammer just discarded.
+# Genesect ex is the consistency Basic (Metallic Signal fetches 2 Evolution
+# Metal Pokémon; Protect Charge hits 150 and takes 30 less next turn), Ethan's
+# Pichu is a free-attack opener that draws.
+#
+# PRINT COLLISION (found 2026-09-07 meta scan): upstream now ALSO ships a
+# standard-legal bare "Drilbur" (sv5-85, Temporal Forces, mark H — this is the
+# "Drilbur (TEF)" ability print referenced above) that wins the bare-name
+# dedupe race over PBL 46 (sets.json lists TEF before ME05/Pitch Black). PBL
+# 46 is now added as "Drilbur (PBL)"; the pool's bare "Drilbur" resolves to
+# TEF 85 on its own from upstream, matching "Drilbur (TEF)" exactly.
 #
 # Trainers: Team Rocket's Petrel (any Trainer) + 4 Team Rocket's Transceiver
 # (fetches Petrel) is the search spine, Boss's Orders/Kieran the gust/+30 push,
@@ -1103,7 +1115,7 @@ DECK_MEGA_EXCADRILL = [
     ("Beldum", 4),
     ("Metang", 4),
     ("Metagross (CRI)", 2),
-    ("Drilbur", 3),
+    ("Drilbur (PBL)", 3),
     ("Mega Excadrill ex", 2),
     ("Genesect ex", 2),
     ("Ethan's Pichu", 1),
