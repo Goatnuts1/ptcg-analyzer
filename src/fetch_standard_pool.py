@@ -51,15 +51,27 @@ def list_set_codes():
 
 
 def is_standard_legal(card):
-    """A card is in our pool only if BOTH checks pass.
+    """A card is in our pool if its regulation mark is one of the currently legal
+    letters.
 
-    1. Its regulation mark is one of the currently legal letters.
-    2. The data dump's own legality field agrees it's Standard legal.
-       (Belt-and-suspenders: catches banned cards that still have a legal mark.)
+    Used to require the data dump's own `legalities.standard == "Legal"` too, as a
+    belt-and-suspenders check meant to catch a card banned outright despite a legal
+    mark. Dropped it (meta-scan 2026-09-03): the upstream dump's `legalities` field
+    lags real tournament legality by set — as of this date it flags 112 of "Mega
+    Evolution — Perfect Order" (me3)'s 124 mark-J cards "Not Legal", including
+    Mega Starmie ex and Telepathic Psychic Energy, both of which are real,
+    tournament-played Standard cards (Perfect Order released 2026-03-27, well past
+    any post-release legality delay) — a false-negative that silently broke
+    `gardevoir_real`/`starmie_toolbox`/`greninja`. And per the official 2026 rotation
+    announcement, Standard currently has ZERO individually banned cards — rotation
+    (regulation mark) is the only exclusion mechanism in play — so the second check
+    had no real bans left to catch and was pure downside. Mark alone is the correct
+    single source of truth until that changes; a genuine future ban needs its own
+    explicit handling (this schema has no "Banned" value to key off — only "Legal"/
+    "Not Legal" — so a ban would need to be listed by name, not inferred from here).
     """
     mark = card.get("regulationMark")
-    legal_field = card.get("legalities", {}).get("standard")
-    return mark in LEGAL_MARKS and legal_field == "Legal"
+    return mark in LEGAL_MARKS
 
 
 def safe_hp(value):
@@ -129,8 +141,38 @@ def build_pool():
     # lists). Deduped by name, so if upstream later ships them, upstream WINS and
     # the supplement entry is silently dropped — at which point it can be deleted
     # from data/manual_cards.json. This keeps the pool reproducible from source.
+    #
+    # PRINT_OVERRIDES is the escape hatch from that rule (meta-scan 2026-09-03):
+    # upstream started shipping its OWN bare-name "Drilbur" (Temporal Forces
+    # sv5-85, ability Dig Dig Dig) after the manual "Drilbur" entry (Pitch Black
+    # pbl-46, Call for Family — PBL isn't in the upstream dump at all) was already
+    # the name every deck/test in this repo means by bare "Drilbur". Letting
+    # upstream win here wouldn't be the same card gaining upstream coverage (the
+    # normal, safe case this rule exists for) — it'd silently swap the tournament
+    # print for an unrelated one under the same name. The TEF print keeps its own
+    # explicit "Drilbur (TEF)" manual entry, so both prints are reachable.
+    # "Rocky Fighting Energy" and "Telepathic Psychic Energy" join Drilbur for a
+    # different reason: the upstream Energy-supertype JSON has no "types" field at
+    # all (what a Special Energy provides lives only in its free-text `rules`), so
+    # letting upstream's copy win would silently zero out InPlayPokemon.provided_types()
+    # for both — they'd still exist in the pool, just unable to pay any cost. The
+    # manual entries carry the type explicitly, exactly like every other Special
+    # Energy this engine reads generically instead of by hardcoded name.
+    # "Alakazam" is the same shape as Drilbur: sv6-82 (mark H, "Strange Hacking" /
+    # "Psychic") is processed before me1-56 (mark I, "Psychic Draw" ability +
+    # "Powerful Hand" attack — the print `alakazam_deck` and its Regional-provenance
+    # relatives actually run) in set order, so upstream's earlier print would win the
+    # bare name and silently swap out the attack every one of those decks needs.
+    # "Staryu" (me3-20) is a same-print fixup, not a collision: upstream's own copy
+    # is otherwise fine but ships an empty evolvesTo (Mega Starmie ex's evolvesFrom
+    # is populated, so nothing in the engine's own evolution matching — which reads
+    # ONLY the evolving card's evolvesFrom — actually breaks; this just restores the
+    # informational back-link the data-integrity tests check).
+    PRINT_OVERRIDES = {"Drilbur", "Rocky Fighting Energy", "Telepathic Psychic Energy",
+                        "Alakazam", "Staryu"}
     for c in load_manual_supplement():
-        if c["name"] in seen:
+        overriding = c["name"] in PRINT_OVERRIDES and c["name"] in seen
+        if c["name"] in seen and not overriding:
             print(f"  manual: skip {c['name']!r} (now in upstream)", file=sys.stderr)
             continue
         # Respect rotation: a manual card whose mark has rotated out is dropped,
@@ -140,6 +182,12 @@ def build_pool():
             print(f"  manual: skip {c['name']!r} (mark {c.get('regulationMark')!r} "
                   f"not legal)", file=sys.stderr)
             continue
+        if overriding:
+            # Replace, don't duplicate: drop the upstream print this name already
+            # resolved to before adding the manual one back under the same name.
+            pool[:] = [p for p in pool if p["name"] != c["name"]]
+            print(f"  manual: override {c['name']!r} (upstream print replaced)",
+                  file=sys.stderr)
         seen.add(c["name"])
         pool.append(slim(c))
         print(f"  manual: +1 {c['name']!r}", file=sys.stderr)
