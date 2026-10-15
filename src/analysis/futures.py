@@ -64,6 +64,10 @@ SPECULATIVE_FLAGS = {
         "(Grass), Mega Golurk ex, Mega Malamar ex.",
         "30th Celebration (2026-09-16): reprint-heavy; low competitive impact expected "
         "unless the new Mewtwo ex / Mew ex prints are playable.",
+        "Delta Reign introduces a new paired-Stadium mechanic ('Legendary Stadium'): "
+        "printed as two half-cards (Left/Right) whose art joins into one Stadium, both "
+        "halves packed together. Unknown rules text as of this scan (2026-10-12) — "
+        "flagged, not scored, until the English or JP card text is confirmed.",
     ],
     "mega_excadrill": [
         "Mega Rayquaza ex is Colorless: no Weakness leverage against Metal — neutral "
