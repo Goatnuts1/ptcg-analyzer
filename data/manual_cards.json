@@ -230,6 +230,7 @@
  {
   "id": "pbl-46",
   "name": "Drilbur",
+  "_override_bare": true,
   "supertype": "Pokémon",
   "subtypes": [
    "Basic"
@@ -1304,5 +1305,220 @@
    "You can use this card only when it is the last card in your hand. During this turn, attacks used by your Pokémon that don't have a Rule Box do 80 more damage to your opponent's Active Pokémon (before applying Weakness and Resistance).",
    "You may play only 1 Supporter card during your turn."
   ]
+ },
+ {
+  "id": "sv5-85",
+  "name": "Drilbur (TEF)",
+  "supertype": "Pokémon",
+  "subtypes": [
+   "Basic"
+  ],
+  "hp": 70,
+  "types": [
+   "Fighting"
+  ],
+  "evolvesFrom": null,
+  "evolvesTo": [
+   "Excadrill"
+  ],
+  "abilities": [
+   {
+    "name": "Dig Dig Dig",
+    "text": "When you play this Pokémon from your hand onto your Bench during your turn, you may search your deck for up to 3 Basic Fighting Energy cards and discard them. Then, shuffle your deck.",
+    "type": "Ability"
+   }
+  ],
+  "attacks": [
+   {
+    "name": "Sand Spray",
+    "cost": [
+     "Fighting",
+     "Colorless"
+    ],
+    "convertedEnergyCost": 2,
+    "damage": "20",
+    "text": ""
+   }
+  ],
+  "rules": [],
+  "weaknesses": [
+   {
+    "type": "Grass",
+    "value": "×2"
+   }
+  ],
+  "resistances": [],
+  "retreatCost": [
+   "Colorless"
+  ],
+  "regulationMark": "H"
+ },
+ {
+  "id": "por-88",
+  "name": "Telepathic Psychic Energy",
+  "supertype": "Energy",
+  "subtypes": [
+   "Special"
+  ],
+  "hp": null,
+  "types": [
+   "Psychic"
+  ],
+  "evolvesFrom": null,
+  "evolvesTo": [],
+  "abilities": [],
+  "attacks": [],
+  "rules": [
+   "As long as this card is attached to a Pokémon, it provides [P] Energy.",
+   "When you attach this card from your hand to a [P] Pokémon, search your deck for up to 2 Basic [P] Pokémon and put them onto your Bench. Then, shuffle your deck."
+  ],
+  "weaknesses": [],
+  "resistances": [],
+  "retreatCost": [],
+  "regulationMark": "J"
+ },
+ {
+  "id": "me3-20",
+  "name": "Staryu",
+  "supertype": "Pokémon",
+  "subtypes": [
+   "Basic"
+  ],
+  "hp": 70,
+  "types": [
+   "Water"
+  ],
+  "evolvesFrom": null,
+  "evolvesTo": [
+   "Mega Starmie ex"
+  ],
+  "abilities": [],
+  "attacks": [
+   {
+    "name": "Water Gun",
+    "cost": [
+     "Water"
+    ],
+    "convertedEnergyCost": 1,
+    "damage": "20",
+    "text": ""
+   }
+  ],
+  "rules": [],
+  "weaknesses": [
+   {
+    "type": "Lightning",
+    "value": "×2"
+   }
+  ],
+  "resistances": [],
+  "retreatCost": [
+   "Colorless"
+  ],
+  "regulationMark": "J"
+ },
+ {
+  "id": "me1-56",
+  "name": "Alakazam",
+  "_override_bare": true,
+  "supertype": "Pokémon",
+  "subtypes": [
+   "Stage 2"
+  ],
+  "hp": 140,
+  "types": [
+   "Psychic"
+  ],
+  "evolvesFrom": "Kadabra",
+  "evolvesTo": [],
+  "abilities": [
+   {
+    "name": "Psychic Draw",
+    "text": "Once during your turn, when you play this Pokémon from your hand to evolve 1 of your Pokémon, you may use this Ability. Draw 3 cards.",
+    "type": "Ability"
+   }
+  ],
+  "attacks": [
+   {
+    "name": "Powerful Hand",
+    "cost": [
+     "Psychic"
+    ],
+    "convertedEnergyCost": 1,
+    "damage": "",
+    "text": "Place 2 damage counters on your opponent's Active Pokémon for each card in your hand."
+   }
+  ],
+  "rules": [],
+  "weaknesses": [
+   {
+    "type": "Darkness",
+    "value": "×2"
+   }
+  ],
+  "resistances": [
+   {
+    "type": "Fighting",
+    "value": "-30"
+   }
+  ],
+  "retreatCost": [
+   "Colorless"
+  ],
+  "regulationMark": "I"
+ },
+ {
+  "id": "me3-21",
+  "name": "Mega Starmie ex",
+  "supertype": "Pokémon",
+  "subtypes": [
+   "Stage 1",
+   "MEGA",
+   "ex"
+  ],
+  "hp": 330,
+  "types": [
+   "Water"
+  ],
+  "evolvesFrom": "Staryu",
+  "evolvesTo": [],
+  "abilities": [],
+  "attacks": [
+   {
+    "name": "Jetting Blow",
+    "cost": [
+     "Water"
+    ],
+    "convertedEnergyCost": 1,
+    "damage": "120",
+    "text": "This attack also does 50 damage to 1 of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)"
+   },
+   {
+    "name": "Nebula Beam",
+    "cost": [
+     "Colorless",
+     "Colorless",
+     "Colorless"
+    ],
+    "convertedEnergyCost": 3,
+    "damage": "210",
+    "text": "This attack's damage isn't affected by Weakness or Resistance, or by any effects on your opponent's Active Pokémon."
+   }
+  ],
+  "rules": [
+   "Mega Evolution ex Rule: When your Mega Evolution Pokémon ex is Knocked Out, your opponent takes 3 Prize cards."
+  ],
+  "weaknesses": [
+   {
+    "type": "Lightning",
+    "value": "×2"
+   }
+  ],
+  "resistances": [],
+  "retreatCost": [
+   "Colorless",
+   "Colorless"
+  ],
+  "regulationMark": "J"
  }
 ]
