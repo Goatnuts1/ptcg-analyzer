@@ -280,6 +280,154 @@
   "regulationMark": "J"
  },
  {
+  "id": "sv5-85",
+  "name": "Drilbur (TEF)",
+  "supertype": "Pokémon",
+  "subtypes": [
+   "Basic"
+  ],
+  "hp": 70,
+  "types": [
+   "Fighting"
+  ],
+  "evolvesFrom": null,
+  "evolvesTo": [
+   "Excadrill"
+  ],
+  "abilities": [
+   {
+    "name": "Dig Dig Dig",
+    "text": "When you play this Pokémon from your hand onto your Bench during your turn, you may search your deck for up to 3 Basic Fighting Energy cards and discard them. Then, shuffle your deck.",
+    "type": "Ability"
+   }
+  ],
+  "attacks": [
+   {
+    "name": "Sand Spray",
+    "cost": [
+     "Fighting",
+     "Colorless"
+    ],
+    "convertedEnergyCost": 2,
+    "damage": "20",
+    "text": ""
+   }
+  ],
+  "rules": [],
+  "weaknesses": [
+   {
+    "type": "Grass",
+    "value": "×2"
+   }
+  ],
+  "resistances": [],
+  "retreatCost": [
+   "Colorless"
+  ],
+  "regulationMark": "H"
+ },
+ {
+  "id": "me1-56",
+  "name": "Alakazam",
+  "supertype": "Pokémon",
+  "subtypes": [
+   "Stage 2"
+  ],
+  "hp": 140,
+  "types": [
+   "Psychic"
+  ],
+  "evolvesFrom": "Kadabra",
+  "evolvesTo": [],
+  "abilities": [
+   {
+    "name": "Psychic Draw",
+    "text": "Once during your turn, when you play this Pokémon from your hand to evolve 1 of your Pokémon, you may use this Ability. Draw 3 cards.",
+    "type": "Ability"
+   }
+  ],
+  "attacks": [
+   {
+    "name": "Powerful Hand",
+    "cost": [
+     "Psychic"
+    ],
+    "convertedEnergyCost": 1,
+    "damage": "",
+    "text": "Place 2 damage counters on your opponent's Active Pokémon for each card in your hand."
+   }
+  ],
+  "rules": [],
+  "weaknesses": [
+   {
+    "type": "Darkness",
+    "value": "×2"
+   }
+  ],
+  "resistances": [
+   {
+    "type": "Fighting",
+    "value": "-30"
+   }
+  ],
+  "retreatCost": [
+   "Colorless"
+  ],
+  "regulationMark": "I"
+ },
+ {
+  "id": "sv6-82",
+  "name": "Alakazam (TWM)",
+  "supertype": "Pokémon",
+  "subtypes": [
+   "Stage 2"
+  ],
+  "hp": 140,
+  "types": [
+   "Psychic"
+  ],
+  "evolvesFrom": "Kadabra",
+  "evolvesTo": [],
+  "abilities": [],
+  "attacks": [
+   {
+    "name": "Strange Hacking",
+    "cost": [
+     "Psychic"
+    ],
+    "convertedEnergyCost": 1,
+    "damage": "",
+    "text": "Your opponent's Active Pokémon is now Confused. You may move any number of damage counters from your opponent's Pokémon to their other Pokémon in any way you like."
+   },
+   {
+    "name": "Psychic",
+    "cost": [
+     "Psychic"
+    ],
+    "convertedEnergyCost": 1,
+    "damage": "10+",
+    "text": "This attack does 50 more damage for each Energy attached to your opponent's Active Pokémon."
+   }
+  ],
+  "rules": [],
+  "weaknesses": [
+   {
+    "type": "Darkness",
+    "value": "×2"
+   }
+  ],
+  "resistances": [
+   {
+    "type": "Fighting",
+    "value": "-30"
+   }
+  ],
+  "retreatCost": [
+   "Colorless"
+  ],
+  "regulationMark": "H"
+ },
+ {
   "id": "me3-87",
   "name": "Rocky Fighting Energy",
   "supertype": "Energy",
