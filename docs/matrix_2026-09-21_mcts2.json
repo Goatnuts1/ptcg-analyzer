@@ -1,0 +1,122 @@
+{
+ "alakazam_deck|ogerpon_box": {
+  "d1": "ogerpon_box",
+  "d1_wins": 56,
+  "d2": "alakazam_deck",
+  "d2_wins": 4,
+  "secs": 181.5,
+  "ties": 0
+ },
+ "beedrill|ogerpon_box": {
+  "d1": "ogerpon_box",
+  "d1_wins": 36,
+  "d2": "beedrill",
+  "d2_wins": 24,
+  "secs": 87.9,
+  "ties": 0
+ },
+ "cornerstone_box|ogerpon_box": {
+  "d1": "ogerpon_box",
+  "d1_wins": 27,
+  "d2": "cornerstone_box",
+  "d2_wins": 33,
+  "secs": 127.3,
+  "ties": 0
+ },
+ "crustle_modern|ogerpon_box": {
+  "d1": "ogerpon_box",
+  "d1_wins": 13,
+  "d2": "crustle_modern",
+  "d2_wins": 47,
+  "secs": 182.8,
+  "ties": 0
+ },
+ "cynthia_garchomp|ogerpon_box": {
+  "d1": "ogerpon_box",
+  "d1_wins": 36,
+  "d2": "cynthia_garchomp",
+  "d2_wins": 24,
+  "secs": 139.0,
+  "ties": 0
+ },
+ "doublade|ogerpon_box": {
+  "d1": "ogerpon_box",
+  "d1_wins": 38,
+  "d2": "doublade",
+  "d2_wins": 22,
+  "secs": 157.3,
+  "ties": 0
+ },
+ "dragapult_blaziken|ogerpon_box": {
+  "d1": "ogerpon_box",
+  "d1_wins": 47,
+  "d2": "dragapult_blaziken",
+  "d2_wins": 13,
+  "secs": 143.4,
+  "ties": 0
+ },
+ "dragapult|ogerpon_box": {
+  "d1": "ogerpon_box",
+  "d1_wins": 45,
+  "d2": "dragapult",
+  "d2_wins": 15,
+  "secs": 152.1,
+  "ties": 0
+ },
+ "festival_lead|ogerpon_box": {
+  "d1": "ogerpon_box",
+  "d1_wins": 47,
+  "d2": "festival_lead",
+  "d2_wins": 13,
+  "secs": 115.9,
+  "ties": 0
+ },
+ "fighting|ogerpon_box": {
+  "d1": "ogerpon_box",
+  "d1_wins": 22,
+  "d2": "fighting",
+  "d2_wins": 38,
+  "secs": 75.9,
+  "ties": 0
+ },
+ "gardevoir|ogerpon_box": {
+  "d1": "ogerpon_box",
+  "d1_wins": 35,
+  "d2": "gardevoir",
+  "d2_wins": 25,
+  "secs": 124.3,
+  "ties": 0
+ },
+ "greninja|ogerpon_box": {
+  "d1": "ogerpon_box",
+  "d1_wins": 37,
+  "d2": "greninja",
+  "d2_wins": 23,
+  "secs": 87.7,
+  "ties": 0
+ },
+ "grimmsnarl_froslass|ogerpon_box": {
+  "d1": "ogerpon_box",
+  "d1_wins": 38,
+  "d2": "grimmsnarl_froslass",
+  "d2_wins": 22,
+  "secs": 113.2,
+  "ties": 0
+ },
+ "ogerpon_box|raging_bolt": {
+  "d1": "ogerpon_box",
+  "d1_wins": 50,
+  "d2": "raging_bolt",
+  "d2_wins": 10,
+  "secs": 102.1,
+  "ties": 0
+ },
+ "ogerpon_box|toucannon": {
+  "d1": "ogerpon_box",
+  "d1_wins": 41,
+  "d2": "toucannon",
+  "d2_wins": 19,
+  "secs": 151.9,
+  "ties": 0
+ }
+}
