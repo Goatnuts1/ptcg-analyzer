@@ -37,14 +37,23 @@ ROTATION_DATE = "2027-04 (est., annual cadence)"
 
 # Share deltas between the two most recent scans (pts). Maintained by the meta-scan
 # skill; positive = rising. Only RISERS contribute to trend risk.
+#
+# 2026-10-05 scan note: direct WebFetch to every deck-tracking domain tried was again
+# blocked (6th consecutive week for this project; 8th+ for the sibling meta-hunt
+# routine) -- see docs/META_SCAN_2026-10-05.md. Two entries below were refreshed from
+# corroborated WebSearch snippets (mega_excadrill: a figure independently matched by
+# this session AND the unmerged 2026-10-01 scan's finding -- see that report's PR
+# #46); ns_zoroark is NEW this cycle (see below). Everything else is left at its
+# 2026-08-20 value rather than guessed -- re-pull properly once egress is unblocked.
 SHARE_TRENDS = {
-    # archetype (registry name): (share_then, share_now) — 2026-08-17 -> 2026-08-20
+    # archetype (registry name): (share_then, share_now) — 2026-08-17 -> 2026-08-20,
+    # not refreshed this cycle unless noted
     "raging_bolt":        (1.79, 1.97),
     "cynthia_garchomp":   (1.18, 1.20),
     "dragapult":          (12.35, 12.47),   # Dragapult + Dusknoir rows combined
     "alakazam_deck":      (5.16, 5.24),
     "slowking":           (5.26, 5.36),
-    "mega_excadrill":     (7.79, 7.84),
+    "mega_excadrill":     (7.84, 7.61),     # 2026-08-20 -> 2026-10-05, corroborated twice
     "festival_lead":      (6.75, 6.55),
     "dragapult_blaziken": (5.99, 6.02),
     "grimmsnarl_froslass": (4.66, 4.55),
@@ -53,17 +62,44 @@ SHARE_TRENDS = {
     "fighting":           (1.77, 1.89),
     "greninja":           (1.70, 1.63),
     "beedrill":           (1.22, 1.16),
+    # NEW 2026-10-05: N's Zoroark ex, newly registered this scan (`ns_zoroark`). The
+    # project has had real-world evidence on this archetype since the 2026-08-17
+    # calibration gauntlet (docs/META_GAUNTLET_2026-08.md: 5.16% share / 48.14% real
+    # WR, flagged there as "93.3% sim — combo mispiloting" because NO effects existed
+    # for it at all back then) but zero registry coverage until this build. This
+    # scan's WebSearch read (6.2% share, 47.2% WR, a concrete 153-160-37 record from
+    # one tracker; other trackers claimed up to 10% / "Tier 2") is noisier but
+    # consistent with a real archetype that may have grown since August. share_then=0
+    # reflects that this project had no visibility into it before today, not that the
+    # archetype itself appeared from nothing.
+    "ns_zoroark":          (0.0, 6.2),
 }
 
 # Speculative flags: upcoming-set concerns/opportunities per deck. LABELED SPECULATION.
 SPECULATIVE_FLAGS = {
     "_global": [
         "Delta Reign (intl. 2026-11-06; JP 'Storm Emeralda' live since 07-31): four new "
-        "Megas — Mega Rayquaza ex (280HP BASIC Mega, Storm Emerald 50x per Fire/Lightning "
-        "Energy on its whole board, Colorless type, Fighting resistance), Mega Golisopod ex "
-        "(Grass), Mega Golurk ex, Mega Malamar ex.",
-        "30th Celebration (2026-09-16): reprint-heavy; low competitive impact expected "
-        "unless the new Mewtwo ex / Mew ex prints are playable.",
+        "Megas — Mega Rayquaza ex (280HP BASIC Mega, Ability 'Ruler's Roar' looks at top 4 "
+        "on bench-entry and attaches a Basic Energy found there, 'Storm Emeralda' 50x per "
+        "Fire/Lightning Energy on its WHOLE board, Colorless type), Mega Golisopod ex "
+        "(Grass, 340HP: Finishing Blow 60(+160 if defender already damaged), Quadruple Hold "
+        "160 + can't-retreat), Mega Golurk ex (Psychic, 350HP: can't attack below 10 hand "
+        "cards, Goliath's Punch 300/30 self), Mega Malamar ex (Dark, 320HP: Psychic "
+        "Marionette 70x opponent's Benched, Eerie Wave 200+Confuse). Card text for all four "
+        "cross-confirmed by 2+ independent sources (Bulbapedia/Serebii/Pokellector/EN and JP "
+        "pokemon-card.com) as of 2026-10-01 -- no JP constructed-format City League results "
+        "exist yet to size real play: Storm Emeralda's JP release was a sealed/shield-battle "
+        "product (pull-and-build-on-the-spot), not a normal constructed expansion, so it has "
+        "no comparable archetype-share signal. Treat as text-confirmed but UNSIZED until "
+        "Delta Reign's own intl. constructed results land (2026-11-06+).",
+        "30th Celebration (legal since 2026-09-25): no tournament has used a numbered card "
+        "from it as of this scan (2026-10-05) -- low competitive impact expected unless the "
+        "new Mewtwo ex / Mew ex prints are playable.",
+        "Next JP set after Storm Emeralda: 'Aura Seeker' (trademark name; M7), reported "
+        "~2026-11-27 JP release per release-calendar trackers — not yet officially dated by "
+        "Pokémon Co., no card reveals as of this scan. ~3 weeks after Delta Reign's intl. "
+        "release, so it will be the next JP preview window to watch for the set AFTER Delta "
+        "Reign.",
     ],
     "mega_excadrill": [
         "Mega Rayquaza ex is Colorless: no Weakness leverage against Metal — neutral "
@@ -75,7 +111,13 @@ SPECULATIVE_FLAGS = {
     ],
     "crustle_modern": [
         "Grass techs gain a target if Mega Golisopod ex (Grass) is playable; no direct "
-        "threat identified from revealed cards.",
+        "threat identified from revealed cards. Mysterious Rock Inn still blocks all four "
+        "new Delta Reign Mega ex outright (they're all Pokémon-ex), same as every other ex "
+        "attacker already in the format.",
+    ],
+    "ns_zoroark": [
+        "None of the four Delta Reign Mega ex carries a Darkness-type attack or an obvious "
+        "N's-line hate card; no direct threat identified from revealed text.",
     ],
 }
 

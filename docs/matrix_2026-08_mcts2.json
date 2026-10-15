@@ -1398,5 +1398,29 @@
   "d2_wins": 18,
   "ties": 0,
   "secs": 48.7
+ },
+ "mega_excadrill|ns_zoroark": {
+  "d1": "mega_excadrill",
+  "d2": "ns_zoroark",
+  "d1_wins": 47,
+  "d2_wins": 13,
+  "ties": 0,
+  "secs": 165.9
+ },
+ "crustle_modern|ns_zoroark": {
+  "d1": "crustle_modern",
+  "d2": "ns_zoroark",
+  "d1_wins": 56,
+  "d2_wins": 4,
+  "ties": 0,
+  "secs": 156.9
+ },
+ "dragapult|ns_zoroark": {
+  "d1": "dragapult",
+  "d2": "ns_zoroark",
+  "d1_wins": 45,
+  "d2_wins": 15,
+  "ties": 0,
+  "secs": 201.5
  }
 }

@@ -38,9 +38,11 @@ def main():
     # here for the same reason: it is the only list carrying the other two activated
     # Stadiums, Grand Tree ("stadium_evolve") and Mystery Garden ("stadium_garden").
     # doublade is here for the newest one: Team Rocket's Factory ("stadium_factory").
+    # ns_zoroark is here for Night Joker's copy_attack_index disambiguation — the
+    # ("attack", ai) key alone collapses every distinct copy choice into one.
     pairings = [("dragapult", "charizard_xy"), ("charizard_xy", "dragapult"),
                 ("hide_n_sneak", "dragapult"), ("gardevoir_real", "dragapult"),
-                ("doublade", "dragapult")]
+                ("doublade", "dragapult"), ("ns_zoroark", "mega_excadrill")]
     for gi in range(24):
         which = pairings[gi % len(pairings)]
         da = load_deck(db, which[0])

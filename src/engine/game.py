@@ -45,9 +45,15 @@ class Action:
     hand_index: Optional[int] = None
     target_index: Optional[int] = None    # index into bench (or -1 for active)
     attack_index: Optional[int] = None
+    # N's Zoroark ex's Night Joker ("attack" kind only): target_index is repurposed
+    # (unused by any other "attack" action) to mean the BENCH SLOT of the N's Pokémon
+    # being copied from, and copy_attack_index selects WHICH of that Pokémon's attacks.
+    # Both are None for every normal attack.
+    copy_attack_index: Optional[int] = None
 
     def __repr__(self):
-        return f"<{self.kind} h={self.hand_index} t={self.target_index} a={self.attack_index}>"
+        return (f"<{self.kind} h={self.hand_index} t={self.target_index} "
+               f"a={self.attack_index} ca={self.copy_attack_index}>")
 
 
 PASS = Action(kind="pass")
@@ -171,6 +177,11 @@ def retreat_cost(mon: InPlayPokemon, state: "GameState" = None,
             and fx.skyliner_free_retreat(state, owner, mon)):
         return 0
     if not mon.energy and any(ab.name == "Agile" for ab in mon.card.abilities):
+        return 0
+    # N's Castle (Stadium): "N's Pokémon in play (both yours and your opponent's) have
+    # no Retreat Cost." Passive, symmetric, name-prefix gated like the rest of the N's
+    # Zoroark ex line's shared-naming checks (Night Joker's copy filter below).
+    if state is not None and mon.card.name.startswith("N's ") and fx.current_stadium_name(state) == "N's Castle":
         return 0
     base = mon.card.retreat_cost
     # Jamming Tower: "Pokémon Tools attached to each Pokémon (both yours and your
@@ -362,8 +373,28 @@ def legal_actions(state: GameState) -> list[Action]:
     if not first_turn_no_attack and not p.active.cannot_attack:
         for ai, atk in enumerate(p.active.card.attacks):
             cost = fx.effective_cost(state, p.active, atk)   # Colorless discounts (Blood Moon)
-            if can_pay_cost(p.active, cost) and atk.name not in p.active.locked_attacks:
-                actions.append(Action("attack", attack_index=ai))
+            if not (can_pay_cost(p.active, cost) and atk.name not in p.active.locked_attacks):
+                continue
+            # Night Joker (N's Zoroark ex): "Choose 1 of your Benched N's Pokémon's
+            # attacks and use it as this attack." The choice of WHICH benched Pokémon
+            # and WHICH of its attacks is the whole decision, so it's enumerated as one
+            # action per (bench slot, that mon's attack index) pair instead of one bare
+            # "attack" action. A benched Pokémon's OWN "Night Joker" is excluded from
+            # the copy pool: copying it would just re-ask the same question of whatever
+            # it would copy, and real tournament lists never run into more than one
+            # Zoroark ex active at a time anyway. If nothing is copyable, Night Joker
+            # simply isn't offered this turn (same as any attack with no legal target).
+            if atk.name == "Night Joker":
+                for bidx, bmon in enumerate(p.bench):
+                    if not bmon.card.name.startswith("N's "):
+                        continue
+                    for cai, cattack in enumerate(bmon.card.attacks):
+                        if cattack.name == "Night Joker":
+                            continue
+                        actions.append(Action("attack", attack_index=ai,
+                                              target_index=bidx, copy_attack_index=cai))
+                continue
+            actions.append(Action("attack", attack_index=ai))
 
     return actions
 
@@ -371,7 +402,8 @@ def legal_actions(state: GameState) -> list[Action]:
 # --------------------------------------------------------------------------- #
 # Applying actions
 # --------------------------------------------------------------------------- #
-def _resolve_attack(state: GameState, atk_index: int) -> None:
+def _resolve_attack(state: GameState, atk_index: int, copy_target_index: Optional[int] = None,
+                    copy_attack_index: Optional[int] = None) -> None:
     attacker = state.current.active
     defender = state.opponent.active
     atk = attacker.card.attacks[atk_index]
@@ -379,6 +411,11 @@ def _resolve_attack(state: GameState, atk_index: int) -> None:
     ctx = fx.EffectContext(state=state, me=state.current, opp=state.opponent,
                            source=attacker, db=state.db, rng=state.rng,
                            effect_kind="attack")
+    # Night Joker (N's Zoroark ex): carry the chosen (benched Pokémon, its attack) pair
+    # on ctx.target so the effect can "use it as this attack" — see _night_joker.
+    if copy_target_index is not None:
+        copy_mon = state.current.bench[copy_target_index]
+        ctx.target = (copy_mon, copy_mon.card.attacks[copy_attack_index])
 
     # Confusion: flip a coin; tails -> 30 to itself and the attack does nothing.
     if attacker.confused and not fx.flip(ctx):
@@ -723,7 +760,7 @@ def apply_action(state: GameState, action: Action) -> None:
         return
 
     if action.kind == "attack":
-        _resolve_attack(state, action.attack_index)
+        _resolve_attack(state, action.attack_index, action.target_index, action.copy_attack_index)
         # attacking always ends the turn
         state.phase = Phase.BETWEEN_TURNS
         return

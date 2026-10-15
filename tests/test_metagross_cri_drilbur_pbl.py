@@ -6,8 +6,11 @@ the initial mega_excadrill build accidentally used different, non-matching print
 Black Drilbur the 2nd/416 "Tournament of Doom" list ran). Covers:
   - Metagross (CRI): M Bounce Back (60 + force the opponent to switch, their choice)
     and Metallic Hammer ("150+", optional discard 3 Metal Energy for +150).
-  - Drilbur (PBL, the bare name — NOT "Drilbur (TEF)"): Call for Family (search up to 2
-    Basic Pokémon to the Bench).
+  - Drilbur (PBL): Call for Family (search up to 2 Basic Pokémon to the Bench). NOTE:
+    bare "Drilbur" used to be this print, but a later upstream pool refresh started
+    shipping its OWN "Drilbur" (sv5-85, the Temporal Forces "Dig Dig Dig" print) under
+    the bare name, so this print now needs the "(PBL)" suffix (same fix as
+    "Metagross (CRI)" below).
 
 Run: python3 tests/test_metagross_cri_drilbur_pbl.py
 """
@@ -46,12 +49,12 @@ def main():
     db = CardDB.from_pool("data/standard_pool.json")
 
     metagross_cri = db.get("Metagross (CRI)")
-    drilbur_pbl = db.get("Drilbur")
+    drilbur_pbl = db.get("Drilbur (PBL)")
 
     check(metagross_cri.id == "cri-61", f"expected Chaos Rising Metagross (cri-61), got {metagross_cri.id}")
     check(drilbur_pbl.id == "pbl-46", f"expected Pitch Black Drilbur (pbl-46), got {drilbur_pbl.id}")
     check(not any(a.name == "Dig Dig Dig" for a in drilbur_pbl.abilities),
-          "the bare 'Drilbur' print must NOT carry Dig Dig Dig (that's 'Drilbur (TEF)')")
+          "the 'Drilbur (PBL)' print must NOT carry Dig Dig Dig (that's the bare 'Drilbur', sv5-85)")
 
     # --- 1. M Bounce Back: 60 (engine-applied elsewhere) + force a switch; the
     # opponent's REPLACEMENT is chosen by _promote's healthiest-bencher policy. ---

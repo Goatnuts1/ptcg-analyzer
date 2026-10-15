@@ -710,12 +710,17 @@ DECK_THE_VAULT = [
 # does not resolve in the pool — substituted with Basic Psychic Energy (the
 # printed "Psychic Energy (MEE)" basic is likewise mapped to the engine's
 # injected "Basic Psychic Energy"), noted here and in the validation report.
+# "Alakazam (MEG)" names the print this list actually plays (Psychic Draw /
+# Powerful Hand) — a later upstream pool refresh started shipping its OWN
+# "Alakazam" (sv6-82, "Strange Hacking"/"Psychic", no Psychic Draw) under the
+# bare name, so the bare name now resolves to the WRONG print and this list
+# must use the suffix (Metagross (CRI) / Drilbur (PBL) precedent).
 # --------------------------------------------------------------------------- #
 DECK_ALAKAZAM = [
     # Pokémon (22)
     ("Abra", 4),
     ("Kadabra", 4),
-    ("Alakazam", 3),
+    ("Alakazam (MEG)", 3),
     ("Dunsparce", 3),
     ("Dudunsparce", 3),
     ("Fezandipiti ex", 1),
@@ -927,7 +932,7 @@ DECK_MEGA_EXCADRILL_SHAYMIN = [
     ("Beldum", 4),
     ("Metang", 4),
     ("Metagross (CRI)", 2),
-    ("Drilbur", 3),
+    ("Drilbur (PBL)", 3),
     ("Mega Excadrill ex", 2),
     ("Genesect ex", 2),
     ("Shaymin (DRI)", 2),
@@ -1073,12 +1078,15 @@ DECK_CRUSTLE_MODERN = [
 # --------------------------------------------------------------------------- #
 # Mega Excadrill ex (Pitch Black-era Metal) — matches the REAL 2nd/416 "Tournament
 # of Doom" tournament list exactly, including print (Ap3XxX9941's decklist on
-# Limitless). Drilbur -> Mega Excadrill ex (340 HP, 3-prize Mega; Undermine mills
-# 2, Maximum Drilling hits 200 / 330 once it has 2 Energy past its [M][M][M]
-# cost) is the payoff; Drilbur itself is the real PBL 46 print (Call for Family
-# benches up to 2 Basics, Dig Claws a plain 50 — NOT the ability-bearing
-# "Drilbur (TEF)" this engine also carries for other builds; that print isn't
-# what the tournament list ran). Beldum -> Metang -> "Metagross (CRI)" is the
+# Limitless). "Drilbur (PBL)" -> Mega Excadrill ex (340 HP, 3-prize Mega;
+# Undermine mills 2, Maximum Drilling hits 200 / 330 once it has 2 Energy past
+# its [M][M][M] cost) is the payoff; Drilbur itself is the real PBL 46 print
+# (Call for Family benches up to 2 Basics, Dig Claws a plain 50 — NOT the
+# ability-bearing "Drilbur (TEF)" this engine also carries for other builds;
+# that print isn't what the tournament list ran). The suffix is required: a
+# later upstream pool refresh started shipping its OWN bare "Drilbur" (sv5-85,
+# the TEF-equivalent "Dig Dig Dig" print), so the bare name no longer resolves
+# to PBL 46. Beldum -> Metang -> "Metagross (CRI)" is the
 # Energy engine and secondary attacker: Metang's Metal Maker digs the top 4 for
 # Basic Metal Energy and attaches them, then Metagross (the real CRI 61 print,
 # NOT the plain "Metagross" used elsewhere in this engine's other decks) either
@@ -1103,7 +1111,7 @@ DECK_MEGA_EXCADRILL = [
     ("Beldum", 4),
     ("Metang", 4),
     ("Metagross (CRI)", 2),
-    ("Drilbur", 3),
+    ("Drilbur (PBL)", 3),
     ("Mega Excadrill ex", 2),
     ("Genesect ex", 2),
     ("Ethan's Pichu", 1),
@@ -1523,6 +1531,61 @@ DECK_GRIMMSNARL_FROSLASS: list[tuple[str, int]] = [
     ("Basic Darkness Energy", 9),
 ]
 
+# --------------------------------------------------------------------------- #
+# N's Zoroark ex — Michele Schiraldi, 26th place, World Championships 2026
+# (Limitless list 28773; corroborated via WebSearch snippets, direct Limitless
+# fetch blocked this session — see docs/META_SCAN_2026-10-05.md). TOURNAMENT
+# provenance. 6.2-10% of the live meta across independent trackers (Tier 2),
+# with a Worlds Top 8 list (Öjvind Svinhufvud, 9th) sharing the same 19
+# Pokémon and a near-identical Trainer line — this is the biggest archetype
+# this project had zero registry coverage for before this build.
+# Engine: Trade (discard 1, draw 2) keeps the hand fueled every turn; Night
+# Joker lets the 280HP ex body borrow N's Zekrom's huge Rampaging Thunder
+# (250, then a 1-turn attack lock) or N's Darmanitan's Back Draft/Flamebody
+# Cannon without paying their real Energy costs — only Night Joker's own [D][D].
+# N's Castle drops the whole line's retreat cost to 0 (useful since Zoroark ex
+# itself has no stated retreat-cost discount). Transformation Tome (×4, "play 2
+# at once") recycles a damaged/used-up Basic back from the discard pile onto
+# a live one's board state. Pecharunt ex is a secondary attacker (Irritated
+# Outburst scales with prizes already taken) whose Subjugating Chains switch
+# would also Poison the new Active — POISON IS NOT MODELED in this engine (the
+# same documented gap as Numbing Water's Paralysis), so that half of the card
+# is a known, logged no-op here. Binding Mochi's own bonus (+40 vs the
+# opponent's Active, but only while ITS HOLDER is Poisoned) never fires for the
+# same reason — it is still a legal, attachable Tool, just an inert one in
+# this engine, same honest limitation.
+DECK_NS_ZOROARK: list[tuple[str, int]] = [
+    ("N's Zorua", 4),
+    ("N's Zoroark ex", 4),
+    ("N's Zekrom", 2),
+    ("N's Darumaka", 1),
+    ("N's Darmanitan", 1),
+    ("Pecharunt ex", 1),
+    ("Fezandipiti ex", 1),
+    ("Meowth ex", 1),
+    ("Yveltal", 1),
+    ("Munkidori", 1),
+    ("Budew", 1),
+    ("Tatsugiri", 1),
+
+    ("Lillie's Determination", 4),
+    ("Boss's Orders", 3),
+    ("Cyrano", 2),
+    ("Black Belt's Training", 1),
+    ("Buddy-Buddy Poffin", 4),
+    ("N's PP Up", 3),
+    ("Poké Pad", 3),
+    ("Night Stretcher", 1),
+    ("Secret Box", 1),        # ACE SPEC
+    ("Binding Mochi", 2),
+    ("N's Castle", 2),
+    ("Transformation Tome", 4),
+    ("Special Red Card", 1),
+    ("Ultra Ball", 2),
+
+    ("Basic Darkness Energy", 8),
+]
+
 DECKS: dict[str, list[tuple[str, int]]] = {
     "dragapult": TOURNAMENT_DRAGAPULT,
     "charizard_xy": TOURNAMENT_CHARIZARD_XY,
@@ -1560,6 +1623,7 @@ DECKS: dict[str, list[tuple[str, int]]] = {
     "dragapult_blaziken": DECK_DRAGAPULT_BLAZIKEN,
     "festival_lead": DECK_FESTIVAL_LEAD,
     "grimmsnarl_froslass": DECK_GRIMMSNARL_FROSLASS,
+    "ns_zoroark": DECK_NS_ZOROARK,
 }
 
 
