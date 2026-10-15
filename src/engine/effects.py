@@ -482,7 +482,7 @@ def print_base_name(name: str) -> str:
     """Strip this project's print-disambiguation suffix: "Dunsparce (JTG)" -> "Dunsparce".
 
     When a deck needs a DIFFERENT print of a card the pool already has under the bare
-    name, the new print is added as "Name (SETCODE)" (Metagross (CRI), Drilbur (TEF),
+    name, the new print is added as "Name (SETCODE)" (Metagross (CRI), Drilbur (PBL),
     Dunsparce (JTG), Shuppet (PBL), ...). That suffix is pool bookkeeping, NOT part of the
     card, so any rule that reads a card's PRINTED name must strip it first.
 
@@ -2515,10 +2515,11 @@ def _maximum_drilling(ctx: EffectContext) -> None:
 
 
 def _call_for_family(ctx: EffectContext) -> None:
-    """Drilbur (PBL 46, the real tournament-list print — NOT "Drilbur (TEF)"): "Search
-    your deck for up to 2 Basic Pokémon and put them onto your Bench. Then, shuffle your
-    deck." Mirrors Precious Trolley's search_deck call, capped at 2 and remaining Bench
-    space instead of unlimited."""
+    """Drilbur (PBL 46, the real tournament-list print — pool name "Drilbur (PBL)", NOT
+    the bare "Drilbur" upstream now resolves to TEF 85): "Search your deck for up to 2
+    Basic Pokémon and put them onto your Bench. Then, shuffle your deck." Mirrors
+    Precious Trolley's search_deck call, capped at 2 and remaining Bench space instead
+    of unlimited."""
     space = min(2, bench_limit(ctx.state, ctx.me) - len(ctx.me.bench))
     if space <= 0:
         return
@@ -3328,7 +3329,7 @@ ATTACK_EFFECTS: dict[tuple[str, str], Callable[[EffectContext], None]] = {
     # --- Journey Together / Surging Sparks / Mega Evolution ---
     ("Lillie's Clefairy ex", "Full Moon Rondo"): _full_moon_rondo,
     ("Chien-Pao", "Icicle Loop"): _icicle_loop,
-    ("Alakazam", "Powerful Hand"): _powerful_hand,
+    ("Alakazam (MEG)", "Powerful Hand"): _powerful_hand,
     # --- Perfect Order (Mega Starmie ex line) + Froakie/Frogadier ---
     ("Mega Starmie ex", "Jetting Blow"): _jetting_blow,
     ("Mega Starmie ex", "Nebula Beam"): _nebula_beam,
@@ -3356,7 +3357,7 @@ ATTACK_EFFECTS: dict[tuple[str, str], Callable[[EffectContext], None]] = {
     ("Ethan's Pichu", "Zapping Draw"): _zapping_draw,
     ("Mega Excadrill ex", "Undermine"): _undermine,
     ("Mega Excadrill ex", "Maximum Drilling"): _maximum_drilling,
-    ("Drilbur", "Call for Family"): _call_for_family,   # real tournament-list print (PBL 46)
+    ("Drilbur (PBL)", "Call for Family"): _call_for_family,   # real tournament-list print (PBL 46)
     ("Metagross (CRI)", "M Bounce Back"): _bounce_back,
     ("Metagross (CRI)", "Metallic Hammer"): _metallic_hammer,
     # --- Mega Evolution-era Fighting (Cynthia's Garchomp ex line) ---
@@ -3440,7 +3441,8 @@ REPEATABLE_ABILITIES: set[tuple[str, str]] = {
 ON_BENCH_TRIGGERS: dict[str, Callable[[EffectContext], None]] = {
     "Meowth ex": _last_ditch_catch,
     "Chien-Pao": _snow_sink,
-    "Drilbur (TEF)": _dig_dig_dig,    # Dig Dig Dig (TEF 85) — NOT the bare "Drilbur"
+    "Drilbur": _dig_dig_dig,    # Dig Dig Dig (TEF 85) — bare "Drilbur" now resolves here;
+                                 # the PBL 46 Call for Family print is "Drilbur (PBL)"
                                       # used by mega_excadrill, which is the real
                                       # tournament-list print (PBL 46, no ability).
     "Iron Leaves ex": _rapid_vernier,  # Rapid Vernier (TEF 25 / svp-128)
@@ -3450,7 +3452,7 @@ ON_BENCH_TRIGGERS: dict[str, Callable[[EffectContext], None]] = {
 # (both the normal evolve action and Rare Candy count as "playing from hand to
 # evolve"). card_name -> effect(ctx with source = the just-evolved Pokémon).
 ON_EVOLVE_TRIGGERS: dict[str, Callable[[EffectContext], None]] = {
-    "Alakazam": _psychic_draw,
+    "Alakazam (MEG)": _psychic_draw,
     "Noctowl": _jewel_seeker,     # Jewel Seeker (SCR 115 / svp-141)
 }
 
@@ -4547,7 +4549,7 @@ TOOL_IMPLEMENTED: set[str] = {"Air Balloon", "Powerglass",
 PASSIVE_ABILITIES: set[tuple[str, str]] = {
     ("Charmander", "Agile"),                 # -> retreat_cost
     ("Meowth ex", "Last-Ditch Catch"),       # -> ON_BENCH_TRIGGERS
-    ("Drilbur (TEF)", "Dig Dig Dig"),         # -> ON_BENCH_TRIGGERS
+    ("Drilbur", "Dig Dig Dig"),         # -> ON_BENCH_TRIGGERS (TEF 85 print, bare name)
     # Passive damage-prevention walls -> apply_attack_damage / place_counters.
     ("Crustle", "Mysterious Rock Inn"),
     ("Milotic ex", "Sparkling Scales"),

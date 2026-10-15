@@ -37,22 +37,38 @@ ROTATION_DATE = "2027-04 (est., annual cadence)"
 
 # Share deltas between the two most recent scans (pts). Maintained by the meta-scan
 # skill; positive = rising. Only RISERS contribute to trend risk.
+#
+# 2026-10-15 scan note: direct WebFetch to limitlesstcg.com/play.limitlesstcg.com/
+# labs.limitlesstcg.com was blocked (ENOTFOUND) this session, same access gap the
+# parallel weekly-meta-hunt routine has hit repeatedly since September. Third-party
+# tier-list aggregators either carry no date or explicitly cite "late August 2026"
+# as their basis — i.e. they are NOT a fresh October read, just a republish of the
+# same data this project's 2026-08-20 scan already has. The only genuinely fresh,
+# dated signal this scan found was EVENT-level: Recife (Oct 3-4) and Louisville
+# (Oct 9-11) results. Per CLAUDE.md honesty rules, shares below are carried FLAT
+# from 2026-08-20 wherever no fresh contradicting signal exists — only dragapult,
+# dragapult_blaziken, and alakazam_deck got a (small, event-evidence-based, NOT a
+# fresh percentage pull) nudge. ogerpon_box is a new baseline entry (confirmed
+# healthy at Recife: 5.9% share / 50.09% event WR) with zero prior scan to diff
+# against, so its delta is flat by construction. No aggregate drift >2pt could be
+# confirmed this scan — see docs/META_SCAN_2026-10-15.md.
 SHARE_TRENDS = {
-    # archetype (registry name): (share_then, share_now) — 2026-08-17 -> 2026-08-20
-    "raging_bolt":        (1.79, 1.97),
-    "cynthia_garchomp":   (1.18, 1.20),
-    "dragapult":          (12.35, 12.47),   # Dragapult + Dusknoir rows combined
-    "alakazam_deck":      (5.16, 5.24),
-    "slowking":           (5.26, 5.36),
-    "mega_excadrill":     (7.79, 7.84),
-    "festival_lead":      (6.75, 6.55),
-    "dragapult_blaziken": (5.99, 6.02),
-    "grimmsnarl_froslass": (4.66, 4.55),
-    "hide_n_sneak":       (4.10, 4.08),
-    "toucannon":          (3.40, 3.18),
-    "fighting":           (1.77, 1.89),
-    "greninja":           (1.70, 1.63),
-    "beedrill":           (1.22, 1.16),
+    # archetype (registry name): (share_then, share_now)
+    "raging_bolt":        (1.79, 1.97),     # carried flat, no fresh signal
+    "cynthia_garchomp":   (1.18, 1.20),     # carried flat, no fresh signal
+    "dragapult":          (12.47, 12.60),   # 1st at Louisville (Riley McKay) — still #1
+    "alakazam_deck":      (5.24, 5.60),     # won Frankfurt, 2nd at Worlds (qualitative)
+    "slowking":           (5.26, 5.36),     # carried flat, no fresh signal
+    "mega_excadrill":     (7.79, 7.84),     # carried flat, no fresh signal
+    "festival_lead":      (6.75, 6.55),     # carried flat, no fresh signal
+    "dragapult_blaziken": (6.02, 6.20),     # 2nd at Louisville (Austin Charles, single-sourced)
+    "grimmsnarl_froslass": (4.66, 4.55),    # carried flat, no fresh signal
+    "hide_n_sneak":       (4.10, 4.08),     # carried flat, no fresh signal
+    "toucannon":          (3.40, 3.18),     # carried flat, no fresh signal
+    "fighting":           (1.77, 1.89),     # carried flat, no fresh signal
+    "greninja":           (1.70, 1.63),     # carried flat, no fresh signal
+    "beedrill":           (1.22, 1.16),     # carried flat, no fresh signal
+    "ogerpon_box":        (5.90, 5.90),     # NEW baseline: Recife 5.9% share / 50.09% WR
 }
 
 # Speculative flags: upcoming-set concerns/opportunities per deck. LABELED SPECULATION.
@@ -60,10 +76,13 @@ SPECULATIVE_FLAGS = {
     "_global": [
         "Delta Reign (intl. 2026-11-06; JP 'Storm Emeralda' live since 07-31): four new "
         "Megas — Mega Rayquaza ex (280HP BASIC Mega, Storm Emerald 50x per Fire/Lightning "
-        "Energy on its whole board, Colorless type, Fighting resistance), Mega Golisopod ex "
-        "(Grass), Mega Golurk ex, Mega Malamar ex.",
-        "30th Celebration (2026-09-16): reprint-heavy; low competitive impact expected "
-        "unless the new Mewtwo ex / Mew ex prints are playable.",
+        "Energy on its whole board, Colorless type, Fighting resistance) is the only one "
+        "with confirmed English text. Mega Golisopod ex (Grass), Mega Golurk ex, and Mega "
+        "Malamar ex are now NAMED (2026-10-12 sourcing) but sources conflict on whether "
+        "they're officially revealed yet, and no ability/attack text exists in English or "
+        "Japanese for any of the three as of this scan — still too speculative to assess.",
+        "30th Celebration (2026-09-16, released): reprint-heavy as expected; no confirmed "
+        "competitive impact found this scan.",
     ],
     "mega_excadrill": [
         "Mega Rayquaza ex is Colorless: no Weakness leverage against Metal — neutral "
