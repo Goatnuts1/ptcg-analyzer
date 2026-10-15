@@ -15,22 +15,22 @@ doublade                   76.8   8.3%   57.9  fighting (11.7%)
 fighting                   76.7  33.3%    0.0  -
 beedrill                   75.5  25.0%   23.3  fighting (31.7%)
 water                      75.5  35.0%    0.0  -
-mega_excadrill             75.2  21.7%   32.3  fighting (15.0%)
 no_vacancy                 74.3  36.7%    0.0  -
 dark                       74.3  36.7%    0.0  -
-mega_excadrill_shaymin     74.1  23.3%   31.8  fighting (18.3%)
 ogerpon_box                73.2  38.3%    0.0  -
 grimmsnarl_froslass        72.9  30.0%   20.2  fighting (28.3%)
 hide_n_sneak               72.8  16.7%   51.7  cynthia_garchomp (18.3%)
 the_vault                  72.0  40.0%    0.0  -
 clefairy_stock             72.0  40.0%    0.0  -
+mega_excadrill             71.7  26.7%   32.3  fighting (15.0%)
 innkeeper                  70.8  41.7%    0.0  -
 colorless                  70.8  41.7%    0.0  -
 clefairy_modified          70.8  41.7%    0.0  -
+mega_excadrill_shaymin     70.6  28.3%   31.8  fighting (18.3%)
 slowking_slowbro           67.3  46.7%    0.0  -
 greninja                   62.0  35.0%   44.9  fighting (18.3%)
 cornerstone_box            61.7  43.3%   26.6  fighting (23.3%)
-alakazam_deck              57.2  50.0%   25.9  fighting (28.3%)
+alakazam_deck              53.7  55.0%   25.9  fighting (28.3%)
 dragapult                  53.5  48.3%   42.3  fighting (18.3%)
 toucannon                  51.8  40.0%   67.2  fighting (15.0%)
 dragapult_blaziken         49.8  50.0%   50.7  fighting (15.0%)
@@ -41,7 +41,7 @@ festival_lead              30.3  56.7%  100.0  mega_excadrill (15.0%)
 
 Largest mark-H exposures (cards lost at rotation):
   festival_lead            56.7%  Grookey x4, Thwackey x4, Buddy-Buddy Poffin x4, Applin (SCR) x3
-  alakazam_deck            50.0%  Abra x4, Kadabra x4, Buddy-Buddy Poffin x4, Dunsparce x3
+  alakazam_deck            55.0%  Abra x4, Kadabra x4, Buddy-Buddy Poffin x4, Alakazam x3
   dragapult_blaziken       50.0%  Dreepy x4, Drakloak x4, Buddy-Buddy Poffin x4, Dragapult ex x2
   slowking                 50.0%  Slowpoke x4, Ciphermaniac's Codebreaking x4, Academy at Night x4, Slowking x3
   dragapult                48.3%  Dreepy x4, Drakloak x4, Buddy-Buddy Poffin x4, Dragapult ex x3
@@ -52,3 +52,14 @@ SPECULATIVE FLAGS (upcoming sets; opinions, not measurements):
   * [crustle_modern] Grass techs gain a target if Mega Golisopod ex (Grass) is playable; no direct threat identified from revealed cards.
   * [fighting] Mega Rayquaza ex resists Fighting (−30) and Basic-Mega speed beats Stage-1 setup: the current #1 sim deck is the most exposed to the November shake.
   * [mega_excadrill] Mega Rayquaza ex is Colorless: no Weakness leverage against Metal — neutral threat, but a 280HP Basic Mega that scales past 300 outraces Metallic Hammer math.
+
+KNOWN DATA-QUALITY CAVEAT (added 2026-08-21, see META_SCAN_2026-08-21.md): mega_excadrill's
+and mega_excadrill_shaymin's rot% (26.7% / 28.3%) count "Drilbur" x3 as mark H. That's a
+misresolution — the deck wants the manual-supplement Pitch Black print (pbl-46, mark J,
+carries Dig Dig Dig); the pool's bare "Drilbur" name is currently resolving to sv5-85
+(Temporal Forces, mark H, no Dig Dig Dig) instead, because fetch_standard_pool.py's
+"now in upstream" skip logic treats any same-named upstream print as satisfying the
+manual entry, even when it's a different print. The deck's TRUE rotation% is lower once
+that's fixed. alakazam_deck's Alakazam x3 mark-H flag looks like the same failure mode
+(see META_SCAN_2026-08-21.md for the full writeup) — not re-derived by hand here, since
+that would launder a guess into the table the same way a speculative flag would.
