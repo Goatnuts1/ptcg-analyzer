@@ -30,7 +30,12 @@ from src.engine import effects as fx
 from src.engine.game import (setup_game, start_turn, end_turn, apply_action, check_win,
                              MAX_TURNS)
 
-SEEDS = range(40)
+# 40 seeds sufficed against the 2026-08-17 pool; later pool rebuilds (upstream data
+# moved, manual supplement merged) shifted greedy trajectories and the rarest tracked
+# line — Area Zero Underdepths' Bench shrink clause — fell out of the first 40. The
+# clause itself is unchanged and unit-tested; this range is the LIVENESS evidence
+# window, so widen it. (Same fix as feature/multihop-mcts 73e0382.)
+SEEDS = range(120)
 
 
 def play(db, seed):

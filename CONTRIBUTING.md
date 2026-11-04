@@ -21,6 +21,7 @@ Small project, simple rules. The point is to keep the build trustworthy.
 ## Running things
 ```bash
 python3 src/fetch_standard_pool.py --out data/standard_pool.json   # build pool
+python3 tests/run_all.py -j 8                                       # whole suite (PASS/SKIP/FAIL)
 python3 tests/test_pool.py                                          # data invariants
 python3 tests/test_engine.py                                        # engine invariants
 python3 tests/test_effects.py                                       # per-card effects
