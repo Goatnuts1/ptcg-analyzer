@@ -35,11 +35,16 @@ from src.engine.game import (setup_game, start_turn, end_turn, apply_action, che
 # the rarest tracked line — Area Zero Underdepths' Bench shrink clause — fell out
 # of the first 40 (it now first fires at seed 60). The clause itself is unchanged
 # and unit-tested; this range is the LIVENESS evidence window, so widen it.
-SEEDS = range(120)
+SEEDS = range(240)
 
 
 def play(db, seed):
     """One deterministic greedy game; returns its full log."""
+    return play_state(db, seed).log
+
+
+def play_state(db, seed):
+    """One deterministic greedy game; returns the final GameState."""
     st = setup_game(load_deck(db, "toucannon"), load_deck(db, "dragapult"),
                     seed=seed, db=db)
     # SEEDED greedy: GreedyAgent()'s default rng is seeded from OS entropy and greedy
@@ -57,7 +62,7 @@ def play(db, seed):
         if st.phase is Phase.GAME_OVER:
             break
         end_turn(st)
-    return st.log
+    return st
 
 
 def play_tracking_bench(db, seed):
@@ -195,10 +200,18 @@ def main():
 
     # --- 5. NEGATIVE: no game may end in an engine-visible stall — every seeded game
     # must reach a real result (someone won, or the deck-out/MAX_TURNS valve fired). ---
+    # Phase 1 (2026-11): a SHORT game is fine when it ended in a real result — e.g. the
+    # going-first player can no longer play a Supporter on turn 1 (rules fix), so an
+    # unlucky lone Active can be KO'd on turn 2 with an empty Bench (seed 18: a genuine
+    # bench-out loss). What this check exists to catch is a STALL: a short log with no
+    # winner. So: short AND no winner -> fail.
     for seed in SEEDS:
         log = play(db, seed)
-        check(len(log) > 20,
-              f"seed {seed} produced a suspiciously short game ({len(log)} lines)")
+        if len(log) <= 20:
+            st = play_state(db, seed)
+            check(st.winner is not None,
+                  f"seed {seed} produced a suspiciously short game ({len(log)} lines) "
+                  f"with no winner")
 
     if fails:
         print(f"FAILED ({len(fails)}):")

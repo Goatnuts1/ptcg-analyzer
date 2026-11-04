@@ -12,6 +12,19 @@ import tempfile
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+# Optional-dependency guard: this suite needs torch (the Trainer venv). On a stdlib-only
+# checkout, skip cleanly instead of crashing with ModuleNotFoundError. Under pytest this
+# is pytest.importorskip; as a plain script it prints SKIP and exits 0.
+import importlib.util as _ilu
+if _ilu.find_spec("torch") is None or _ilu.find_spec("numpy") is None:
+    if "pytest" in sys.modules:
+        import pytest
+        pytest.importorskip("torch")
+        pytest.importorskip("numpy")
+    print(f"SKIP {os.path.basename(__file__)}: torch/numpy not installed "
+          "(run with the Trainer venv: .venv/bin/python tests/...)")
+    sys.exit(0)
+
 import numpy as np
 import torch
 
