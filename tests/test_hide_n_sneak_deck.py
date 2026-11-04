@@ -27,7 +27,7 @@ from src.engine.agents import GreedyAgent
 from src.engine.game import (setup_game, start_turn, end_turn, apply_action, check_win,
                              MAX_TURNS)
 
-SEEDS = range(12)
+SEEDS = range(24)
 
 
 def play(db, seed):

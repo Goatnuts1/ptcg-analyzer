@@ -33,7 +33,7 @@ from src.engine.game import (setup_game, start_turn, end_turn, apply_action, che
                              MAX_TURNS)
 from src.analysis.gap_check import check_deck_implementation
 
-SEEDS = range(12)
+SEEDS = range(24)
 
 
 def play(db, seed):

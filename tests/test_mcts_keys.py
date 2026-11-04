@@ -28,6 +28,7 @@ def main():
     fails = []
     db = CardDB.from_pool("data/standard_pool.json")
     seen_kinds = set()
+    N_GAMES = 48
 
     # Drive several diverse games; at every decision, check the key invariant for
     # all legal actions (these tournament decks exercise stadium/tool/ability/attack/
@@ -45,8 +46,13 @@ def main():
     # would collapse into each other and the search would silently see one option.
     pairings = [("dragapult", "charizard_xy"), ("charizard_xy", "dragapult"),
                 ("hide_n_sneak", "dragapult"), ("gardevoir_real", "dragapult"),
-                ("doublade", "dragapult"), ("ns_zoroark", "dragapult")]
-    for gi in range(24):
+                ("doublade", "dragapult"), ("ns_zoroark", "dragapult"),
+                 # Phase 1: Drew's Crustle v1.1 carries Lumiose City ("stadium_lumiose").
+                 ("crustle_drew_v11", "dragapult_puebla")]
+    # 48 games (was 24): the Phase 1 rules fixes (Supporter lock on the first turn,
+    # coin flip before the deal, mulligan draws) moved seeded trajectories and Mystery
+    # Garden no longer showed up in the first 24.
+    for gi in range(N_GAMES):
         which = pairings[gi % len(pairings)]
         da = load_deck(db, which[0])
         dbk = load_deck(db, which[1])
@@ -86,7 +92,7 @@ def main():
 
     # sanity: the sweep actually exercised the kinds that used to vanish
     for needed in ("play_stadium", "attach_tool", "stadium_draw", "stadium_evolve",
-                   "stadium_garden", "stadium_factory"):
+                   "stadium_garden", "stadium_factory", "stadium_lumiose"):
         if needed not in seen_kinds:
             fails.append(f"sweep never exercised {needed!r} — can't claim it's guarded")
 

@@ -40,7 +40,7 @@ from src.engine.game import (setup_game, start_turn, end_turn, apply_action, che
 # policy under-expresses (see CLAUDE.md's "greedy mispilots complex decks"). A wider
 # DETERMINISTIC sweep is what it takes to observe repeated Weaponized Swords use in real
 # games; the sample is still fully reproducible, just bigger.
-SEEDS = range(30)
+SEEDS = range(120)
 
 LINE_NAMES = ("Honedge", "Doublade", "Aegislash")
 
