@@ -1606,6 +1606,117 @@ DECK_DRAGAPULT_WORLDS: list[tuple[str, int]] = [
     ("Basic Psychic Energy", 3),
 ]
 
+# --------------------------------------------------------------------------- #
+# PHASE 1 (2026-11) exact tournament / Live lists. Exact 60s, exact prints where the
+# engine distinguishes prints. Sources recorded per deck; see DECISIONS.md D-P1-06.
+# --------------------------------------------------------------------------- #
+
+# Drew's Crustle v1.1 (his Live list, deck-guides/crustle/crustle-Live.txt).
+# Prints: Mega Kangaskhan ex MEG 104 (pool me1-104), Dwebble DRI 11 (sv10-11, Ascension),
+# Crustle DRI 12 (sv10-12). Lumiose City POR 77 / Growing Grass Energy POR 86 come from
+# data/manual_cards.json (not yet in the upstream dump).
+DECK_CRUSTLE_DREW_V11: list[tuple[str, int]] = [
+    ("Mega Kangaskhan ex", 4),
+    ("Dwebble", 3),
+    ("Crustle", 3),
+
+    ("Boss's Orders", 4),
+    ("Team Rocket's Petrel", 4),
+    ("Lillie's Determination", 4),
+    ("Crispin", 2),
+    ("Eri", 2),
+    ("Hilda", 2),
+    ("Xerosic's Machinations", 1),
+    ("Pokémon Center Lady", 1),
+    ("Jumbo Ice Cream", 4),
+    ("Pokégear 3.0", 3),
+    ("Buddy-Buddy Poffin", 2),
+    ("Switch", 1),
+    ("Ultra Ball", 1),
+    ("Hero's Cape", 1),          # ACE SPEC
+    ("Lumiose City", 1),
+    ("Festival Grounds", 1),
+    ("Team Rocket's Factory", 1),
+
+    ("Mist Energy", 4),
+    ("Growing Grass Energy", 4),
+    ("Spiky Energy", 3),
+    ("Basic Grass Energy", 2),
+    ("Basic Fighting Energy", 1),
+    ("Basic Darkness Energy", 1),
+]
+
+# Dragapult ex — Puebla 2026 1st (Hedrick, labs.limitlesstcg.com/0078/player/1603) and
+# 2nd (Rogerson, /0078/player/0788): the two 60s are IDENTICAL. Differences from
+# dragapult_worlds: Judge instead of Special Red Card, and the TEF 128 Dunsparce print
+# (pool "Dunsparce", sv5-128) instead of "Dunsparce (JTG)".
+DECK_DRAGAPULT_PUEBLA: list[tuple[str, int]] = [
+    ("Dreepy", 4),
+    ("Drakloak", 4),
+    ("Dragapult ex", 3),
+    ("Munkidori", 2),
+    ("Budew", 2),
+    ("Dunsparce", 1),            # TEF 128
+    ("Dudunsparce", 1),          # TEF 129
+    ("Meowth ex", 1),
+    ("Fezandipiti ex", 1),
+
+    ("Lillie's Determination", 4),
+    ("Boss's Orders", 3),
+    ("Crispin", 2),
+    ("Rosa's Encouragement", 1),
+    ("Judge", 1),
+    ("Buddy-Buddy Poffin", 4),
+    ("Poké Pad", 4),
+    ("Crushing Hammer", 4),
+    ("Night Stretcher", 3),
+    ("Ultra Ball", 3),
+    ("Unfair Stamp", 1),         # ACE SPEC
+    ("Risky Ruins", 2),
+
+    ("Basic Fire Energy", 3),
+    ("Basic Psychic Energy", 3),
+    ("Basic Darkness Energy", 3),
+]
+
+# Basic Box — Gantner, Nice 2026 1st (labs.limitlesstcg.com/0077/player/2115).
+# Print notes: Raging Bolt ex TEF 123 = pool svp-145 text; Iron Crown ex TEF 81 = pool
+# svp-146 text; Chien-Pao SSP 56 = pool svp-152 text (Snow Sink / Icicle Loop); Glass
+# Trumpet ASC 189 = SCR 135 text. Passimian, Cobalt Command and Glass Trumpet were
+# implemented for this list in Phase 1.
+DECK_BASIC_BOX_GANTNER: list[tuple[str, int]] = [
+    ("Mega Kangaskhan ex", 4),
+    ("Meowth ex", 3),
+    ("Teal Mask Ogerpon ex", 2),
+    ("Wellspring Mask Ogerpon ex", 2),
+    ("Latias ex", 2),
+    ("Lillie's Clefairy ex", 2),
+    ("Raging Bolt ex", 1),
+    ("Chien-Pao", 1),
+    ("Iron Crown ex", 1),
+    ("Passimian", 1),
+    ("Fezandipiti ex", 1),
+    ("Iron Leaves ex", 1),
+
+    ("Crispin", 4),
+    ("Cyrano", 2),
+    ("Boss's Orders", 2),
+    ("Ciphermaniac's Codebreaking", 1),
+    ("Energy Switch", 4),
+    ("Ultra Ball", 4),
+    ("Night Stretcher", 2),
+    ("Unfair Stamp", 1),         # ACE SPEC
+    ("Glass Trumpet", 1),
+    ("Area Zero Underdepths", 3),
+
+    ("Basic Grass Energy", 6),
+    ("Basic Psychic Energy", 3),
+    ("Basic Lightning Energy", 2),
+    ("Basic Fighting Energy", 2),
+    ("Basic Water Energy", 2),
+]
+
+
 DECKS: dict[str, list[tuple[str, int]]] = {
     "dragapult": TOURNAMENT_DRAGAPULT,
     "charizard_xy": TOURNAMENT_CHARIZARD_XY,
@@ -1645,6 +1756,9 @@ DECKS: dict[str, list[tuple[str, int]]] = {
     "grimmsnarl_froslass": DECK_GRIMMSNARL_FROSLASS,
     "dragapult_worlds": DECK_DRAGAPULT_WORLDS,
     "ns_zoroark": DECK_NS_ZOROARK,
+    "crustle_drew_v11": DECK_CRUSTLE_DREW_V11,
+    "dragapult_puebla": DECK_DRAGAPULT_PUEBLA,
+    "basic_box_gantner": DECK_BASIC_BOX_GANTNER,
 }
 
 

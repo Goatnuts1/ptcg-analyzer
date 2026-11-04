@@ -352,6 +352,16 @@ def main():
     ap.add_argument("--from-file", metavar="PATH",
                     help="with --import-deck: read the deck list from a file instead of stdin")
     ap.add_argument("--name", metavar="NAME", help="name for an imported deck")
+    ap.add_argument("--parallel", type=int, nargs="?", const=0, default=None, metavar="N",
+                    help="run --deck1 vs --deck2 across N worker processes (0/omitted = "
+                         "all CPUs); deterministic per-game seeds, results independent "
+                         "of N. Reports by who went first.")
+    ap.add_argument("--seat-order", choices=["both", "deck1", "deck2", "coin"],
+                    default="both",
+                    help="with --parallel: who goes first (both = alternate, default)")
+    ap.add_argument("--out", metavar="PATH",
+                    help="with --parallel: write PATH.csv (per game) + PATH.json (summary, "
+                         "rewritten as games finish so partial results are readable)")
     args = ap.parse_args()
 
     # --- web UI ---
@@ -420,6 +430,24 @@ def main():
             print(f"  {name}")
         if not args.list:
             print("\nUsage: python3 cli.py --deck1 <name> --deck2 <name> --games 5000")
+        return
+
+    if args.parallel is not None:
+        from src.analysis.parallel_runner import run_parallel, format_summary
+        try:
+            load_deck(CardDB.from_pool(args.pool), args.deck1)
+            load_deck(CardDB.from_pool(args.pool), args.deck2)
+        except KeyError as e:
+            print(e)
+            return
+        default_iters = 120
+        s = run_parallel(args.deck1, args.deck2, args.games, agent1=args.agent,
+                         agent2=args.agent2,
+                         iters1=args.iters if args.iters else default_iters,
+                         iters2=args.iters2 if args.iters2 else None,
+                         seed=args.seed, workers=args.parallel,
+                         seat_order=args.seat_order, pool=args.pool, out=args.out)
+        print(format_summary(s))
         return
 
     t0 = time.time()

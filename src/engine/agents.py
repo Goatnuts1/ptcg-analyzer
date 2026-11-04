@@ -35,6 +35,16 @@ _SEARCH_SUPPORTERS = ("Hilda", "Dawn", "Crispin", "Arven",
 # sits last and MCTS owns the timing. (§5 deviation.)
 _OTHER_SUPPORTERS = ("Boss's Orders",)
 
+# Phase-1 bias fix (2026-11): attacks whose damage "isn't affected by any effects on
+# your opponent's Active Pokémon" — they go through Rock Inn / Cornerstone / Scales and
+# Dig's shield (apply_attack_damage(..., ignore_active_effects=True)).
+_WALL_BYPASS_ATTACKS = frozenset({"Superb Scissors", "Demolish", "Nebula Beam", "Shred"})
+# Attacks whose main value survives a damage wall because it is an EFFECT (damage
+# counters placed on the Bench), valued at the counters' damage-equivalent. Without
+# this, wall-awareness would stop Dragapult ex from Phantom Diving into a Crustle
+# board — and the Bench spread is exactly the real-world anti-Crustle line.
+_WALLED_EFFECT_VALUE = {"Phantom Dive": 60}
+
 
 class RandomAgent:
     """Picks a uniformly random legal action. The dumb baseline to beat."""
@@ -63,6 +73,38 @@ class GreedyAgent:
         acts = legal_actions(state)
         p = state.current
         defender = state.opponent.active
+
+        # WALL AWARENESS (Phase-1 bias fix, 2026-11). Greedy used to value every attack
+        # at its printed damage, so a Pokémon ex kept swinging into Crustle's Mysterious
+        # Rock Inn (or Cornerstone Stance / Sparkling Scales / Dig's shield) for 0 every
+        # turn and never looked for another attacker — the main source of the greedy
+        # Crustle bias (see DECISIONS.md). Everything read here is PUBLIC (the
+        # defender's printed Ability, the attacker's subtypes): no hidden information,
+        # no lookahead, deterministic.
+        def _walled(mon, atk=None):
+            if defender is None or mon is None:
+                return False
+            if atk is not None and (atk.name in _WALL_BYPASS_ATTACKS
+                                    or atk.name in _WALLED_EFFECT_VALUE):
+                return False
+            return bool(getattr(defender, "shielded", False)) or \
+                fx.wall_prevents_damage(state, defender, mon)
+
+        def _hit_power(mon):
+            """Best printed damage among `mon`'s PAYABLE attacks that the current
+            defender's wall does not stop (0 if none)."""
+            return max((atk.damage for atk in mon.card.attacks
+                        if atk.damage > 0 and not _walled(mon, atk)
+                        and can_pay_cost(mon, fx.effective_cost(state, mon, atk))),
+                       default=0)
+
+        def _wall_pivot_target(mon):
+            """A Benched mon that could hit through the wall once powered: has a
+            damaging attack the wall doesn't stop."""
+            return any(atk.damage > 0 and not _walled(mon, atk) for atk in mon.card.attacks)
+
+        active_walled = (p.active is not None and defender is not None
+                         and _walled(p.active) and _hit_power(p.active) == 0)
 
         # 0. use any free ability first (card advantage / setup)
         abilities = [a for a in acts if a.kind == "use_ability"]
@@ -173,6 +215,10 @@ class GreedyAgent:
         if defender is not None:
             for a in attacks:
                 atk = p.active.card.attacks[a.attack_index]
+                if _walled(p.active, atk) or (
+                        atk.name in _WALLED_EFFECT_VALUE
+                        and fx.wall_prevents_damage(state, defender, p.active)):
+                    continue          # wall stops the damage: it can't be lethal
                 cv = _copy_value(a)
                 dmg = cv if cv is not None else (_wave_value(atk) or atk.damage)
                 for wtype, _ in defender.card.weaknesses:
@@ -255,6 +301,22 @@ class GreedyAgent:
             if (len(p.hand) <= 4 and p.active is not None
                     and fx.has_festival_lead(p.active.card)):
                 gladion_hold = True
+
+        # 1d-wall. Walled Active that CAN pay a damaging attack once the defender is
+        # gone (it just hits the wall): Boss's Orders a non-walled Benched target up
+        # ahead of draw/search Supporters (the gust's target choice is wall-aware in
+        # effects._gust_victim). Phase-1 bias fix; inert unless the Active is walled.
+        if (defender is not None and p.active is not None and _walled(p.active)
+                and not gladion_hold
+                and any(atk.damage > 0 and atk.name not in _WALL_BYPASS_ATTACKS
+                        and can_pay_cost(p.active, fx.effective_cost(state, p.active, atk))
+                        for atk in p.active.card.attacks)
+                and any(not fx.wall_prevents_damage(state, m, p.active)
+                        for m in state.opponent.bench)):
+            for a in trainers:
+                c = p.hand[a.hand_index]
+                if c.name == "Boss's Orders" and c.is_supporter:
+                    return a
 
         # 1d. one Supporter per turn: refill the hand when low, else set up. (Legal
         # actions already hides Supporters once one is played this turn.)
@@ -400,6 +462,16 @@ class GreedyAgent:
             if nz:
                 return max(nz, key=lambda a: (_nz_target(a).energy_count(),
                                               a.target_index == -1))
+            # 2a-wall. Walled Active: power the Benched Pokémon that can hit through
+            # the wall (most Energy already attached first — concentrate, don't
+            # spread), instead of feeding an Active that does 0. Phase-1 bias fix.
+            if active_walled:
+                wall_att = [a for a in attaches if a.target_index != -1
+                            and _wall_pivot_target(p.bench[a.target_index])]
+                if wall_att:
+                    return max(wall_att, key=lambda a: (
+                        p.bench[a.target_index].energy_count(),
+                        max(atk.damage for atk in p.bench[a.target_index].card.attacks)))
             # prefer attaching to the active
             active_attaches = [a for a in attaches if a.target_index == -1]
             return (active_attaches or attaches)[0]
@@ -485,6 +557,23 @@ class GreedyAgent:
                 if _power(best) >= 60:
                     return best
 
+        # 2b-wall. Walled-Active pivot: retreat into the Benched Pokémon with the best
+        # payable attack the wall doesn't stop (legal_actions already gated the
+        # retreat's affordability and once-per-turn). Can't thrash: once a non-walled
+        # attacker is Active, active_walled is False. Phase-1 bias fix.
+        # Generalised: the same pivot fires when the Active has NO legal attack at all
+        # (after this turn's attachment) and a Benched Pokémon can already pay a
+        # damaging one — e.g. an unpowered Mega Kangaskhan ex in front of a powered
+        # attacker. A legal 0-damage engine attack (Seek Inspiration, Night Joker...)
+        # keeps the Active where it is, so no engine deck's play changes.
+        if p.active is not None and (
+                (defender is not None and _walled(p.active) and _hit_power(p.active) == 0)
+                or not attacks):
+            cands = [a for a in acts if a.kind == "retreat"
+                     and _hit_power(p.bench[a.target_index]) > 0]
+            if cands:
+                return max(cands, key=lambda a: _hit_power(p.bench[a.target_index]))
+
         # 3. best available attack. Value = printed damage, with ONE exception:
         # Slowking's Seek Inspiration (printed 0) is valued at the seek_value of the
         # top card of the deck when that card is KNOWN GOOD — i.e. this player planted
@@ -505,9 +594,26 @@ class GreedyAgent:
                 top = p.deck[0]
                 if top.is_pokemon and not fx._has_rule_box(top) and top.attacks:
                     return max(fx.seek_value(top, t) for t in top.attacks)
+            if _walled(p.active, atk):                            # wall-aware (Phase 1)
+                return 0
+            if (atk.name in _WALLED_EFFECT_VALUE and defender is not None
+                    and fx.wall_prevents_damage(state, defender, p.active)):
+                return _WALLED_EFFECT_VALUE[atk.name]
             return atk.damage
         if attacks:
             return max(attacks, key=_attack_value)
+
+        # 3b. Lumiose City (Phase 1): bench a Basic from the deck — but it ENDS THE TURN,
+        # so greedy only takes it as its last act instead of passing (never in place of
+        # an attack). Prefer the Basic with the best _search_value (an evolution base
+        # first), ties by name order. Without this branch the Stadium is inert.
+        lumiose = [a for a in acts if a.kind == "stadium_lumiose"]
+        if lumiose:
+            names = fx.lumiose_city_options(p)
+            def _lv(a):
+                c = next(c for c in p.deck if c.name == names[a.target_index])
+                return fx._search_value(c)
+            return max(lumiose, key=_lv)
 
         # 4. nothing useful
         return Action(kind="pass")
