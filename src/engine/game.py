@@ -102,26 +102,52 @@ def setup_game(deck_a: list[Card], deck_b: list[Card], seed: Optional[int] = Non
     pa = PlayerState(name="A", deck=list(deck_a))
     pb = PlayerState(name="B", deck=list(deck_b))
 
+    # RULES (Phase 1 fix, see DECISIONS.md D-P1-03): the coin flip that decides who
+    # goes first happens BEFORE either player draws their opening hand (rulebook:
+    # "Flip a coin. The winner of the coin flip decides which player goes first... Each
+    # player then shuffles and draws 7"). Previously the flip was drawn from the shared
+    # rng AFTER the mulligan shuffles, which made "who goes first" a function of how many
+    # times each player mulliganed. The flip is drawn first now; an explicit
+    # `first_player` still overrides it (the draw is consumed either way so seeded deals
+    # are identical with and without the override — only the seat changes).
+    flip = rng.randint(0, 1)
+    first = flip if first_player is None else first_player
+
+    mulligans = []
     for p in (pa, pb):
         # mulligan loop: reshuffle and redraw until the hand has a Basic Pokemon
+        n = 0
         while True:
             rng.shuffle(p.deck)
-            p.hand = []
-            p.deck_draw_into_hand = None  # noqa (placeholder, unused)
             p.hand = [p.deck.pop(0) for _ in range(STARTING_HAND)]
             if _has_basic(p.hand):
                 break
             p.deck.extend(p.hand)         # put hand back and try again
+            n += 1
+        mulligans.append(n)
 
     state = GameState(players=(pa, pb), rng=rng)
     state.db = db
-    state.active_index = rng.randint(0, 1) if first_player is None else first_player
+    state.active_index = first
 
-    # each player puts one Basic active, then sets 6 prizes off the top
+    # each player puts one Basic active
     for p in (pa, pb):
         basics = [i for i, c in enumerate(p.hand) if c.is_pokemon and c.is_basic]
         idx = basics[0]
         p.active = InPlayPokemon(card=p.hand.pop(idx))
+
+    # RULES (Phase 1 fix): "For each mulligan your opponent took, you may draw 1 card."
+    # The engine never paid this. A player who mulliganed fewer times draws the
+    # DIFFERENCE (each player's own mulligans entitle the OTHER player). Always taken —
+    # "may" is almost never declined in practice and agents have no hook for it here.
+    for i, p in enumerate((pa, pb)):
+        extra = mulligans[1 - i]
+        for _ in range(min(extra, len(p.deck))):
+            p.hand.append(p.deck.pop(0))
+    state.setup_mulligans = tuple(mulligans)
+
+    # then each player sets 6 prizes off the top
+    for p in (pa, pb):
         p.prizes = [p.deck.pop(0) for _ in range(PRIZE_COUNT)]
 
     state.phase = Phase.MAIN
@@ -258,6 +284,11 @@ def legal_actions(state: GameState) -> list[Action]:
             continue
         if c.is_supporter and p.supporter_played_this_turn:
             continue
+        # RULES (Phase 1 fix): "The player who goes first can't play a Supporter card
+        # during their first turn" (rulebook, also no attack — gated below). turn_number
+        # 1 is exactly the going-first player's first turn. Previously ungated.
+        if c.is_supporter and state.turn_number == 1:
+            continue
         if fx.get_trainer_effect(c.name) and fx.can_play_trainer(state, p, c.name):
             actions.append(Action("play_trainer", hand_index=i))
 
@@ -283,7 +314,7 @@ def legal_actions(state: GameState) -> list[Action]:
                     actions.append(Action("attach_tool", hand_index=i, target_index=t))
 
     # retreat (if enough energy, a bench Pokemon to promote, and not retreat-locked)
-    if (p.bench and not p.cant_retreat
+    if (p.bench and not p.cant_retreat and not p.retreated_this_turn
             and p.active.energy_count() >= retreat_cost(p.active, state, p)):
         for t in range(len(p.bench)):
             actions.append(Action("retreat", target_index=t))
@@ -370,6 +401,18 @@ def legal_actions(state: GameState) -> list[Action]:
                           if c.is_pokemon and c.name.startswith("Marnie's")})
         for j in range(len(marnies)):
             actions.append(Action("stadium_spikemuth", target_index=j))
+
+    # Lumiose City (Stadium, POR 77): "Once during each player's turn, that player may
+    # search their deck for a Basic Pokémon and put it onto their Bench. Then, that
+    # player shuffles their deck. If a player searches their deck in this way, their
+    # turn ends." Enumerated per distinct Basic NAME (sorted, Spikemuth shape). Only
+    # offered with Bench room and a Basic in deck (never offer a do-nothing action).
+    # Cross-checked against twinleafgg/ptcg-server (MIT) lumioise-city.ts.
+    if (fx.current_stadium_name(state) == "Lumiose City"
+            and not p.stadium_lumiose_used_this_turn
+            and len(p.bench) < fx.bench_limit(state, p)):
+        for j in range(len(fx.lumiose_city_options(p))):
+            actions.append(Action("stadium_lumiose", target_index=j))
 
     # attack: starting player cannot attack on the very first turn, and a Pokémon
     # under a "can't attack this turn" lock (Eon Blade, etc.) can't attack either.
@@ -510,6 +553,8 @@ def apply_action(state: GameState, action: Action) -> None:
                                    source=mon, db=state.db, rng=state.rng,
                                    effect_kind="energy")
             on_attach(ctx)
+        # Energy can change max HP (Growing Grass Energy: +20 HP on a [G] Pokémon).
+        fx.refresh_hp_modifiers(state)
         return
 
     if action.kind == "attach_tool":
@@ -564,7 +609,10 @@ def apply_action(state: GameState, action: Action) -> None:
         new_active = p.bench.pop(action.target_index)
         p.bench.append(p.active)
         p.active = new_active
+        p.retreated_this_turn = True       # retreat is once per turn (Phase 1 fix)
         state.emit(f"retreated to {new_active.card.name}")
+        # Discarding Energy can lower max HP (Growing Grass Energy's +20) — sweep.
+        fx.process_knockouts(state)
         return
 
     if action.kind == "stadium_switch":
@@ -663,6 +711,26 @@ def apply_action(state: GameState, action: Action) -> None:
         drew = p.draw(2)
         p.stadium_factory_used_this_turn = True
         state.emit(f"Team Rocket's Factory: drew {drew}")
+        return
+
+    if action.kind == "stadium_lumiose":
+        # Lumiose City: bench the chosen Basic from the deck, shuffle, END THE TURN.
+        # Not "played from hand", so no ON_BENCH_TRIGGERS (Snow Sink etc.); the bench
+        # arrival chokepoint still runs.
+        p.stadium_lumiose_used_this_turn = True
+        names = fx.lumiose_city_options(p)
+        want = names[action.target_index]
+        card = next(c for c in p.deck if c.name == want)
+        p.deck.remove(card)
+        mon = InPlayPokemon(card=card, played_this_turn=True)
+        p.bench.append(mon)
+        fx.on_benched_new(state, p, mon)
+        if state.rng:
+            state.rng.shuffle(p.deck)
+        state.emit(f"Lumiose City: benched {card.name}; turn ends")
+        fx.process_knockouts(state)
+        if state.phase != Phase.GAME_OVER:
+            state.phase = Phase.BETWEEN_TURNS
         return
 
     if action.kind == "stadium_academy":
@@ -810,6 +878,8 @@ def start_turn(state: GameState) -> bool:
     p.stadium_factory_used_this_turn = False  # Team Rocket's Factory: once per turn
     p.stadium_academy_used_this_turn = False  # Academy at Night: once per turn
     p.stadium_spikemuth_used_this_turn = False  # Spikemuth Gym: once per turn
+    p.stadium_lumiose_used_this_turn = False    # Lumiose City: once per turn
+    p.retreated_this_turn = False               # retreat: once per turn
     # ...and its CONDITION resets too — "played ... this turn" means THIS turn only.
     p.team_rocket_supporter_played_this_turn = False
     # snapshot "KO'd during the opponent's last turn" for Flip the Script, then

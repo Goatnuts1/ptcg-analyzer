@@ -230,6 +230,15 @@ class PlayerState:
     # that player shuffles their deck." Own once-per-turn budget, same
     # one-flag-per-Stadium-ability rule as the six above. Reset each turn.
     stadium_spikemuth_used_this_turn: bool = False
+    # Lumiose City (Stadium, POR 77): "Once during each player's turn, that player may
+    # search their deck for a Basic Pokémon and put it onto their Bench. Then, that
+    # player shuffles their deck. If a player searches their deck in this way, their
+    # turn ends." Own once-per-turn budget (the turn ends anyway). Reset each turn.
+    stadium_lumiose_used_this_turn: bool = False
+    # Retreat: "You can retreat only once during your turn" (rulebook). Phase 1 found the
+    # engine never enforced it — a player with Energy could retreat repeatedly. Reset
+    # each turn by game.start_turn.
+    retreated_this_turn: bool = False
     # Gladion's Final Battle (Supporter): "During this turn, attacks used by your Pokémon
     # that don't have a Rule Box do 80 more damage to your opponent's Active Pokémon
     # (before applying Weakness and Resistance)." Turn-scoped like bonus_damage_vs_ex_v
@@ -309,6 +318,8 @@ class PlayerState:
             stadium_factory_used_this_turn=self.stadium_factory_used_this_turn,
             stadium_academy_used_this_turn=self.stadium_academy_used_this_turn,
             stadium_spikemuth_used_this_turn=self.stadium_spikemuth_used_this_turn,
+            stadium_lumiose_used_this_turn=self.stadium_lumiose_used_this_turn,
+            retreated_this_turn=self.retreated_this_turn,
             bonus_damage_nonrulebox=self.bonus_damage_nonrulebox,
             team_rocket_supporter_played_this_turn=self.team_rocket_supporter_played_this_turn,
             legacy_energy_prize_reduction_used=self.legacy_energy_prize_reduction_used,

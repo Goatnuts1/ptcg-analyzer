@@ -177,6 +177,10 @@ def _semantic_key(state: GameState, a: Action):
         # the SORTED distinct-name list (stable across determinizations), and IS the
         # decision — which Marnie's Pokémon to fetch.
         return ("stadium_spikemuth", a.target_index)
+    if a.kind == "stadium_lumiose":
+        # Lumiose City's once-per-turn Basic-to-Bench search (ENDS THE TURN).
+        # target_index indexes the SORTED distinct Basic-name list — the decision.
+        return ("stadium_lumiose", a.target_index)
     if a.kind == "stadium_garden":
         # Mystery Garden's once-per-turn discard-an-Energy-and-refill. No parameters —
         # the engine picks which Energy goes — so the kind alone is the decision.

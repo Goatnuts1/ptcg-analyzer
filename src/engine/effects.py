@@ -1113,6 +1113,9 @@ def apply_attack_damage(ctx: EffectContext, target: InPlayPokemon, amount: int,
                     dmg += sum(30 for m in s_owner.all_in_play()
                                if m.card.name == "Cynthia's Roserade"
                                and not ability_suppressed(ctx.state, m))
+                # Iron Crown ex's Cobalt Command (+20 per Iron Crown ex, Future
+                # attackers other than Iron Crown ex, opponent's Active, pre-W/R).
+                dmg += cobalt_command_bonus(ctx.state, s_owner, source)
     if not on_bench:
         dmg = _apply_weakness_resistance(ctx.state, source.card if source else None, target,
                                          dmg, skip_weakness=ignore_weakness,
@@ -1312,6 +1315,7 @@ def process_knockouts(state: GameState) -> None:
     here, exactly like one that was damaged past its printed HP.
     """
     refresh_hp_modifiers(state)
+    festival_grounds_recover(state)
     for i, owner in enumerate(state.players):
         scorer = state.players[1 - i]
         koed_any = False
@@ -1329,7 +1333,7 @@ def process_knockouts(state: GameState) -> None:
             ko = owner.active
             owner.active = None
             _ko_cleanup(state, scorer, owner, ko)
-            _promote(owner)
+            _promote(owner, state)
             koed_any = True
 
         # "during your opponent's last turn" = owner lost a Pokémon while it was
@@ -1391,9 +1395,43 @@ def _ko_cleanup(state, scorer, victim, mon) -> None:
     state.emit(f"{mon.card.name} KO'd; {scorer.name} takes {prizes} prize(s)")
 
 
-def _promote(victim: PlayerState) -> None:
+_PROMOTE_WALL_BYPASS = frozenset({"Superb Scissors", "Demolish", "Nebula Beam", "Shred"})
+
+
+def _promote(victim: PlayerState, state: Optional[GameState] = None) -> None:
+    """Choose the new Active after a KO (a PLAYER choice the engine makes for both
+    agents). v0: highest remaining HP. v1 (Phase-1 bias fix, 2026-11, when `state` is
+    given): among the Bench, prefer the Pokémon that can ALREADY pay a damaging attack
+    the opposing Active's wall (Rock Inn / Cornerstone / Scales) doesn't stop, by that
+    attack's printed damage (own-damage attacks with printed 0 count as 50); ties keep
+    the v0 order (highest HP first). v0 promoted e.g. an unpowered 300-HP Mega
+    Kangaskhan ex over a fully powered attacker, losing whole turns. Public info only."""
     if victim.active is None and victim.bench:
         victim.bench.sort(key=lambda m: m.remaining_hp, reverse=True)
+        if state is not None:
+            from .game import can_pay_cost
+            foe_owner = state.players[1] if state.players[0] is victim else state.players[0]
+            foe = foe_owner.active
+
+            def ready(m):
+                best = 0
+                for atk in m.card.attacks:
+                    owns = (m.card.name, atk.name) in ATTACK_EFFECT_OWNS_DAMAGE
+                    if atk.damage <= 0 and not owns:
+                        continue
+                    if (foe is not None and atk.name not in _PROMOTE_WALL_BYPASS
+                            and wall_prevents_damage(state, foe, m)):
+                        continue
+                    try:
+                        payable = can_pay_cost(m, effective_cost(state, m, atk))
+                    except Exception:
+                        payable = False
+                    if payable:
+                        best = max(best, atk.damage if atk.damage > 0 else 50)
+                return best
+            i = max(range(len(victim.bench)), key=lambda i: (ready(victim.bench[i]), -i))
+            victim.active = victim.bench.pop(i)
+            return
         victim.active = victim.bench.pop(0)
 
 
@@ -2583,7 +2621,7 @@ def _bounce_back(ctx: EffectContext) -> None:
         victim = opp.active
         opp.bench.append(victim)
         opp.active = None
-        _promote(opp)
+        _promote(opp, ctx.state)
         ctx.state.emit(f"M Bounce Back: switched {victim.card.name} to the Bench")
 
 
@@ -3729,13 +3767,26 @@ def can_play_cheren(state, me) -> bool:
     return len(me.deck) > 0
 
 
+def _gust_victim(ctx: EffectContext, attacker):
+    """Gust target (Boss's Orders / Prime Catcher), v1 — Phase-1 bias fix (2026-11).
+    v0 was simply the lowest-remaining-HP Benched Pokémon, which happily dragged up a
+    Crustle (Mysterious Rock Inn) in front of an ex attacker. v1 first drops targets
+    whose passive wall stops all damage from `attacker` (the Pokémon that will attack
+    after the gust), then keeps the v0 rule among the rest; if every target is walled
+    it falls back to v0. Public information only."""
+    bench = ctx.opp.bench
+    cands = [m for m in bench
+             if attacker is None or not wall_prevents_damage(ctx.state, m, attacker)]
+    return min(cands or bench, key=lambda m: m.remaining_hp)
+
+
 def _boss_orders(ctx: EffectContext) -> bool:
     """Gust: switch one of the opponent's Benched Pokemon into the Active Spot.
     Target choice (v0): the benched Pokemon with the lowest remaining HP (easiest
     to KO) — a hook MCTS will later own."""
     if not ctx.opp.bench:
         return False
-    victim = min(ctx.opp.bench, key=lambda m: m.remaining_hp)
+    victim = _gust_victim(ctx, ctx.me.active)
     ctx.opp.bench.remove(victim)
     if ctx.opp.active:
         ctx.opp.bench.append(ctx.opp.active)
@@ -3758,7 +3809,10 @@ def _prime_catcher(ctx: EffectContext) -> bool:
     same as Switch with an empty Bench)."""
     if not ctx.opp.bench:
         return False
-    victim = min(ctx.opp.bench, key=lambda m: m.remaining_hp)
+    me = ctx.me
+    attacker = (max(me.bench, key=lambda m: m.remaining_hp)
+                if me.bench and me.active is not None else me.active)
+    victim = _gust_victim(ctx, attacker)
     ctx.opp.bench.remove(victim)
     if ctx.opp.active:
         ctx.opp.bench.append(ctx.opp.active)
@@ -3789,6 +3843,29 @@ def _poke_pad(ctx: EffectContext) -> bool:
     return n > 0
 
 
+def _discard_keep_last_energy(hand, order, k):
+    """Pick `k` discard indices from `order` (lowest value first), but never pitch the
+    LAST Energy card in hand while any other candidate remains (Phase-1 bot fix,
+    2026-11: v0 pitched Energy first, which starved 9-Energy lists like Dragapult —
+    "no Energy in hand" was the #1 reason its greedy pilot passed without attacking)."""
+    picks = []
+    energy_left = sum(1 for c in hand if c.is_energy)
+    for i in order:
+        if len(picks) == k:
+            break
+        if hand[i].is_energy and energy_left <= 1:
+            continue
+        picks.append(i)
+        if hand[i].is_energy:
+            energy_left -= 1
+    for i in order:                   # not enough non-protected cards: fall back
+        if len(picks) == k:
+            break
+        if i not in picks:
+            picks.append(i)
+    return picks
+
+
 def _ultra_ball(ctx: EffectContext) -> bool:
     """Discard 2 other cards from hand, then search deck for any Pokémon to hand."""
     if len(ctx.me.hand) < 2 or not any(p_pokemon(c) for c in ctx.me.deck):
@@ -3796,7 +3873,7 @@ def _ultra_ball(ctx: EffectContext) -> bool:
     # v0 discard policy: pitch the 2 lowest-value cards (energy/items before
     # Pokémon/Supporters); a hook MCTS will later own.
     order = sorted(range(len(ctx.me.hand)), key=lambda i: _search_value(ctx.me.hand[i]))
-    for i in sorted(order[:2], reverse=True):
+    for i in sorted(_discard_keep_last_energy(ctx.me.hand, order, 2), reverse=True):
         ctx.me.discard.append(ctx.me.hand.pop(i))
     search_deck(ctx, [p_pokemon], dest="hand")
     ctx.state.emit("Ultra Ball: discarded 2, searched a Pokémon")
@@ -3820,8 +3897,16 @@ def _dawn(ctx: EffectContext) -> bool:
 
 
 def _night_stretcher(ctx: EffectContext) -> bool:
-    """Put a Pokémon OR a Basic Energy from the discard pile into hand."""
-    n = recover_from_discard(ctx, [p_pokemon_or_basic_energy])
+    """Put a Pokémon OR a Basic Energy from the discard pile into hand.
+    Phase-1 bot fix (2026-11): with NO Energy in hand and no attachment made this turn,
+    take a Basic Energy (v0 always took the highest-_search_value card, i.e. a Pokémon,
+    leaving energy-light decks with nothing to attach)."""
+    me = ctx.me
+    if (not any(c.is_energy for c in me.hand) and not me.energy_attached_this_turn
+            and any(c.is_basic_energy for c in me.discard)):
+        n = recover_from_discard(ctx, [p_basic_energy])
+    else:
+        n = recover_from_discard(ctx, [p_pokemon_or_basic_energy])
     if n:
         ctx.state.emit("Night Stretcher: recovered from discard")
     return n > 0
@@ -5592,4 +5677,211 @@ _TRAINER_CAN_PLAY.update({
     "N's PP Up":
         lambda state, me: (any(c.is_basic_energy for c in me.discard)
                            and any(p_ns_pokemon(m.card) for m in me.bench)),
+})
+
+
+# =========================================================================== #
+# §PHASE1-CRUSTLE-2026-11 — cards for Drew's Crustle v1.1 and Gantner's Basic Box
+# (Nice 2026 1st). Card text verified against Limitless card pages / the pool / the
+# project rules cheatsheet + Compendium rulings saved under deck-guides/rules. Where a
+# reference implementation was consulted it was twinleafgg/ptcg-server (MIT License,
+# https://github.com/twinleafgg/ptcg-server) — credited per card below. No code was
+# copied; behavior was cross-checked.
+# =========================================================================== #
+
+def lumiose_city_options(player: PlayerState) -> list[str]:
+    """Lumiose City's choice set: the distinct Basic Pokémon NAMES in `player`'s deck,
+    sorted (stable across determinizations — deck order is hidden info)."""
+    return sorted({c.name for c in player.deck if c.is_pokemon and c.is_basic})
+
+
+STADIUM_IMPLEMENTED.add("Lumiose City")   # activated -> game action "stadium_lumiose"
+# Festival Grounds was already enforced at the condition chokepoint (can_be_conditioned)
+# but never registered, so the coverage test flagged it. Its "recovers from all Special
+# Conditions" half is festival_grounds_recover(), run at the top of process_knockouts.
+STADIUM_IMPLEMENTED.add("Festival Grounds")
+
+
+def festival_grounds_recover(state: GameState) -> None:
+    """Festival Grounds: "Each Pokémon that has any Energy attached ... recovers from all
+    Special Conditions". A Pokémon that was Confused/Poisoned BEFORE it had Energy (or
+    before Festival Grounds came into play) recovers as soon as both hold."""
+    if current_stadium_name(state) != "Festival Grounds":
+        return
+    for p in state.players:
+        for mon in p.all_in_play():
+            if mon.energy and (mon.confused or mon.poisoned):
+                mon.confused = False
+                mon.poisoned = False
+
+
+# Special Energy that change the max HP of their holder. Folded into the derived
+# hp_modifier by refresh_hp_modifiers (wrapped below).
+ENERGY_HP_MODIFIERS: dict[str, Callable] = {
+    # Growing Grass Energy (POR 86): "As long as this card is attached to a Pokémon, it
+    # provides [G] Energy. The [G] Pokémon this card is attached to gets +20 HP."
+    # Each copy is its own +20 (two attached = +40) — the text is per card.
+    "Growing Grass Energy": lambda mon: 20 if "Grass" in (mon.card.types or ()) else 0,
+}
+SPECIAL_ENERGY_PASSIVE.add("Growing Grass Energy")
+SPECIAL_ENERGY_IMPLEMENTED.add("Growing Grass Energy")
+
+_refresh_hp_modifiers_base = refresh_hp_modifiers
+
+
+def refresh_hp_modifiers(state: GameState) -> None:   # noqa: F811 (deliberate wrap)
+    """Stadium + Tool modifiers (the original function), PLUS attached-Energy modifiers
+    (Growing Grass Energy). Still derived-from-scratch, never accumulated."""
+    _refresh_hp_modifiers_base(state)
+    for p in state.players:
+        for mon in p.all_in_play():
+            for e in mon.energy:
+                f = ENERGY_HP_MODIFIERS.get(e.name)
+                if f is not None:
+                    mon.hp_modifier += f(mon)
+
+
+# Snow Sink lives in ON_BENCH_TRIGGERS (Chien-Pao -> _snow_sink) but was missing from
+# the passive registry, so the coverage test flagged it as unimplemented.
+PASSIVE_ABILITIES.add(("Chien-Pao", "Snow Sink"))
+# Cobalt Command: passive damage add -> apply_attack_damage (cobalt_command_bonus).
+PASSIVE_ABILITIES.add(("Iron Crown ex", "Cobalt Command"))
+
+
+def cobalt_command_bonus(state: GameState, s_owner: PlayerState,
+                         source: InPlayPokemon) -> int:
+    """Iron Crown ex — Cobalt Command: "Attacks used by your Future Pokémon, except any
+    Iron Crown ex, do 20 more damage to your opponent's Active Pokémon (before applying
+    Weakness and Resistance)." Each un-suppressed Iron Crown ex is its own Ability, so
+    copies stack (+20 each)."""
+    if source is None or "Future" not in source.card.subtypes:
+        return 0
+    if print_base_name(source.card.name) == "Iron Crown ex":
+        return 0
+    return sum(20 for m in s_owner.all_in_play()
+               if print_base_name(m.card.name) == "Iron Crown ex"
+               and not ability_suppressed(state, m))
+
+
+# --- Dwebble (DRI 11): Ascension -------------------------------------------- #
+def _ascension(ctx: EffectContext) -> None:
+    """Dwebble — Ascension [C]: "Search your deck for a card that evolves from this
+    Pokémon and put it onto this Pokémon to evolve it. Then, shuffle your deck."
+    Works on the attacker's first turn in play (Compendium ruling: the evolve-timing
+    rules restrict evolving from HAND, not an attack's effect). Evolving from the deck
+    is not "played from hand", so on-evolve-from-hand triggers do not fire. Damage and
+    attached cards carry over; evolving clears Special Conditions. A whiff (no Crustle
+    left) still shuffles. Cross-checked vs twinleafgg/ptcg-server (MIT)."""
+    me, mon = ctx.me, ctx.source
+    if mon is None:
+        return
+    base = print_base_name(mon.card.name)
+    cands = [c for c in me.deck if c.is_pokemon and c.evolves_from == base]
+    if cands:
+        evo = max(cands, key=_search_value)
+        me.deck.remove(evo)
+        mon.evolved_from.append(mon.card)
+        mon.card = evo
+        mon.evolved_this_turn = True
+        mon.ability_used_this_turn = False
+        mon.confused = False
+        mon.poisoned = False
+        ctx.state.emit(f"Ascension: evolved into {evo.name}")
+    if ctx.rng:
+        ctx.rng.shuffle(me.deck)
+
+
+# --- Passimian (SSP 111): Coordinated Throwing ------------------------------ #
+def _coordinated_throwing(ctx: EffectContext) -> None:
+    """Passimian — Coordinated Throwing [F][C] 20×: "This attack does 20 damage for each
+    of your Basic Pokémon in play." Counts the Active (Passimian itself) too."""
+    n = sum(1 for m in ctx.me.all_in_play() if m.card.is_basic)
+    damage_active_with_weakness(ctx, 20 * n)
+
+
+ATTACK_EFFECTS.update({
+    ("Dwebble", "Ascension"): _ascension,
+    ("Passimian", "Coordinated Throwing"): _coordinated_throwing,
+})
+ATTACK_EFFECT_OWNS_DAMAGE.add(("Passimian", "Coordinated Throwing"))
+
+
+# --- Xerosic's Machinations (SFA 64) ---------------------------------------- #
+def _xerosics_machinations(ctx: EffectContext) -> bool:
+    """Supporter: "Your opponent discards cards from their hand until they have 3 cards
+    in their hand." The OPPONENT chooses what to discard; v0 policy: they keep their
+    highest _search_value cards (Pokémon/Supporters) and pitch the rest."""
+    opp = ctx.opp
+    if len(opp.hand) <= 3:
+        return False
+    keep = sorted(opp.hand, key=_search_value, reverse=True)[:3]
+    for c in list(opp.hand):
+        if c in keep:
+            keep.remove(c)
+            continue
+        opp.hand.remove(c)
+        opp.discard.append(c)
+    ctx.state.emit(f"Xerosic's Machinations: opponent down to {len(opp.hand)} cards")
+    return True
+
+
+# --- Pokémon Center Lady (MEG 123) ------------------------------------------ #
+def _pokemon_center_lady(ctx: EffectContext) -> bool:
+    """Supporter: "Heal 60 damage from 1 of your Pokémon, and it recovers from all
+    Special Conditions." Policy: the Pokémon that gains the most (healed HP, +30 per
+    Condition cleared), ties to the Active."""
+    me = ctx.me
+    mons = me.all_in_play()
+    if not mons:
+        return False
+    def gain(m):
+        return (min(60, m.damage) + 30 * (int(m.confused) + int(m.poisoned)),
+                m is me.active)
+    best = max(mons, key=gain)
+    if gain(best)[0] <= 0:
+        return False
+    heal(ctx, best, 60)
+    best.confused = False
+    best.poisoned = False
+    ctx.state.emit(f"Pokémon Center Lady: healed {best.card.name}")
+    return True
+
+
+# --- Glass Trumpet (SCR 135 / ASC 189) -------------------------------------- #
+def _glass_trumpet(ctx: EffectContext) -> bool:
+    """Item: "You can use this card only if you have any Tera Pokémon in play. Choose up
+    to 2 of your Benched [C] Pokémon and attach a Basic Energy card from your discard
+    pile to each of them." Policy: Benched Colorless Pokémon with the fewest Energy
+    first (ex first on ties); Energy by type-match then name (deterministic)."""
+    me = ctx.me
+    targets = sorted((m for m in me.bench if "Colorless" in (m.card.types or ())),
+                     key=lambda m: (m.energy_count(), not _has_rule_box(m.card)))[:2]
+    done = 0
+    for m in targets:
+        pool = sorted((c for c in me.discard if c.is_basic_energy), key=lambda c: c.name)
+        if not pool:
+            break
+        e = pool[0]
+        me.discard.remove(e)
+        m.energy.append(e)
+        done += 1
+        ctx.state.emit(f"Glass Trumpet: attached {e.name} to {m.card.name}")
+    return done > 0
+
+
+TRAINER_EFFECTS.update({
+    "Xerosic's Machinations": _xerosics_machinations,
+    "Pokémon Center Lady": _pokemon_center_lady,
+    "Glass Trumpet": _glass_trumpet,
+})
+_TRAINER_CAN_PLAY.update({
+    "Xerosic's Machinations":
+        lambda state, me: len(state.players[1 - state.active_index].hand) > 3,
+    "Pokémon Center Lady":
+        lambda state, me: any(m.damage > 0 or m.confused or m.poisoned
+                              for m in me.all_in_play()),
+    "Glass Trumpet":
+        lambda state, me: (any(p_tera(m.card) for m in me.all_in_play())
+                           and any("Colorless" in (m.card.types or ()) for m in me.bench)
+                           and any(c.is_basic_energy for c in me.discard)),
 })
